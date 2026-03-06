@@ -1087,8 +1087,8 @@ function animate(){
     const mv=new THREE.Vector3();
     if(keys['arrowup']||keys['w'])mv.add(fwd);
     if(keys['arrowdown']||keys['s'])mv.sub(fwd);
-    if(keys['arrowleft']||keys['a'])mv.sub(right);
-    if(keys['arrowright']||keys['d'])mv.add(right);
+    if(keys['arrowleft']||keys['a'])mv.add(right);
+    if(keys['arrowright']||keys['d'])mv.sub(right);
     if(mv.lengthSq()>0){
       mv.normalize().multiplyScalar(SPEED);
       const pp=playerContainer.position;
