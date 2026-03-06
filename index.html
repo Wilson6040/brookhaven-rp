@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brookhaven RP - Phase 1</title>
+  <title>Brookhaven RP - Phase 2</title>
   <style>
     :root {
       --ui-bg: rgba(14, 22, 28, 0.75);
@@ -145,6 +145,55 @@
       font-size: 14px;
     }
 
+    #eventToast {
+      position: absolute;
+      left: 50%;
+      top: 70px;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      font-weight: 600;
+      min-width: 220px;
+      text-align: center;
+    }
+
+    #jobProgressWrap {
+      position: absolute;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      width: min(340px, 85vw);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      padding: 8px;
+    }
+
+    #jobProgressBar {
+      width: 0%;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ffd45b, #ffe89a);
+      transition: width 0.08s linear;
+    }
+
+    #fadeOverlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0);
+      pointer-events: none;
+      transition: background 0.35s ease;
+      z-index: 15;
+    }
+
+    .flash-positive { color: var(--good); animation: flashPulse 0.45s ease; }
+    .flash-negative { color: var(--bad); animation: flashPulse 0.45s ease; }
+
+    @keyframes flashPulse {
+      0% { filter: brightness(1); transform: scale(1); }
+      50% { filter: brightness(1.7); transform: scale(1.08); }
+      100% { filter: brightness(1); transform: scale(1); }
+    }
+
     .overlay {
       position: absolute;
       inset: 0;
@@ -261,6 +310,7 @@
   <div id="ui">
     <div id="hudTopLeft" class="panel">
       <div>Balance: <strong id="balanceText">$500</strong></div>
+      <div>Fuel: <strong id="fuelText">100%</strong></div>
       <div>
         Stamina
         <div class="barWrap"><div id="staminaBar" class="bar" style="width:100%"></div></div>
@@ -278,6 +328,9 @@
 
     <div id="zonePopup" class="panel">Town Centre</div>
     <div id="interactionPrompt" class="panel">Press E</div>
+    <div id="eventToast" class="panel"></div>
+    <div id="jobProgressWrap" class="panel"><div id="jobProgressBar"></div></div>
+    <div id="fadeOverlay"></div>
 
     <div id="hotbar" class="panel">
       <div class="slot">1</div>
@@ -296,7 +349,7 @@
       <div class="menuCard panel">
         <h2>Paused</h2>
         <button id="resumeBtn" class="menuBtn">Resume</button>
-        <div class="panel">Controls: WASD move, Shift run, Space jump, E emote, F sit, V first-person, M map, Esc pause</div>
+        <div class="panel">Controls: WASD move/drive, Shift run/turbo, Space jump/handbrake, E vehicle+doors+buy, F interact, V first-person, M map, Esc pause</div>
         <div class="panel">
           <div style="margin-bottom:8px;font-weight:600">Settings</div>
           <div class="menuRow">
@@ -365,6 +418,11 @@
     const weatherText = document.getElementById("weatherText");
     const zonePopup = document.getElementById("zonePopup");
     const interactionPrompt = document.getElementById("interactionPrompt");
+    const eventToast = document.getElementById("eventToast");
+    const fuelText = document.getElementById("fuelText");
+    const jobProgressWrap = document.getElementById("jobProgressWrap");
+    const jobProgressBar = document.getElementById("jobProgressBar");
+    const fadeOverlay = document.getElementById("fadeOverlay");
     const pauseOverlay = document.getElementById("pauseOverlay");
     const mapOverlay = document.getElementById("mapOverlay");
     const mapPlayer = document.getElementById("mapPlayer");
@@ -389,7 +447,23 @@
       swimMode: false,
       rainPositions: [],
       snowPositions: [],
-      mapBlink: 0
+      mapBlink: 0,
+      fuel: 100,
+      ownedVehicles: ["sedan", "pickup", "suv", "sports", "motorbike", "bicycle", "bus", "ambulance", "police", "firetruck"],
+      drivingVehicleId: null,
+      currentInterior: null,
+      currentInteractive: null,
+      toastTimer: 0,
+      balanceFlashTimer: 0,
+      balanceFlashType: "",
+      policeHat: false,
+      activeOutfitColor: 0x4da6ff,
+      sleepingFadeTimer: 0,
+      showerBurstTimer: 0,
+      firePoleSlideTimer: 0,
+      pendingDelivery: null,
+      deliveryPickupReadyAt: 0,
+      fishingReadyAt: 0
     };
 
     const keys = {};
@@ -398,6 +472,22 @@
     const benches = [];
     const houseWindows = [];
     const streetlamps = [];
+    const houseDoors = [];
+    const doorTriggers = [];
+    const interactiveObjects = [];
+    const vehicleEntities = [];
+    const vehicleMap = new Map();
+    const dealershipDisplays = [];
+    const interiorSpawns = new Map();
+    const interiorDoorTriggers = new Map();
+    const interiorLights = [];
+    const miniJobs = [];
+    const tempVec3A = new THREE.Vector3();
+    const tempVec3B = new THREE.Vector3();
+    const raycaster = new THREE.Raycaster();
+    let activeVehicle = null;
+    let vehicleTurboTimer = 0;
+    let flashEmergencyTimer = 0;
 
     const playerConfig = {
       skinColor: 0xf2c8a0,
@@ -506,6 +596,14 @@
     }
     applyHairStyle(playerConfig.hairStyle);
 
+    const policeHat = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.31, 0.36, 0.14, 14),
+      new THREE.MeshStandardMaterial({ color: 0x213f78 })
+    );
+    policeHat.position.set(0, 0.32, 0);
+    policeHat.visible = false;
+    head.add(policeHat);
+
     const velocity = new THREE.Vector3();
     const moveVector = new THREE.Vector3();
     const cameraTarget = new THREE.Vector3();
@@ -574,6 +672,42 @@
       collisionBoxes.push(new THREE.Box3().setFromObject(mesh));
     }
 
+    function setShadowRecursive(obj) {
+      obj.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+    }
+
+    function registerInteractive(object, prompt, range, onInteract) {
+      object.userData.interactive = true;
+      object.userData.prompt = prompt;
+      object.userData.range = range;
+      object.userData.onInteract = onInteract;
+      interactiveObjects.push(object);
+      return object;
+    }
+
+    function showToast(text, seconds = 2) {
+      eventToast.textContent = text;
+      eventToast.style.opacity = "1";
+      state.toastTimer = seconds;
+    }
+
+    function pushInventory(item) {
+      const idx = state.inventory.findIndex((slot) => slot === null);
+      if (idx >= 0) state.inventory[idx] = item;
+      else state.inventory[Math.floor(Math.random() * state.inventory.length)] = item;
+    }
+
+    function updateBalance(amount) {
+      state.balance += amount;
+      state.balanceFlashTimer = 0.45;
+      state.balanceFlashType = amount >= 0 ? "flash-positive" : "flash-negative";
+    }
+
     function makeWindow(x, y, z, rotY = 0) {
       const windowMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.75, 0.65, 0.05),
@@ -621,6 +755,8 @@
       door.position.set(cx, 0.95, cz + d / 2 + 0.05);
       door.castShadow = true;
       scene.add(door);
+      houseDoors.push({ x: cx, z: cz + d / 2 + 1.2, color });
+      doorTriggers.push({ x: cx, z: cz + d / 2 + 1.2, range: 3.6, interiorId: `house_${houseDoors.length - 1}` });
 
       makeWindow(cx - w * 0.2, 1.7, cz + d / 2 + 0.06);
       makeWindow(cx + w * 0.2, 1.7, cz + d / 2 + 0.06);
@@ -667,14 +803,15 @@
 
     function createHighStreet() {
       const shops = [
-        { x: -75, z: -24, c: 0x89d7f0 },
-        { x: -40, z: -24, c: 0xa7d98e },
-        { x: -5, z: -24, c: 0x9ab1ff },
-        { x: 30, z: -24, c: 0xffb270 },
-        { x: 65, z: -24, c: 0xd1b0ff }
+        { x: -75, z: -24, c: 0x89d7f0, interiorId: "restaurant" },
+        { x: -40, z: -24, c: 0xa7d98e, interiorId: "clothing" },
+        { x: -5, z: -24, c: 0x9ab1ff, interiorId: "grocery" },
+        { x: 30, z: -24, c: 0xffb270, interiorId: "dealership" },
+        { x: 65, z: -24, c: 0xd1b0ff, interiorId: "office" }
       ];
       for (const s of shops) {
         createShop(s.x, s.z, 24, 9, 16, s.c);
+        doorTriggers.push({ x: s.x, z: s.z + 9.5, range: 3.5, interiorId: s.interiorId });
       }
 
       const petrol = new THREE.Mesh(
@@ -691,6 +828,23 @@
       canopy.position.set(80, 8.8, 26);
       canopy.castShadow = true;
       scene.add(canopy);
+      doorTriggers.push({ x: 80, z: 35, range: 4, interiorId: "petrol" });
+
+      const dealershipPad = new THREE.Mesh(
+        new THREE.BoxGeometry(52, 0.5, 22),
+        new THREE.MeshStandardMaterial({ color: 0x2d3238 })
+      );
+      dealershipPad.position.set(10, 0.28, 34);
+      dealershipPad.receiveShadow = true;
+      scene.add(dealershipPad);
+
+      const marker = new THREE.Mesh(
+        new THREE.ConeGeometry(1.1, 2.2, 8),
+        new THREE.MeshStandardMaterial({ color: 0xffdf5c, emissive: 0x6b5300, emissiveIntensity: 0.2 })
+      );
+      marker.position.set(10, 3, 34);
+      marker.castShadow = true;
+      scene.add(marker);
     }
 
     function createCivic() {
@@ -700,6 +854,7 @@
       );
       hospital.position.set(92, 7, -120);
       addBuildingBox(hospital);
+      doorTriggers.push({ x: 92, z: -106, range: 4, interiorId: "hospital" });
 
       const police = new THREE.Mesh(
         new THREE.BoxGeometry(32, 10, 22),
@@ -707,6 +862,7 @@
       );
       police.position.set(145, 5, -125);
       addBuildingBox(police);
+      doorTriggers.push({ x: 145, z: -113, range: 4, interiorId: "police" });
 
       const fire = new THREE.Mesh(
         new THREE.BoxGeometry(34, 10, 24),
@@ -714,6 +870,7 @@
       );
       fire.position.set(172, 5, -74);
       addBuildingBox(fire);
+      doorTriggers.push({ x: 172, z: -61, range: 4, interiorId: "fire" });
 
       const school = new THREE.Mesh(
         new THREE.BoxGeometry(46, 12, 30),
@@ -721,6 +878,7 @@
       );
       school.position.set(110, 6, -42);
       addBuildingBox(school);
+      doorTriggers.push({ x: 110, z: -26, range: 4, interiorId: "school" });
 
       const church = new THREE.Mesh(
         new THREE.BoxGeometry(24, 12, 18),
@@ -765,6 +923,10 @@
       seat.position.set(x, 0.8, z);
       seat.castShadow = true;
       scene.add(seat);
+      registerInteractive(seat, "Press F to Sit", 3, () => {
+        state.sitting = !state.sitting;
+        if (state.sitting) player.position.set(x, 0.87, z + 0.1);
+      });
 
       const back = new THREE.Mesh(
         new THREE.BoxGeometry(3.2, 0.8, 0.15),
@@ -1023,6 +1185,370 @@
       createStreetLamps();
     }
 
+    const interiorOffsetZ = -2000;
+
+    const vehicleData = [
+      { id: "sedan", name: "Sedan", type: "car", maxSpeed: 30, color: 0xd84141, position: [-48, 1.1, -4], dimensions: [2.6, 0.9, 4.5], price: 1200 },
+      { id: "pickup", name: "Pickup Truck", type: "truck", maxSpeed: 26, color: 0x3d74d9, position: [68, 1.1, 8], dimensions: [2.8, 1.05, 5.2], price: 2000 },
+      { id: "suv", name: "SUV", type: "car", maxSpeed: 27, color: 0xb9bec8, position: [8, 1.15, 34], dimensions: [2.9, 1.1, 4.8], price: 2600 },
+      { id: "sports", name: "Sports Car", type: "car", maxSpeed: 38, color: 0xffde44, position: [-8, 1.05, 34], dimensions: [2.5, 0.82, 4.2], price: 4200 },
+      { id: "motorbike", name: "Motorbike", type: "bike", maxSpeed: 34, color: 0x202020, position: [20, 0.95, 34], dimensions: [1, 0.75, 2.6], price: 950 },
+      { id: "bicycle", name: "Bicycle", type: "bike", maxSpeed: 18, color: 0x35a653, position: [32, 0.92, 34], dimensions: [0.8, 0.8, 2.2], price: 350 },
+      { id: "bus", name: "Bus", type: "bus", maxSpeed: 22, color: 0xe8963d, position: [170, 1.45, 12], dimensions: [3.2, 1.7, 8.4], price: 5600 },
+      { id: "ambulance", name: "Ambulance", type: "service", maxSpeed: 28, color: 0xffffff, position: [82, 1.18, -106], dimensions: [2.8, 1.15, 5], price: 3600 },
+      { id: "police", name: "Police Car", type: "service", maxSpeed: 31, color: 0xffffff, position: [149, 1.15, -110], dimensions: [2.7, 1.05, 4.8], price: 3800 },
+      { id: "firetruck", name: "Fire Truck", type: "service", maxSpeed: 24, color: 0xd93838, position: [172, 1.3, -58], dimensions: [3.1, 1.4, 6.6], price: 6200 }
+    ];
+
+    function createVehicleMesh(v) {
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: v.color });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(v.dimensions[0], v.dimensions[1], v.dimensions[2]), bodyMat);
+      body.position.y = 0.45;
+      g.add(body);
+
+      const top = new THREE.Mesh(
+        new THREE.BoxGeometry(v.dimensions[0] * 0.72, v.dimensions[1] * 0.65, v.dimensions[2] * 0.52),
+        new THREE.MeshStandardMaterial({ color: 0xf0f3f8, metalness: 0.2, roughness: 0.55 })
+      );
+      top.position.y = 0.95;
+      g.add(top);
+
+      if (v.id === "ambulance" || v.id === "firetruck") {
+        const stripe = new THREE.Mesh(
+          new THREE.BoxGeometry(v.dimensions[0] * 0.95, 0.16, v.dimensions[2] * 0.5),
+          new THREE.MeshStandardMaterial({ color: 0xce2d2d })
+        );
+        stripe.position.y = 0.7;
+        g.add(stripe);
+      }
+
+      if (v.id === "police") {
+        const stripe = new THREE.Mesh(
+          new THREE.BoxGeometry(v.dimensions[0] * 0.95, 0.18, v.dimensions[2] * 0.45),
+          new THREE.MeshStandardMaterial({ color: 0x2e66d1 })
+        );
+        stripe.position.y = 0.72;
+        g.add(stripe);
+      }
+
+      if (v.id === "ambulance") {
+        const cross = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.08, 0.22), new THREE.MeshStandardMaterial({ color: 0xcc2d2d }));
+        const cross2 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.8), new THREE.MeshStandardMaterial({ color: 0xcc2d2d }));
+        cross.position.set(0, 1.26, 0);
+        cross2.position.set(0, 1.26, 0);
+        g.add(cross, cross2);
+      }
+
+      const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.34, 14);
+      wheelGeo.rotateZ(Math.PI / 2);
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x202020 });
+      const wheelPos = [
+        [-v.dimensions[0] * 0.42, 0.38, v.dimensions[2] * 0.36],
+        [v.dimensions[0] * 0.42, 0.38, v.dimensions[2] * 0.36],
+        [-v.dimensions[0] * 0.42, 0.38, -v.dimensions[2] * 0.36],
+        [v.dimensions[0] * 0.42, 0.38, -v.dimensions[2] * 0.36]
+      ];
+      for (const w of wheelPos) {
+        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+        wheel.position.set(w[0], w[1], w[2]);
+        g.add(wheel);
+      }
+
+      let emergencyLight = null;
+      if (["ambulance", "police", "firetruck"].includes(v.id)) {
+        emergencyLight = new THREE.PointLight(v.id === "police" ? 0x336dff : 0xff4444, 0, 16, 2.4);
+        emergencyLight.position.set(0, 1.55, 0);
+        g.add(emergencyLight);
+      }
+
+      setShadowRecursive(g);
+      g.position.set(v.position[0], v.position[1], v.position[2]);
+      scene.add(g);
+      return { mesh: g, emergencyLight };
+    }
+
+    function createVehicles() {
+      for (const v of vehicleData) {
+        const built = createVehicleMesh(v);
+        const entity = {
+          ...v,
+          mesh: built.mesh,
+          emergencyLight: built.emergencyLight,
+          velocity: new THREE.Vector3(),
+          speed: 0,
+          steeringAngle: 0,
+          yVelocity: 0,
+          owned: state.ownedVehicles.includes(v.id),
+          displayOnly: false
+        };
+        vehicleEntities.push(entity);
+        vehicleMap.set(entity.id, entity);
+      }
+      for (const id of ["sports", "suv", "motorbike", "bicycle"]) {
+        const base = vehicleMap.get(id);
+        if (!base) continue;
+        base.mesh.position.set(base.position[0], base.position[1], base.position[2]);
+        dealershipDisplays.push(base);
+        const pedestal = new THREE.Mesh(
+          new THREE.CylinderGeometry(2.2, 2.2, 0.4, 18),
+          new THREE.MeshStandardMaterial({ color: 0x434a52 })
+        );
+        pedestal.position.set(base.mesh.position.x, 0.2, base.mesh.position.z);
+        pedestal.receiveShadow = true;
+        scene.add(pedestal);
+      }
+    }
+
+    function createInteriorRoom(id, centerX, color) {
+      const floor = new THREE.Mesh(
+        new THREE.BoxGeometry(36, 1, 34),
+        new THREE.MeshStandardMaterial({ color: 0x5a5f66 })
+      );
+      floor.position.set(centerX, 0.5, interiorOffsetZ);
+      scene.add(floor);
+
+      const walls = [
+        [36, 8, 1, 0, 4, -17],
+        [36, 8, 1, 0, 4, 17],
+        [1, 8, 34, -18, 4, 0],
+        [1, 8, 34, 18, 4, 0]
+      ];
+      for (const w of walls) {
+        const wall = new THREE.Mesh(
+          new THREE.BoxGeometry(w[0], w[1], w[2]),
+          new THREE.MeshStandardMaterial({ color })
+        );
+        wall.position.set(centerX + w[3], w[4], interiorOffsetZ + w[5]);
+        addBuildingBox(wall);
+      }
+
+      const doorMat = new THREE.MeshStandardMaterial({ color: 0x3a2e24 });
+      const door = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.6, 0.2), doorMat);
+      door.position.set(centerX, 1.8, interiorOffsetZ + 16.3);
+      scene.add(door);
+
+      const light = new THREE.PointLight(0xfff1d1, 1.4, 70, 2);
+      light.position.set(centerX, 6.5, interiorOffsetZ);
+      scene.add(light);
+      interiorLights.push(light);
+
+      const backDoor = new THREE.Mesh(
+        new THREE.BoxGeometry(2.8, 2.8, 0.35),
+        new THREE.MeshStandardMaterial({ color: 0x7d6349 })
+      );
+      backDoor.position.set(centerX, 1.4, interiorOffsetZ + 15.8);
+      scene.add(backDoor);
+
+      interiorSpawns.set(id, new THREE.Vector3(centerX, 1, interiorOffsetZ + 12));
+      interiorDoorTriggers.set(id, { x: centerX, z: interiorOffsetZ + 15.8, range: 4 });
+      return { centerX };
+    }
+
+    function createInteriors() {
+      function spawnNpc(x, z, shirt = 0x4d7bb8) {
+        const npc = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.2, 12), new THREE.MeshStandardMaterial({ color: shirt }));
+        body.position.y = 0.95;
+        const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 12), new THREE.MeshStandardMaterial({ color: 0xf0c9a1 }));
+        headMesh.position.y = 1.72;
+        npc.add(body, headMesh);
+        npc.position.set(x, 0, z);
+        setShadowRecursive(npc);
+        scene.add(npc);
+      }
+
+      for (let i = 0; i < houseDoors.length; i++) {
+        const room = createInteriorRoom(`house_${i}`, -420 - (i % 4) * 48, houseDoors[i].color);
+        const sofa = new THREE.Mesh(new THREE.BoxGeometry(5, 1.2, 2), new THREE.MeshStandardMaterial({ color: 0x7b8796 }));
+        sofa.position.set(room.centerX - 8, 1.1, interiorOffsetZ - 10);
+        scene.add(sofa);
+
+        const table = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 1.4), new THREE.MeshStandardMaterial({ color: 0x6d4f36 }));
+        table.position.set(room.centerX - 6.5, 0.8, interiorOffsetZ - 6.7);
+        scene.add(table);
+
+        const tv = new THREE.Mesh(new THREE.BoxGeometry(3.6, 2.2, 0.2), new THREE.MeshStandardMaterial({ color: 0x171717, emissive: 0x4fc9ff, emissiveIntensity: 0.6 }));
+        tv.position.set(room.centerX - 8, 2.4, interiorOffsetZ - 16.2);
+        registerInteractive(tv, "Press F to Toggle TV", 4, () => {
+          tv.material.emissiveIntensity = tv.material.emissiveIntensity > 0.1 ? 0 : 0.6;
+          playInteractionClick();
+        });
+        scene.add(tv);
+
+        const kitchenCounter = new THREE.Mesh(new THREE.BoxGeometry(6.5, 1.2, 1.4), new THREE.MeshStandardMaterial({ color: 0x8b8f95 }));
+        kitchenCounter.position.set(room.centerX + 7.8, 1.1, interiorOffsetZ - 9);
+        scene.add(kitchenCounter);
+
+        const fridge = new THREE.Mesh(new THREE.BoxGeometry(1.9, 3.6, 1.8), new THREE.MeshStandardMaterial({ color: 0xd7dee3 }));
+        fridge.position.set(room.centerX + 13, 1.9, interiorOffsetZ - 10);
+        registerInteractive(fridge, "Press F to Grab Apple (+10 health)", 3.5, () => {
+          state.health = Math.min(100, state.health + 10);
+          pushInventory("Apple");
+          showToast("Picked up: Apple +10 health");
+          playInteractionClick();
+        });
+        scene.add(fridge);
+
+        const bed = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.8, 2.8), new THREE.MeshStandardMaterial({ color: 0x6f87aa }));
+        bed.position.set(room.centerX + 8.5, 0.8, interiorOffsetZ + 8.3);
+        registerInteractive(bed, "Press F to Sleep", 3.5, () => {
+          state.sleepingFadeTimer = 1.1;
+          state.timeOfDay = (state.timeOfDay + 0.5) % 1;
+          showToast("Sleeping...");
+          playInteractionClick();
+        });
+        scene.add(bed);
+
+        const shower = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3.4, 2.2), new THREE.MeshStandardMaterial({ color: 0x84a9be, transparent: true, opacity: 0.5 }));
+        shower.position.set(room.centerX - 14, 1.7, interiorOffsetZ + 9.8);
+        registerInteractive(shower, "Press F to Shower", 3.5, () => {
+          state.showerBurstTimer = 2;
+          playInteractionClick();
+        });
+        scene.add(shower);
+      }
+
+      const hospital = createInteriorRoom("hospital", 80, 0xd9e1ea);
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(10, 1.4, 2), new THREE.MeshStandardMaterial({ color: 0x9d8364 }));
+      desk.position.set(hospital.centerX, 1.2, interiorOffsetZ - 10);
+      registerInteractive(desk, "Press F to Restore Health", 3.5, () => {
+        state.health = 100;
+        showToast("Health restored to 100");
+        playInteractionClick();
+      });
+      scene.add(desk);
+      spawnNpc(hospital.centerX, interiorOffsetZ - 12, 0x6ca4c4);
+      for (let i = 0; i < 4; i++) {
+        const bed = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.8, 2), new THREE.MeshStandardMaterial({ color: 0xd6ebf5 }));
+        bed.position.set(hospital.centerX - 12 + i * 8, 0.9, interiorOffsetZ + 4);
+        scene.add(bed);
+      }
+
+      const police = createInteriorRoom("police", 140, 0xc8d6ef);
+      const locker = new THREE.Mesh(new THREE.BoxGeometry(2.4, 4.5, 1.6), new THREE.MeshStandardMaterial({ color: 0x566170 }));
+      locker.position.set(police.centerX - 12, 2.3, interiorOffsetZ - 8);
+      registerInteractive(locker, "Press F to Equip Police Hat", 3.5, () => {
+        state.policeHat = true;
+        showToast("Police hat equipped");
+        playInteractionClick();
+      });
+      scene.add(locker);
+      spawnNpc(police.centerX - 2, interiorOffsetZ - 12, 0x3c62a5);
+      for (let i = 0; i < 2; i++) {
+        const cell = new THREE.Mesh(new THREE.BoxGeometry(7, 5, 6), new THREE.MeshStandardMaterial({ color: 0x5d6a77, wireframe: true }));
+        cell.position.set(police.centerX + 7 + i * 9, 2.8, interiorOffsetZ - 8);
+        scene.add(cell);
+      }
+
+      const fire = createInteriorRoom("fire", 200, 0xf2d3d3);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 7, 10), new THREE.MeshStandardMaterial({ color: 0x9fa7b5 }));
+      pole.position.set(fire.centerX - 4, 3.8, interiorOffsetZ - 4);
+      registerInteractive(pole, "Press F to Slide Pole", 3.5, () => {
+        state.firePoleSlideTimer = 0.6;
+        showToast("Sliding down...");
+        playInteractionClick();
+      });
+      scene.add(pole);
+
+      const fireTruck = createVehicleMesh(vehicleMap.get("firetruck") || vehicleData[9]).mesh;
+      fireTruck.position.set(fire.centerX + 7, 1.3, interiorOffsetZ - 5);
+      scene.add(fireTruck);
+
+      const school = createInteriorRoom("school", 260, 0xe0d6b9);
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 4; c++) {
+          const deskMesh = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1, 1.6), new THREE.MeshStandardMaterial({ color: 0x8f6f49 }));
+          deskMesh.position.set(school.centerX - 10 + c * 5.2, 1, interiorOffsetZ - 10 + r * 4.5);
+          scene.add(deskMesh);
+        }
+      }
+      const board = new THREE.Mesh(new THREE.BoxGeometry(8, 2.6, 0.2), new THREE.MeshStandardMaterial({ color: 0x2f5130 }));
+      board.position.set(school.centerX, 3, interiorOffsetZ - 15.8);
+      scene.add(board);
+      const hoopBoard = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.6, 0.2), new THREE.MeshStandardMaterial({ color: 0xf4f4f4 }));
+      hoopBoard.position.set(school.centerX + 13, 4.2, interiorOffsetZ + 7);
+      scene.add(hoopBoard);
+      const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.08, 12, 24), new THREE.MeshStandardMaterial({ color: 0xff8f2c }));
+      hoop.position.set(school.centerX + 11.9, 3.5, interiorOffsetZ + 7);
+      hoop.rotation.y = Math.PI / 2;
+      scene.add(hoop);
+      spawnNpc(school.centerX, interiorOffsetZ - 14, 0x3f7b48);
+
+      const restaurant = createInteriorRoom("restaurant", 320, 0xe1ceb0);
+      for (let i = 0; i < 4; i++) {
+        const table = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 2), new THREE.MeshStandardMaterial({ color: 0x7d5639 }));
+        table.position.set(restaurant.centerX - 8 + (i % 2) * 8, 1, interiorOffsetZ - 8 + Math.floor(i / 2) * 8);
+        registerInteractive(table, "Press F to Order Burger (+20 health, -$18)", 3, () => {
+          if (state.balance < 18) return showToast("Not enough cash");
+          updateBalance(-18);
+          state.health = Math.min(100, state.health + 20);
+          state.sitting = true;
+          player.position.set(table.position.x, 0.9, table.position.z + 1.2);
+          showToast("Ordered: Burger +20 health -$18");
+          playInteractionClick();
+        });
+        scene.add(table);
+      }
+
+      const clothing = createInteriorRoom("clothing", 380, 0xdad6eb);
+      const colors = [0xff7c7c, 0x73a7ff, 0x5ec27a];
+      for (let i = 0; i < 3; i++) {
+        const rackItem = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: colors[i] }));
+        rackItem.position.set(clothing.centerX - 9 + i * 4.5, 1.2, interiorOffsetZ - 9);
+        registerInteractive(rackItem, `Press F to Try On Outfit ${i + 1}`, 3, () => {
+          torso.material.color.setHex(colors[i]);
+          state.activeOutfitColor = colors[i];
+          showToast(`Try on: Outfit ${i + 1}`);
+          playInteractionClick();
+        });
+        scene.add(rackItem);
+      }
+      const cashier = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 1.4), new THREE.MeshStandardMaterial({ color: 0x7a6448 }));
+      cashier.position.set(clothing.centerX + 11, 1.1, interiorOffsetZ - 8);
+      registerInteractive(cashier, "Press F to Purchase Outfit ($35)", 3.5, () => {
+        if (state.balance < 35) return showToast("Not enough cash");
+        updateBalance(-35);
+        showToast("Purchased outfit for $35");
+        playInteractionClick();
+      });
+      scene.add(cashier);
+      spawnNpc(clothing.centerX + 11, interiorOffsetZ - 10, 0x2d2d2d);
+
+      const grocery = createInteriorRoom("grocery", 440, 0xd6dcc7);
+      for (let i = 0; i < 6; i++) {
+        const shelfItem = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), new THREE.MeshStandardMaterial({ color: 0x8ea86f + i * 520 }));
+        shelfItem.position.set(grocery.centerX - 11 + (i % 3) * 6, 1.2, interiorOffsetZ - 10 + Math.floor(i / 3) * 8);
+        registerInteractive(shelfItem, "Press F to Buy Grocery Item ($6)", 3, () => {
+          if (state.balance < 6) return showToast("Not enough cash");
+          updateBalance(-6);
+          pushInventory(`Grocery-${i + 1}`);
+          showToast("Picked up grocery item -$6");
+          playInteractionClick();
+        });
+        scene.add(shelfItem);
+      }
+
+      createInteriorRoom("dealership", 500, 0xcfd6df);
+      createInteriorRoom("petrol", 560, 0xd9d9d9);
+      createInteriorRoom("office", 620, 0xc7cfdb);
+    }
+
+    function createMiniJobs() {
+      const fishMarker = new THREE.Mesh(
+        new THREE.ConeGeometry(0.8, 2.3, 8),
+        new THREE.MeshStandardMaterial({ color: 0xffde49, emissive: 0x6d5f18, emissiveIntensity: 0.3 })
+      );
+      fishMarker.position.set(-20, 2, 250);
+      scene.add(fishMarker);
+      miniJobs.push({ id: "fishing", marker: fishMarker, cooldown: 30, readyAt: 0, activeUntil: 0 });
+
+      const deliveryMarker = fishMarker.clone();
+      deliveryMarker.position.set(110, 2, -24);
+      scene.add(deliveryMarker);
+      miniJobs.push({ id: "delivery", marker: deliveryMarker, cooldown: 60, readyAt: 0, activeUntil: 0, hasPackage: false, target: null });
+    }
+
     const starGeo = new THREE.BufferGeometry();
     const starPositions = [];
     for (let i = 0; i < 500; i++) {
@@ -1083,6 +1609,21 @@
     snowMesh.visible = false;
     snowMesh.castShadow = false;
     scene.add(snowMesh);
+
+    const showerParticleCount = 120;
+    const showerGeo = new THREE.BufferGeometry();
+    const showerArray = new Float32Array(showerParticleCount * 3);
+    for (let i = 0; i < showerParticleCount; i++) {
+      showerArray[i * 3] = 0;
+      showerArray[i * 3 + 1] = -100;
+      showerArray[i * 3 + 2] = 0;
+    }
+    showerGeo.setAttribute("position", new THREE.BufferAttribute(showerArray, 3));
+    const showerParticles = new THREE.Points(
+      showerGeo,
+      new THREE.PointsMaterial({ color: 0xaee7ff, size: 0.12, transparent: true, opacity: 0.85 })
+    );
+    scene.add(showerParticles);
 
     const skyColors = {
       dawn: new THREE.Color(0xf2ad78),
@@ -1147,8 +1688,9 @@
 
     function updateZoneName(dt) {
       let found = "Town Centre";
+      const pos = getPlayerOrVehiclePosition();
       for (const z of zones) {
-        if (player.position.x >= z.minX && player.position.x <= z.maxX && player.position.z >= z.minZ && player.position.z <= z.maxZ) {
+        if (pos.x >= z.minX && pos.x <= z.maxX && pos.z >= z.minZ && pos.z <= z.maxZ) {
           found = z.name;
           break;
         }
@@ -1178,7 +1720,10 @@
         pet: null,
         timeOfDay: state.timeOfDay,
         weather: state.weather,
-        ownedVehicles: [],
+        ownedVehicles: state.ownedVehicles,
+        fuel: state.fuel,
+        activeOutfitColor: state.activeOutfitColor,
+        vehiclePositions: vehicleEntities.map((v) => ({ id: v.id, p: [v.mesh.position.x, v.mesh.position.y, v.mesh.position.z], r: v.mesh.rotation.y })),
         homeDecor: {}
       };
       localStorage.setItem(saveKey, JSON.stringify(data));
@@ -1196,6 +1741,23 @@
         state.balance = Number(data.balance) || 500;
         state.timeOfDay = Number(data.timeOfDay) || 0.25;
         state.inventory = Array.isArray(data.inventory) ? data.inventory.slice(0, 6) : state.inventory;
+        state.fuel = THREE.MathUtils.clamp(Number(data.fuel) || 100, 0, 100);
+        if (Array.isArray(data.ownedVehicles)) state.ownedVehicles = [...new Set(data.ownedVehicles)];
+        if (Number.isFinite(data.activeOutfitColor)) {
+          state.activeOutfitColor = data.activeOutfitColor;
+          torso.material.color.setHex(state.activeOutfitColor);
+        }
+        if (Array.isArray(data.vehiclePositions)) {
+          for (const saved of data.vehiclePositions) {
+            const v = vehicleMap.get(saved.id);
+            if (!v || !Array.isArray(saved.p) || saved.p.length !== 3) continue;
+            v.mesh.position.set(saved.p[0], saved.p[1], saved.p[2]);
+            v.mesh.rotation.y = Number(saved.r) || 0;
+          }
+        }
+        for (const v of vehicleEntities) {
+          v.owned = state.ownedVehicles.includes(v.id);
+        }
         setWeather(typeof data.weather === "string" ? data.weather : "sunny");
       } catch (err) {
         console.warn("Load failed", err);
@@ -1274,6 +1836,141 @@
       osc.stop(audioCtx.currentTime + 0.22);
     }
 
+    function playInteractionClick() {
+      if (!audioCtx || !sfxGain) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(980, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.12 * Number(document.getElementById("sfxVolume").value), audioCtx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      gain.connect(sfxGain);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.09);
+    }
+
+    function enterInterior(interiorId) {
+      const spawn = interiorSpawns.get(interiorId);
+      if (!spawn) return;
+      state.currentInterior = interiorId;
+      state.sitting = false;
+      player.position.copy(spawn);
+      velocity.y = 0;
+      showToast(`Entered ${interiorId.replace("_", " ")}`);
+      playInteractionClick();
+    }
+
+    function exitInterior() {
+      if (!state.currentInterior) return;
+      const door = doorTriggers.find((d) => d.interiorId === state.currentInterior);
+      if (!door) return;
+      player.position.set(door.x, 1, door.z + 2.4);
+      state.currentInterior = null;
+      state.sitting = false;
+      showToast("Exited building");
+      playInteractionClick();
+    }
+
+    function getPlayerOrVehiclePosition() {
+      if (activeVehicle) return activeVehicle.mesh.position;
+      return player.position;
+    }
+
+    function tryEnterOrExitVehicle() {
+      if (activeVehicle) {
+        const right = new THREE.Vector3(Math.cos(activeVehicle.mesh.rotation.y), 0, -Math.sin(activeVehicle.mesh.rotation.y));
+        player.visible = true;
+        player.position.copy(activeVehicle.mesh.position).addScaledVector(right, 2);
+        player.position.y = 1;
+        state.drivingVehicleId = null;
+        activeVehicle = null;
+        showToast("Exited vehicle");
+        playInteractionClick();
+        return true;
+      }
+
+      const source = player.position;
+      let nearest = null;
+      let best = 4;
+      for (const v of vehicleEntities) {
+        if (!v.owned || v.displayOnly) continue;
+        const d = source.distanceTo(v.mesh.position);
+        if (d < best) {
+          best = d;
+          nearest = v;
+        }
+      }
+      if (!nearest) return false;
+      activeVehicle = nearest;
+      state.drivingVehicleId = nearest.id;
+      player.visible = false;
+      state.sitting = false;
+      showToast(`Driving ${nearest.name}`);
+      playInteractionClick();
+      return true;
+    }
+
+    function tryEnterDoor() {
+      if (state.currentInterior) {
+        const interiorDoor = interiorDoorTriggers.get(state.currentInterior);
+        if (!interiorDoor) return false;
+        const dx = player.position.x - interiorDoor.x;
+        const dz = player.position.z - interiorDoor.z;
+        if (Math.hypot(dx, dz) <= interiorDoor.range) {
+          exitInterior();
+          return true;
+        }
+        return false;
+      }
+
+      const pos = getPlayerOrVehiclePosition();
+      for (const d of doorTriggers) {
+        const dx = pos.x - d.x;
+        const dz = pos.z - d.z;
+        if (Math.hypot(dx, dz) <= d.range) {
+          if (activeVehicle) {
+            showToast("Exit your vehicle first");
+            return false;
+          }
+          enterInterior(d.interiorId);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function tryDealershipBuy() {
+      if (!state.currentInterior && activeVehicle) return false;
+      const pos = getPlayerOrVehiclePosition();
+      let target = null;
+      let best = 3.2;
+      for (const v of dealershipDisplays) {
+        const d = pos.distanceTo(v.mesh.position);
+        if (d < best) {
+          best = d;
+          target = v;
+        }
+      }
+      if (!target) return false;
+      if (state.ownedVehicles.includes(target.id)) {
+        showToast(`${target.name} already owned`);
+        return true;
+      }
+      if (state.balance < target.price) {
+        showToast(`Need $${target.price}`);
+        return true;
+      }
+      state.ownedVehicles.push(target.id);
+      target.owned = true;
+      updateBalance(-target.price);
+      showToast(`Bought ${target.name} for $${target.price}`);
+      playInteractionClick();
+      return true;
+    }
+
     function updateDayNight(dt) {
       state.timeOfDay = (state.timeOfDay + dt / 1200) % 1;
 
@@ -1316,6 +2013,7 @@
     function updateWeather(dt) {
       state.weatherTimer += dt;
       if (state.weatherTimer >= state.weatherDuration) nextRandomWeather();
+      const weatherFocus = getPlayerOrVehiclePosition();
 
       if (state.weather === "rain") {
         const arr = rain.geometry.attributes.position.array;
@@ -1324,8 +2022,8 @@
           p.y -= dt * 35;
           if (p.y < 0.5) {
             p.y = 80 + Math.random() * 120;
-            p.x = player.position.x + (Math.random() - 0.5) * 280;
-            p.z = player.position.z + (Math.random() - 0.5) * 280;
+            p.x = weatherFocus.x + (Math.random() - 0.5) * 280;
+            p.z = weatherFocus.z + (Math.random() - 0.5) * 280;
           }
           const idx = i * 6;
           arr[idx] = p.x;
@@ -1345,8 +2043,8 @@
           p.x += Math.sin((p.z + i) * 0.01 + performance.now() * 0.0004) * dt * 0.7;
           if (p.y < 0.4) {
             p.y = 50 + Math.random() * 120;
-            p.x = player.position.x + (Math.random() - 0.5) * 300;
-            p.z = player.position.z + (Math.random() - 0.5) * 300;
+            p.x = weatherFocus.x + (Math.random() - 0.5) * 300;
+            p.z = weatherFocus.z + (Math.random() - 0.5) * 300;
           }
           tempMatrix.makeTranslation(p.x, p.y, p.z);
           snowMesh.setMatrixAt(i, tempMatrix);
@@ -1400,6 +2098,8 @@
     let footstepTimer = 0;
 
     function updatePlayer(dt) {
+      if (activeVehicle) return;
+
       if (state.sitting) {
         if (keys["KeyW"] || keys["KeyA"] || keys["KeyS"] || keys["KeyD"] || keys["Space"]) {
           state.sitting = false;
@@ -1476,9 +2176,15 @@
           playFootstep();
         }
       }
+
+      if (state.firePoleSlideTimer > 0) {
+        state.firePoleSlideTimer -= dt;
+        player.position.y = Math.max(1, player.position.y - dt * 8);
+      }
     }
 
     function updateEmote(dt) {
+      if (activeVehicle) return;
       const t = performance.now() * 0.001;
       const emote = state.emoteIndex;
 
@@ -1511,24 +2217,71 @@
     }
 
     function updatePrompt() {
-      let nearBench = false;
-      for (const b of benches) {
-        if (b.distanceTo(player.position) < 2.5) {
-          nearBench = true;
-          break;
+      state.currentInteractive = null;
+
+      if (state.currentInterior) {
+        const interiorDoor = interiorDoorTriggers.get(state.currentInterior);
+        if (interiorDoor && Math.hypot(player.position.x - interiorDoor.x, player.position.z - interiorDoor.z) <= interiorDoor.range) {
+          interactionPrompt.textContent = "Press E to Exit Building";
+          interactionPrompt.style.opacity = "1";
+          return;
         }
       }
 
-      if (nearBench) {
-        interactionPrompt.textContent = "Press F to Sit";
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(interactiveObjects, true);
+      for (const hit of intersects) {
+        const root = hit.object;
+        if (!root.userData.interactive) continue;
+        const range = Number(root.userData.range) || 3;
+        const pos = tempVec3A.setFromMatrixPosition(root.matrixWorld);
+        if (player.position.distanceTo(pos) > range) continue;
+        state.currentInteractive = root;
+        interactionPrompt.textContent = root.userData.prompt || "Press F";
         interactionPrompt.style.opacity = "1";
-      } else {
-        interactionPrompt.textContent = "Press E to Emote";
-        interactionPrompt.style.opacity = "1";
+        return;
       }
+
+      if (activeVehicle) {
+        interactionPrompt.textContent = "Press E to Exit Vehicle";
+        interactionPrompt.style.opacity = "1";
+        return;
+      }
+
+      if (vehicleEntities.some((v) => v.owned && !v.displayOnly && v.mesh.position.distanceTo(player.position) < 4)) {
+        interactionPrompt.textContent = "Press E to Enter Vehicle";
+        interactionPrompt.style.opacity = "1";
+        return;
+      }
+
+      if (doorTriggers.some((d) => Math.hypot(player.position.x - d.x, player.position.z - d.z) < d.range)) {
+        interactionPrompt.textContent = "Press E to Enter Building";
+        interactionPrompt.style.opacity = "1";
+        return;
+      }
+
+      if (dealershipDisplays.some((d) => d.mesh.position.distanceTo(player.position) < 3.2)) {
+        interactionPrompt.textContent = "Press E to Buy Vehicle";
+        interactionPrompt.style.opacity = "1";
+        return;
+      }
+
+      interactionPrompt.textContent = "Press E to Emote";
+      interactionPrompt.style.opacity = "1";
     }
 
     function updateCamera(dt) {
+      if (activeVehicle) {
+        const heading = activeVehicle.mesh.rotation.y;
+        const target = tempVec3A.copy(activeVehicle.mesh.position).add(new THREE.Vector3(0, 1.8, 0));
+        const followOffset = new THREE.Vector3(Math.sin(heading), 0, Math.cos(heading)).multiplyScalar(-9);
+        followOffset.y = 4.2;
+        const desired = target.clone().add(followOffset);
+        camera.position.lerp(desired, Math.min(1, dt * 5.5));
+        camera.lookAt(target);
+        return;
+      }
+
       const headPos = new THREE.Vector3(player.position.x, player.position.y + 0.85, player.position.z);
       if (state.firstPerson) {
         const lookDir = new THREE.Vector3(
@@ -1555,12 +2308,13 @@
     }
 
     function updateMinimap() {
-      miniCamera.position.set(player.position.x, 260, player.position.z);
-      miniCamera.lookAt(player.position.x, 0, player.position.z);
+      const focus = getPlayerOrVehiclePosition();
+      miniCamera.position.set(focus.x, 260, focus.z);
+      miniCamera.lookAt(focus.x, 0, focus.z);
       miniRenderer.render(scene, miniCamera);
 
-      const nx = (player.position.x + 400) / 800;
-      const nz = (player.position.z + 400) / 800;
+      const nx = (focus.x + 400) / 800;
+      const nz = (focus.z + 400) / 800;
       mapPlayer.style.left = `${(nx * 100).toFixed(2)}%`;
       mapPlayer.style.top = `${(nz * 100).toFixed(2)}%`;
       state.mapBlink += 0.04;
@@ -1582,10 +2336,141 @@
       waterMesh.geometry.computeVertexNormals();
     }
 
+    function updateVehicles(dt) {
+      flashEmergencyTimer += dt;
+      const flashOn = Math.floor(flashEmergencyTimer / 0.5) % 2 === 0;
+
+      for (const v of vehicleEntities) {
+        if (v.emergencyLight) v.emergencyLight.intensity = flashOn ? 2.2 : 0;
+      }
+
+      if (!activeVehicle) return;
+
+      const throttle = (keys["KeyW"] ? 1 : 0) - (keys["KeyS"] ? 1 : 0);
+      const steerInput = (keys["KeyD"] ? 1 : 0) - (keys["KeyA"] ? 1 : 0);
+      const handbrake = keys["Space"];
+      const turbo = keys["ShiftLeft"] || keys["ShiftRight"];
+
+      if (turbo && vehicleTurboTimer <= 0 && state.fuel > 1) vehicleTurboTimer = 1.2;
+      vehicleTurboTimer = Math.max(0, vehicleTurboTimer - dt);
+      const turboMultiplier = vehicleTurboTimer > 0 ? 1.45 : 1;
+
+      const accel = activeVehicle.maxSpeed * (handbrake ? 0.3 : 0.9);
+      activeVehicle.speed += throttle * accel * dt;
+      const maxSpeed = activeVehicle.maxSpeed * turboMultiplier;
+      activeVehicle.speed = THREE.MathUtils.clamp(activeVehicle.speed, -maxSpeed * 0.5, maxSpeed);
+
+      const friction = handbrake ? 8.5 : 2.2;
+      activeVehicle.speed -= activeVehicle.speed * Math.min(1, friction * dt);
+
+      const steerTarget = steerInput * (handbrake ? 0.8 : 0.46);
+      activeVehicle.steeringAngle += (steerTarget - activeVehicle.steeringAngle) * Math.min(1, dt * 8);
+      activeVehicle.mesh.rotation.y += activeVehicle.steeringAngle * (activeVehicle.speed / Math.max(8, activeVehicle.maxSpeed)) * dt * 2.4;
+
+      const forward = tempVec3B.set(Math.sin(activeVehicle.mesh.rotation.y), 0, Math.cos(activeVehicle.mesh.rotation.y));
+      activeVehicle.velocity.copy(forward).multiplyScalar(activeVehicle.speed);
+      activeVehicle.mesh.position.addScaledVector(activeVehicle.velocity, dt);
+
+      activeVehicle.yVelocity -= 20 * dt;
+      activeVehicle.mesh.position.y += activeVehicle.yVelocity * dt;
+      if (activeVehicle.mesh.position.y <= activeVehicle.position[1]) {
+        activeVehicle.mesh.position.y = activeVehicle.position[1];
+        activeVehicle.yVelocity = 0;
+      }
+
+      activeVehicle.mesh.position.x = THREE.MathUtils.clamp(activeVehicle.mesh.position.x, -390, 390);
+      activeVehicle.mesh.position.z = THREE.MathUtils.clamp(activeVehicle.mesh.position.z, -390, 390);
+
+      state.fuel = Math.max(0, state.fuel - Math.abs(activeVehicle.speed) * dt * 0.02);
+    }
+
+    function updateFuelAndZones() {
+      const pos = getPlayerOrVehiclePosition();
+      const inPetrolZone = pos.x > 66 && pos.x < 94 && pos.z > 16 && pos.z < 38;
+      if (inPetrolZone && state.fuel < 100) {
+        state.fuel = 100;
+        showToast("Fuel tank refilled");
+      }
+    }
+
+    function updateInteractionTimers(dt) {
+      if (state.toastTimer > 0) {
+        state.toastTimer -= dt;
+        if (state.toastTimer <= 0) eventToast.style.opacity = "0";
+      }
+      if (state.balanceFlashTimer > 0) {
+        state.balanceFlashTimer -= dt;
+      } else if (state.balanceFlashType) {
+        balanceText.classList.remove("flash-positive", "flash-negative");
+        state.balanceFlashType = "";
+      }
+      if (state.sleepingFadeTimer > 0) {
+        state.sleepingFadeTimer -= dt;
+        const alpha = state.sleepingFadeTimer > 0.55 ? (1.1 - state.sleepingFadeTimer) / 0.55 : state.sleepingFadeTimer / 0.55;
+        fadeOverlay.style.background = `rgba(0, 0, 0, ${THREE.MathUtils.clamp(alpha, 0, 0.85)})`;
+      } else {
+        fadeOverlay.style.background = "rgba(0, 0, 0, 0)";
+      }
+
+      const showerArr = showerGeo.attributes.position.array;
+      if (state.showerBurstTimer > 0) {
+        state.showerBurstTimer -= dt;
+        for (let i = 0; i < showerParticleCount; i++) {
+          const idx = i * 3;
+          showerArr[idx] = player.position.x + (Math.random() - 0.5) * 2.2;
+          showerArr[idx + 1] = player.position.y + 2 + Math.random() * 2;
+          showerArr[idx + 2] = player.position.z + (Math.random() - 0.5) * 2.2;
+        }
+      } else {
+        for (let i = 0; i < showerParticleCount; i++) {
+          showerArr[i * 3 + 1] = -100;
+        }
+      }
+      showerGeo.attributes.position.needsUpdate = true;
+    }
+
+    function updateMiniJobs(dt) {
+      const now = performance.now() * 0.001;
+      const fishing = miniJobs.find((j) => j.id === "fishing");
+      const delivery = miniJobs.find((j) => j.id === "delivery");
+
+      if (fishing) {
+        fishing.marker.visible = now >= fishing.readyAt;
+        if (fishing.activeUntil > now) {
+          const progress = 1 - (fishing.activeUntil - now) / 5;
+          jobProgressWrap.style.opacity = "1";
+          jobProgressBar.style.width = `${(progress * 100).toFixed(1)}%`;
+          if (fishing.activeUntil - now <= 0.02) {
+            fishing.activeUntil = 0;
+            fishing.readyAt = now + fishing.cooldown;
+            const reward = 12 + Math.floor(Math.random() * 29);
+            updateBalance(reward);
+            showToast(`Fishing complete! +$${reward}`);
+          }
+        }
+      }
+
+      if (delivery) {
+        delivery.marker.visible = now >= delivery.readyAt && !delivery.hasPackage;
+        if (delivery.target) delivery.target.visible = delivery.hasPackage;
+      }
+
+      if (!fishing || fishing.activeUntil <= now) {
+        jobProgressWrap.style.opacity = "0";
+        jobProgressBar.style.width = "0%";
+      }
+    }
+
     function updateHUD() {
       balanceText.textContent = `$${Math.floor(state.balance)}`;
+      fuelText.textContent = `${Math.round(state.fuel)}%`;
       staminaBar.style.width = `${state.stamina}%`;
       healthBar.style.width = `${state.health}%`;
+      policeHat.visible = state.policeHat;
+      if (state.balanceFlashType) {
+        balanceText.classList.remove("flash-positive", "flash-negative");
+        balanceText.classList.add(state.balanceFlashType);
+      }
     }
 
     function animate() {
@@ -1594,11 +2479,15 @@
 
       const dt = Math.min(0.05, clock.getDelta());
       updatePlayer(dt);
+      updateVehicles(dt);
       updateEmote(dt);
       updatePrompt();
       updateDayNight(dt);
       updateWeather(dt);
       updateBeachWater();
+      updateFuelAndZones();
+      updateMiniJobs(dt);
+      updateInteractionTimers(dt);
       updateZoneName(dt);
       updateCamera(dt);
       updateMinimap();
@@ -1643,15 +2532,63 @@
       if (state.paused) return;
 
       keys[e.code] = true;
-      if (e.code === "Space" && canJump && !state.swimMode && !state.sitting) {
+      if (e.code === "Space" && !activeVehicle && canJump && !state.swimMode && !state.sitting) {
         velocity.y = 10;
         canJump = false;
         playJumpSound();
       }
       if (e.code === "KeyE") {
+        ensureAudio();
+        if (tryEnterOrExitVehicle()) return;
+        if (tryEnterDoor()) return;
+        if (tryDealershipBuy()) return;
         state.emoteIndex = (state.emoteIndex + 1) % 5;
       }
       if (e.code === "KeyF") {
+        ensureAudio();
+        const now = performance.now() * 0.001;
+        const fishing = miniJobs.find((j) => j.id === "fishing");
+        const delivery = miniJobs.find((j) => j.id === "delivery");
+
+        if (state.currentInteractive?.userData?.onInteract) {
+          state.currentInteractive.userData.onInteract();
+          return;
+        }
+
+        if (fishing && now >= fishing.readyAt && player.position.distanceTo(fishing.marker.position) < 4) {
+          fishing.activeUntil = now + 5;
+          showToast("Fishing...");
+          playInteractionClick();
+          return;
+        }
+
+        if (delivery && now >= delivery.readyAt && !delivery.hasPackage && player.position.distanceTo(delivery.marker.position) < 4) {
+          delivery.hasPackage = true;
+          const pick = houseDoors[Math.floor(Math.random() * houseDoors.length)];
+          if (delivery.target) scene.remove(delivery.target);
+          delivery.target = new THREE.Mesh(
+            new THREE.ConeGeometry(0.8, 2.3, 8),
+            new THREE.MeshStandardMaterial({ color: 0x5ae886, emissive: 0x0e5b2a, emissiveIntensity: 0.35 })
+          );
+          delivery.target.position.set(pick.x, 2, pick.z + 4);
+          scene.add(delivery.target);
+          showToast("Package picked up");
+          playInteractionClick();
+          return;
+        }
+
+        if (delivery && delivery.hasPackage && delivery.target && player.position.distanceTo(delivery.target.position) < 4) {
+          delivery.hasPackage = false;
+          delivery.readyAt = now + delivery.cooldown;
+          const reward = 35 + Math.floor(Math.random() * 35);
+          updateBalance(reward);
+          showToast(`Delivered! +$${reward}`);
+          scene.remove(delivery.target);
+          delivery.target = null;
+          playInteractionClick();
+          return;
+        }
+
         trySit();
       }
       if (e.code === "KeyV") {
@@ -1718,6 +2655,10 @@
     });
 
     buildWorld();
+    createVehicles();
+    createInteriors();
+    createMiniJobs();
+    setShadowRecursive(scene);
     setWeather("sunny");
     loadGame();
     updateHUD();
