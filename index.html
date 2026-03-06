@@ -224,19 +224,19 @@ body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif}
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 //  BROOKHAVEN RP  —  3D Edition v3
-// ═══════════════════════════════════════════════════════════════
+// ===============================================================
 
 function setLoad(p){document.getElementById('loadfill').style.width=p+'%';}
 function hideLoad(){const e=document.getElementById('loading');e.style.opacity='0';setTimeout(()=>e.style.display='none',1000);}
 
-// ── Player state ────────────────────────────────────────────────
+// -- Player state ------------------------------------------------
 const P={sk:'#FDBCB4',ey:'#333',hs:'short',hc:'#4A3728',ts:'hoodie',tc:'#7EC8E3',bs:'jeans',bc:'#4A6FA5',hat:'none',htc:'#E34234',glasses:false,backpack:false,badge:false,scarf:false,mask:false,wings:false,halo:false,tail:false,earrings:false,necklace:false,nm:'Player'};
 let money=1000,heldPet=null,swingFrame=0;
 const owned={items:new Set(),pets:new Set()};
 
-// ── Wardrobe data (25 per category) ─────────────────────────────
+// -- Wardrobe data (25 per category) -----------------------------
 const SK_C=['#FDBCB4','#F1C27D','#E0AC69','#C68642','#8D5524','#FFCBA4','#A0522D'];
 const EY_C=['#222','#1a5276','#145a32','#784212','#6c3483','#c0392b','#008080','#b8860b'];
 const HC_C=['#4A3728','#B5651D','#E8D5B7','#2C2C2C','#E34234','#F4D03F','#FFB6C1','#7B68EE','#00CED1','#228B22','#FF8C00','#800080'];
@@ -300,7 +300,7 @@ const ACCS=[
   {id:'jetpack',ico:'🚀',lb:'Jetpack'}
 ];
 
-// ── Shop inventory ──────────────────────────────────────────────
+// -- Shop inventory ----------------------------------------------
 const SHOP_ITEMS={
   hats:[
     {id:'cap',ico:'🧢',nm:'Cap',price:80},{id:'beanie',ico:'🎩',nm:'Beanie',price:60},{id:'cowboy',ico:'🤠',nm:'Cowboy',price:120},
@@ -348,7 +348,7 @@ const SHOP_ITEMS={
   ]
 };
 
-// ── Pets ────────────────────────────────────────────────────────
+// -- Pets --------------------------------------------------------
 const PETS=[
   {id:'dog',ico:'🐕',nm:'Dog',price:200,snd:'Woof!'},{id:'cat',ico:'🐈',nm:'Cat',price:180,snd:'Meow!'},{id:'snake',ico:'🐍',nm:'Snake',price:150,snd:'Sssss'},
   {id:'parrot',ico:'🦜',nm:'Parrot',price:250,snd:'Squawk!'},{id:'rabbit',ico:'🐇',nm:'Rabbit',price:120,snd:'*binkies*'},
@@ -359,7 +359,7 @@ const PETS=[
   {id:'unicorn',ico:'🦄',nm:'Unicorn',price:999,snd:'*sparkles*'}
 ];
 
-// ── NPC data with personalities & dialogue ──────────────────────
+// -- NPC data with personalities & dialogue ----------------------
 const NPC_CONFIGS=[
   {x:-40,z:5,nm:'Sam',role:'Skateboarder',col:'#E34234',hair:'spiky',hc:'#E34234',tc:'#333',bc:'#333',hat:'cap',
    personality:'chill, uses slang, loves skating',
@@ -434,7 +434,7 @@ const NPC_CONFIGS=[
    }}
 ];
 
-// ── Baby data ───────────────────────────────────────────────────
+// -- Baby data ---------------------------------------------------
 const BABIES=[
   {nm:'Leo',ico:'👶',mood:'😴 sleeping',hair:'none',sk:'#FDBCB4',tc:'#7EC8E3',bc:'#fff'},
   {nm:'Poppy',ico:'👶',mood:'😊 giggling',hair:'short',sk:'#F1C27D',tc:'#F8C8D4',bc:'#ffb3d9'},
@@ -444,7 +444,7 @@ const BABIES=[
   {nm:'Bea',ico:'👶',mood:'😴 sleeping',hair:'none',sk:'#F1C27D',tc:'#C9B1FF',bc:'#fff'}
 ];
 
-// ── THREE.js setup ──────────────────────────────────────────────
+// -- THREE.js setup ----------------------------------------------
 const canvas=document.getElementById('c');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
@@ -463,13 +463,13 @@ camera.position.set(0,8,15);
 
 window.addEventListener('resize',()=>{renderer.setSize(window.innerWidth,window.innerHeight);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();});
 
-// ── Lighting ────────────────────────────────────────────────────
+// -- Lighting ----------------------------------------------------
 const ambient=new THREE.AmbientLight(0x8090b0,0.6);scene.add(ambient);
 const sun=new THREE.DirectionalLight(0xfff5e0,1.4);
 sun.position.set(40,60,30);sun.castShadow=true;
 sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;
 sun.shadow.camera.near=1;sun.shadow.camera.far=300;
-['left','right','top','bottom'].forEach((s,i)=>sun.shadow.camera[s]=[−80,80,80,-80][i]);
+sun.shadow.camera.left=-80;sun.shadow.camera.right=80;sun.shadow.camera.top=80;sun.shadow.camera.bottom=-80;
 sun.shadow.bias=-0.0005;scene.add(sun);
 const fill=new THREE.DirectionalLight(0x4060a0,0.3);fill.position.set(-20,10,-20);scene.add(fill);
 const moon=new THREE.DirectionalLight(0x3050c0,0);moon.position.set(-40,60,-30);scene.add(moon);
@@ -482,13 +482,13 @@ stars.visible=false;scene.add(stars);
 
 setLoad(10);
 
-// ── Helpers ─────────────────────────────────────────────────────
+// -- Helpers -----------------------------------------------------
 function mat(col,rough=0.75,metal=0){return new THREE.MeshStandardMaterial({color:new THREE.Color(col),roughness:rough,metalness:metal});}
 function sh(m){m.castShadow=true;m.receiveShadow=true;return m;}
 function box(w,h,d,col,rough){return sh(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(col,rough)));}
 function cyl(rt,rb,h,seg,col){return sh(new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat(col)));}
 
-// ── Ground & Roads ──────────────────────────────────────────────
+// -- Ground & Roads ----------------------------------------------
 const gnd=sh(new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat('#7ec87e',0.95)));
 gnd.rotation.x=-Math.PI/2;scene.add(gnd);
 function makeRoad(x,z,w,d){
@@ -499,7 +499,7 @@ function makeRoad(x,z,w,d){
 makeRoad(0,0,200,8);makeRoad(0,-40,200,8);makeRoad(0,40,200,8);makeRoad(0,75,200,8);
 makeRoad(-30,0,8,220);makeRoad(30,0,8,220);makeRoad(70,0,8,220);makeRoad(-70,0,8,220);
 
-// ── Buildings ───────────────────────────────────────────────────
+// -- Buildings ---------------------------------------------------
 const buildingDefs=[];
 function makeBuilding(x,z,w,h,d,wc,rc,label){
   const g=new THREE.Group();
@@ -534,7 +534,7 @@ makeBuilding(-10,70,16,8,12,'#99DDFF','#5599aa','🛍️ Shop');
 
 setLoad(30);
 
-// ── Trees ───────────────────────────────────────────────────────
+// -- Trees -------------------------------------------------------
 function makeTree(x,z,s=1){
   const g=new THREE.Group();
   const tr=sh(cyl(0.18*s,0.28*s,1.8*s,8,'#6B3F2A'));tr.position.y=0.9*s;g.add(tr);
@@ -544,7 +544,7 @@ function makeTree(x,z,s=1){
 }
 [[-45,5],[45,5],[-45,-30],[20,-60],[60,-60],[-20,30],[55,35],[38,15],[-65,40],[-25,-75],[20,-30],[65,10],[42,-28],[28,35],[-48,35],[-68,-60],[88,-60],[35,65],[0,85],[-30,65],[10,55],[55,55],[85,55],[88,20],[-25,45]].forEach(([x,z])=>makeTree(x,z,0.8+Math.random()*0.5));
 
-// ── Street lights ───────────────────────────────────────────────
+// -- Street lights -----------------------------------------------
 const streetLights=[];
 function makeStreetLight(x,z){
   const g=new THREE.Group();
@@ -558,7 +558,7 @@ function makeStreetLight(x,z){
 }
 [[-8,15],[8,15],[-8,-15],[8,-15],[-8,45],[8,45],[38,-55],[38,35],[78,-55],[78,35],[-58,-55],[-58,15],[20,80],[40,80],[-20,80]].forEach(([x,z])=>makeStreetLight(x,z));
 
-// ── Cars ────────────────────────────────────────────────────────
+// -- Cars --------------------------------------------------------
 const cars3d=[];
 const CAR_DEFS=[
   {x:-20,z:0,col:'#E34234',rot:0,lb:'Red Coupe'},{x:15,z:0,col:'#7EC8E3',rot:0,lb:'Blue Sedan'},
@@ -590,7 +590,7 @@ CAR_DEFS.forEach(makeCar3d);
 
 setLoad(50);
 
-// ── Character builder (shared player+NPC) ───────────────────────
+// -- Character builder (shared player+NPC) -----------------------
 function buildChar(cfg,scale=1){
   const g=new THREE.Group();
   const c=(col)=>new THREE.MeshStandardMaterial({color:new THREE.Color(col),roughness:0.7});
@@ -662,7 +662,7 @@ function buildChar(cfg,scale=1){
   return g;
 }
 
-// ── Player mesh ─────────────────────────────────────────────────
+// -- Player mesh -------------------------------------------------
 let playerMesh=buildChar(P);
 const playerContainer=new THREE.Group();
 playerContainer.add(playerMesh);
@@ -671,7 +671,7 @@ scene.add(playerContainer);
 let playerCar=null;
 function rebuildPlayer(){playerContainer.remove(playerMesh);playerMesh=buildChar(P);playerContainer.add(playerMesh);}
 
-// ── Baby characters in crèche ───────────────────────────────────
+// -- Baby characters in crèche -----------------------------------
 const babyMeshes=[];
 const crechePos={x:30,z:70};
 BABIES.forEach((b,i)=>{
@@ -684,7 +684,7 @@ BABIES.forEach((b,i)=>{
 
 setLoad(65);
 
-// ── NPCs as 3D characters ────────────────────────────────────────
+// -- NPCs as 3D characters ----------------------------------------
 const npcs3d=[];
 NPC_CONFIGS.forEach(cfg=>{
   const mesh=buildChar(cfg);
@@ -693,21 +693,21 @@ NPC_CONFIGS.forEach(cfg=>{
   npcs3d.push({mesh,vx:(Math.random()-.5)*0.03,vz:(Math.random()-.5)*0.03,timer:80+Math.random()*120,chatT:0,chat:'',cfg});
 });
 
-// ── CARNIVAL GROUNDS (open-air, no building) ────────────────────
+// -- CARNIVAL GROUNDS (open-air, no building) --------------------
 const CARNIVAL_CX=87,CARNIVAL_CZ=-83;// Centre of carnival area
 const carnivalAnimated={};// holds refs for animation loop
 
 function makeCarnivalGrounds(){
   const cx=CARNIVAL_CX,cz=CARNIVAL_CZ;
 
-  // ── Ground: colourful checkerboard-ish floor ──
+  // -- Ground: colourful checkerboard-ish floor --
   const floorMat=new THREE.MeshStandardMaterial({color:0x2a7a2a,roughness:0.9});
   const floor=sh(new THREE.Mesh(new THREE.PlaneGeometry(48,44),floorMat));floor.rotation.x=-Math.PI/2;floor.position.set(cx,0.02,cz);scene.add(floor);
   // Coloured path tiles
   const tileColors=['#FF6B9D','#FFE066','#7EC8E3','#A8D8B9','#C9B1FF'];
   for(let i=0;i<12;i++){const tm=sh(new THREE.Mesh(new THREE.PlaneGeometry(3,3),mat(tileColors[i%5],0.9)));tm.rotation.x=-Math.PI/2;tm.position.set(cx-16+i*3,0.025,cz+2);scene.add(tm);}
 
-  // ── Entrance arch ──
+  // -- Entrance arch --
   const am=mat('#FF6B9D',0.5,0.1);
   const lp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.6,8,0.6),am));lp.position.set(cx-8,4,cz+20);scene.add(lp);
   const rp=lp.clone();rp.position.set(cx+8,4,cz+20);scene.add(rp);
@@ -725,7 +725,7 @@ function makeCarnivalGrounds(){
     const pl=new THREE.PointLight(new THREE.Color(c),0.8,6);pl.position.copy(bl.position);scene.add(pl);
   });
 
-  // ── Perimeter string lights ──
+  // -- Perimeter string lights --
   function makeStringLights(x1,z1,x2,z2,col){
     const pts=[new THREE.Vector3(x1,5,z1),new THREE.Vector3((x1+x2)/2,4,(z1+z2)/2),new THREE.Vector3(x2,5,z2)];
     const curve=new THREE.CatmullRomCurve3(pts);
@@ -744,34 +744,34 @@ function makeCarnivalGrounds(){
   makeStringLights(cx-22,cz,cx+22,cz,slColors[0]);
   makeStringLights(cx,cz-20,cx,cz+20,slColors[1]);
 
-  // ── Ferris Wheel (left of centre) ──
+  // -- Ferris Wheel (left of centre) --
   const fw=makeFerrisWheel3d(cx-12,cz-8);
   carnivalAnimated.ferrisWheel=fw;
 
-  // ── Carousel (right of centre) ──
+  // -- Carousel (right of centre) --
   const cr=makeCarousel3d(cx+10,cz-6);
   carnivalAnimated.carousel=cr;
 
-  // ── Yell-O-Vator drop tower (back left) ──
+  // -- Yell-O-Vator drop tower (back left) --
   const yov=makeYellOVator(cx-16,cz-16);
   carnivalAnimated.yellOVator=yov;
 
-  // ── Bumper car ring (back right) ──
+  // -- Bumper car ring (back right) --
   makeBumperCarRing(cx+10,cz-16);
 
-  // ── Shooting gallery booth ──
+  // -- Shooting gallery booth --
   makeShootingGallery(cx-4,cz+8);
 
-  // ── Cotton candy stand ──
+  // -- Cotton candy stand --
   makeCandyStand(cx+4,cz+8);
 
-  // ── Ticket booth (entrance) ──
+  // -- Ticket booth (entrance) --
   makeTicketBooth(cx,cz+16);
 
-  // ── Prize tent ──
+  // -- Prize tent --
   makePrizeTent(cx+18,cz);
 
-  // ── Low fence boundary ──
+  // -- Low fence boundary --
   const fm=mat('#FF6B9D',0.7);
   [[cx-22,cz,0,44],[cx+22,cz,0,44],[cx,cz-20,44,0]].forEach(([fx,fz,fw2,fd])=>{
     const post=sh(new THREE.Mesh(new THREE.BoxGeometry(fw2||0.4,1.4,fd||0.4),fm));post.position.set(fx,0.7,fz);scene.add(post);
@@ -987,14 +987,14 @@ makeCarnivalGrounds();
 
 setLoad(80);
 
-// ── Sword swing mesh ────────────────────────────────────────────
+// -- Sword swing mesh --------------------------------------------
 const swingGroup=new THREE.Group();scene.add(swingGroup);
 const blade=sh(new THREE.Mesh(new THREE.BoxGeometry(0.08,1.9,0.06),new THREE.MeshStandardMaterial({color:0x88aaff,emissive:0x4466ff,emissiveIntensity:1.5,transparent:true,opacity:0.85})));
 blade.position.y=0.95;swingGroup.add(blade);
 sh(new THREE.Mesh(new THREE.BoxGeometry(0.7,0.1,0.1),new THREE.MeshStandardMaterial({color:0xddaa00,emissive:0x886600,emissiveIntensity:0.8}))).position.set(0,0,0);
 swingGroup.add(swingGroup.children[0]);swingGroup.visible=false;
 
-// ── Input ───────────────────────────────────────────────────────
+// -- Input -------------------------------------------------------
 const keys={};
 let chatOpen=false,wOpen=false,shopOpen=false;
 let camAngle=0,camPitch=0.35,camDist=12;
@@ -1028,7 +1028,7 @@ canvas.addEventListener('wheel',e=>{camDist=Math.max(6,Math.min(30,camDist+e.del
 canvas.addEventListener('touchstart',e=>{isDrag=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;});
 canvas.addEventListener('touchmove',e=>{e.preventDefault();camAngle-=(e.touches[0].clientX-lastMX)*0.008;camPitch=Math.max(0.08,Math.min(0.88,camPitch+(e.touches[0].clientY-lastMY)*0.004));lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;},{passive:false});
 
-// ── Chat (world) ─────────────────────────────────────────────────
+// -- Chat (world) -------------------------------------------------
 function openChat(){chatOpen=true;const i=document.getElementById('chatin');i.style.display='block';i.focus();}
 function closeChat(){chatOpen=false;document.getElementById('chatin').style.display='none';}
 function submitChat(){
@@ -1044,7 +1044,7 @@ function addChatMsg(nm,msg,cls='npc'){
   while(l.children.length>20)l.removeChild(l.firstChild);
 }
 
-// ── NPC dialogue ─────────────────────────────────────────────────
+// -- NPC dialogue -------------------------------------------------
 function openNpcDialog(npc){
   activeNpc=npc;dialogOpen=true;
   document.getElementById('npc-dialog-name').textContent=npc.cfg.nm+' '+getEmoji(npc.cfg.nm);
@@ -1099,7 +1099,7 @@ function getNpcReply(cfg,msg){
 }
 document.getElementById('npc-dialog-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendNpcMsg();}});
 
-// ── Pet shop ────────────────────────────────────────────────────
+// -- Pet shop ----------------------------------------------------
 function buildPetGrid(){
   const g=document.getElementById('pet-grid');g.innerHTML='';
   const hd=document.getElementById('held-pet-display');
@@ -1119,7 +1119,7 @@ function buyOrPickPet(p){
 function dropPet(){heldPet=null;document.getElementById('pet-hud').style.display='none';buildPetGrid();}
 window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&heldPet&&!chatOpen&&!dialogOpen){addChatMsg(P.nm,P.nm+' feeds '+heldPet.nm+' 🐾','player');setTimeout(()=>addChatMsg(heldPet.nm,heldPet.snd,'npc'),400);}});
 
-// ── Carnival ────────────────────────────────────────────────────
+// -- Carnival ----------------------------------------------------
 function buildCarnival(){
   const div=document.getElementById('carnival-acts');div.innerHTML='';
   const acts=[
@@ -1143,7 +1143,7 @@ function buildCarnival(){
   });
 }
 
-// ── Crèche panel ────────────────────────────────────────────────
+// -- Crèche panel ------------------------------------------------
 function buildCrechePanel(){
   const div=document.getElementById('creche-babies');div.innerHTML='';
   BABIES.forEach(b=>{
@@ -1156,7 +1156,7 @@ function buildCrechePanel(){
   });
 }
 
-// ── Shop ────────────────────────────────────────────────────────
+// -- Shop --------------------------------------------------------
 function buildShop(){
   const tabs=document.getElementById('shop-tabs');const secs=document.getElementById('shop-secs');
   tabs.innerHTML='';secs.innerHTML='';
@@ -1196,10 +1196,10 @@ function buyOrEquipItem(cat,item,el){
 }
 function toggleShop(){shopOpen=!shopOpen;document.getElementById('shoppanel').style.display=shopOpen?'block':'none';if(shopOpen){document.getElementById('shop-bal').textContent=money;buildShop();}}
 
-// ── Panel utility ───────────────────────────────────────────────
+// -- Panel utility -----------------------------------------------
 function closePanel(id){document.getElementById(id).style.display='none';if(id==='shoppanel')shopOpen=false;}
 
-// ── Interaction ─────────────────────────────────────────────────
+// -- Interaction -------------------------------------------------
 function tryInteract(){
   if(dialogOpen){closeNpcDialog();return;}
   const pp=playerContainer.position;
@@ -1223,7 +1223,7 @@ function enterCar3d(car){car.occupied=true;playerCar=car;document.getElementById
 function exitCar3d(){if(!playerCar)return;playerContainer.position.set(playerCar.group.position.x+3,0,playerCar.group.position.z);playerCar.occupied=false;playerCar=null;document.getElementById('vhud').style.display='none';}
 function showPopup(t){const e=document.getElementById('location-popup');e.textContent=t;e.style.opacity='1';setTimeout(()=>e.style.opacity='0',2200);}
 
-// ── Wardrobe ─────────────────────────────────────────────────────
+// -- Wardrobe -----------------------------------------------------
 const pvc=document.getElementById('pvc'),pvctx=pvc.getContext('2d');
 function drawPv(){
   pvctx.clearRect(0,0,130,210);
@@ -1260,7 +1260,7 @@ mkGrid('bt-gr',BOTS,'bs');mkSw('bc-sw',BC_C,'bc');
 mkGrid('ht-gr',HATS,'hat');mkSw('htc-sw',HT_C,'htc');
 mkAcc();
 
-// ── Day/night ────────────────────────────────────────────────────
+// -- Day/night ----------------------------------------------------
 const SKY_DAY=new THREE.Color(0x87CEEB),SKY_SUNSET=new THREE.Color(0xFF7733),SKY_NIGHT=new THREE.Color(0x06091a);
 function updateDayNight(t){
   let skyCol,sunI,ambI,moonI;
@@ -1290,14 +1290,14 @@ function updateDayNight(t){
   document.getElementById('tstr').textContent=`${h12}:${mi.toString().padStart(2,'0')} ${ampm}`;
 }
 
-// ── Collision ────────────────────────────────────────────────────
+// -- Collision ----------------------------------------------------
 function collides(nx,nz){
   for(const b of buildingDefs){const hw=b.w/2+0.9,hd=b.d/2+0.9;if(Math.abs(nx-b.x)<hw&&Math.abs(nz-b.z)<hd)return true;}
   if(Math.abs(nx)>98||Math.abs(nz)>98)return true;
   return false;
 }
 
-// ── Minimap ──────────────────────────────────────────────────────
+// -- Minimap ------------------------------------------------------
 const mmC=document.getElementById('mm'),mmX=mmC.getContext('2d');
 function drawMinimap(){
   const S=140/200,OX=70,OZ=55;
@@ -1308,7 +1308,7 @@ function drawMinimap(){
   const pp=playerContainer.position;mmX.fillStyle='#fff';mmX.beginPath();mmX.arc((pp.x+OX)*S,(pp.z+OZ)*S,4,0,Math.PI*2);mmX.fill();
 }
 
-// ── Animation loop ───────────────────────────────────────────────
+// -- Animation loop -----------------------------------------------
 const clock=new THREE.Clock();let walkT=0,fwAngle=0;
 function animate(){
   requestAnimationFrame(animate);
@@ -1317,7 +1317,7 @@ function animate(){
   updateDayNight(dayTime);
   moneyT+=dt;if(moneyT>60){money+=25;moneyT=0;document.getElementById('money').textContent=money;}
 
-  // ── Carnival animations ──
+  // -- Carnival animations --
   fwAngle+=dt*0.35;
   // Ferris wheel gondolas orbit
   if(carnivalAnimated.ferrisWheel){
