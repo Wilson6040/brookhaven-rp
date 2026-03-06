@@ -527,7 +527,7 @@ makeBuilding(-55,20,14,8,12,'#FFE066','#c0a830','🍕 Pizza');
 makeBuilding(-10,22,16,10,12,'#F4D03F','#b89020','🏦 Bank');
 makeBuilding(45,20,22,14,16,'#E8D5B7','#c0a878','🏰 Mansion');
 makeBuilding(80,25,20,10,14,'#B5E7A0','#80b060','🚗 Dealer');
-makeBuilding(80,-80,24,12,18,'#FF6B9D','#c04070','🎡 Carnival');
+// Carnival is open-air — no building, handled below
 makeBuilding(-55,-80,16,10,12,'#FFB347','#c07820','🐾 Pet Shop');
 makeBuilding(30,70,20,10,14,'#ffb3d9','#d080a8','🍼 Crèche');
 makeBuilding(-10,70,16,8,12,'#99DDFF','#5599aa','🛍️ Shop');
@@ -693,31 +693,297 @@ NPC_CONFIGS.forEach(cfg=>{
   npcs3d.push({mesh,vx:(Math.random()-.5)*0.03,vz:(Math.random()-.5)*0.03,timer:80+Math.random()*120,chatT:0,chat:'',cfg});
 });
 
-// ── Ferris wheel ────────────────────────────────────────────────
-function makeFerrisWheel(x,z){
+// ── CARNIVAL GROUNDS (open-air, no building) ────────────────────
+const CARNIVAL_CX=87,CARNIVAL_CZ=-83;// Centre of carnival area
+const carnivalAnimated={};// holds refs for animation loop
+
+function makeCarnivalGrounds(){
+  const cx=CARNIVAL_CX,cz=CARNIVAL_CZ;
+
+  // ── Ground: colourful checkerboard-ish floor ──
+  const floorMat=new THREE.MeshStandardMaterial({color:0x2a7a2a,roughness:0.9});
+  const floor=sh(new THREE.Mesh(new THREE.PlaneGeometry(48,44),floorMat));floor.rotation.x=-Math.PI/2;floor.position.set(cx,0.02,cz);scene.add(floor);
+  // Coloured path tiles
+  const tileColors=['#FF6B9D','#FFE066','#7EC8E3','#A8D8B9','#C9B1FF'];
+  for(let i=0;i<12;i++){const tm=sh(new THREE.Mesh(new THREE.PlaneGeometry(3,3),mat(tileColors[i%5],0.9)));tm.rotation.x=-Math.PI/2;tm.position.set(cx-16+i*3,0.025,cz+2);scene.add(tm);}
+
+  // ── Entrance arch ──
+  const am=mat('#FF6B9D',0.5,0.1);
+  const lp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.6,8,0.6),am));lp.position.set(cx-8,4,cz+20);scene.add(lp);
+  const rp=lp.clone();rp.position.set(cx+8,4,cz+20);scene.add(rp);
+  const arch=sh(new THREE.Mesh(new THREE.BoxGeometry(17,1.2,0.6),am));arch.position.set(cx,7.6,cz+20);scene.add(arch);
+  // Arch sign
+  const asc=document.createElement('canvas');asc.width=512;asc.height=96;
+  const asctx=asc.getContext('2d');asctx.fillStyle='#FF6B9D';asctx.fillRect(0,0,512,96);
+  asctx.fillStyle='#fff';asctx.font='bold 54px Segoe UI';asctx.textAlign='center';asctx.textBaseline='middle';asctx.fillText('🎡  CARNIVAL  🎡',256,48);
+  const ast=new THREE.CanvasTexture(asc);const asign=new THREE.Mesh(new THREE.PlaneGeometry(16,1.8),new THREE.MeshBasicMaterial({map:ast,transparent:true}));
+  asign.position.set(cx,8.4,cz+20.4);scene.add(asign);
+  // Coloured arch lights
+  ['#E34234','#FFE066','#7EC8E3','#FF6B9D','#A8D8B9','#C9B1FF','#E34234','#FFE066'].forEach((c,i)=>{
+    const bl=new THREE.Mesh(new THREE.SphereGeometry(0.22,6,5),new THREE.MeshStandardMaterial({color:new THREE.Color(c),emissive:new THREE.Color(c),emissiveIntensity:1.2}));
+    bl.position.set(cx-7.5+i*2.2,7.4,cz+20.4);scene.add(bl);
+    const pl=new THREE.PointLight(new THREE.Color(c),0.8,6);pl.position.copy(bl.position);scene.add(pl);
+  });
+
+  // ── Perimeter string lights ──
+  function makeStringLights(x1,z1,x2,z2,col){
+    const pts=[new THREE.Vector3(x1,5,z1),new THREE.Vector3((x1+x2)/2,4,(z1+z2)/2),new THREE.Vector3(x2,5,z2)];
+    const curve=new THREE.CatmullRomCurve3(pts);
+    for(let t=0;t<=1;t+=0.07){
+      const pos=curve.getPointAt(t);
+      const lm=new THREE.MeshStandardMaterial({color:new THREE.Color(col),emissive:new THREE.Color(col),emissiveIntensity:1.5});
+      const lb=new THREE.Mesh(new THREE.SphereGeometry(0.14,5,4),lm);lb.position.copy(pos);scene.add(lb);
+    }
+  }
+  const slColors=['#FFE066','#FF6B9D','#7EC8E3','#E34234'];
+  makeStringLights(cx-22,cz-20,cx+22,cz-20,slColors[0]);
+  makeStringLights(cx-22,cz+20,cx+22,cz+20,slColors[1]);
+  makeStringLights(cx-22,cz-20,cx-22,cz+20,slColors[2]);
+  makeStringLights(cx+22,cz-20,cx+22,cz+20,slColors[3]);
+  // Cross string lights
+  makeStringLights(cx-22,cz,cx+22,cz,slColors[0]);
+  makeStringLights(cx,cz-20,cx,cz+20,slColors[1]);
+
+  // ── Ferris Wheel (left of centre) ──
+  const fw=makeFerrisWheel3d(cx-12,cz-8);
+  carnivalAnimated.ferrisWheel=fw;
+
+  // ── Carousel (right of centre) ──
+  const cr=makeCarousel3d(cx+10,cz-6);
+  carnivalAnimated.carousel=cr;
+
+  // ── Yell-O-Vator drop tower (back left) ──
+  const yov=makeYellOVator(cx-16,cz-16);
+  carnivalAnimated.yellOVator=yov;
+
+  // ── Bumper car ring (back right) ──
+  makeBumperCarRing(cx+10,cz-16);
+
+  // ── Shooting gallery booth ──
+  makeShootingGallery(cx-4,cz+8);
+
+  // ── Cotton candy stand ──
+  makeCandyStand(cx+4,cz+8);
+
+  // ── Ticket booth (entrance) ──
+  makeTicketBooth(cx,cz+16);
+
+  // ── Prize tent ──
+  makePrizeTent(cx+18,cz);
+
+  // ── Low fence boundary ──
+  const fm=mat('#FF6B9D',0.7);
+  [[cx-22,cz,0,44],[cx+22,cz,0,44],[cx,cz-20,44,0]].forEach(([fx,fz,fw2,fd])=>{
+    const post=sh(new THREE.Mesh(new THREE.BoxGeometry(fw2||0.4,1.4,fd||0.4),fm));post.position.set(fx,0.7,fz);scene.add(post);
+  });
+  // Front fence (with gap for entrance)
+  [cx-18,cx-14,cx-10,cx+10,cx+14,cx+18].forEach(px=>{
+    const p=sh(new THREE.Mesh(new THREE.BoxGeometry(0.4,1.4,0.4),fm));p.position.set(px,0.7,cz+20);scene.add(p);
+    const r=sh(new THREE.Mesh(new THREE.BoxGeometry(3.8,0.2,0.15),fm));r.position.set(px+2,1.0,cz+20);scene.add(r);
+  });
+}
+
+function makeFerrisWheel3d(x,z){
   const g=new THREE.Group();
-  const rm=mat('#ffd700',0.4,0.5);
-  const ring=sh(new THREE.Mesh(new THREE.TorusGeometry(5,0.15,8,40),rm));ring.position.y=6;ring.rotation.y=Math.PI/2;g.add(ring);
-  for(let i=0;i<8;i++){const spk=sh(new THREE.Mesh(new THREE.BoxGeometry(0.1,10,0.1),rm));spk.position.y=6;spk.rotation.z=i*Math.PI/4;g.add(spk);}
-  const gondColors=['#E34234','#7EC8E3','#F9E05E','#A8D8B9','#C9B1FF','#FF8C69','#FFB6C1','#2ECC71'];
+  const rm=mat('#ffd700',0.3,0.6);
+  // Main ring
+  const ring=sh(new THREE.Mesh(new THREE.TorusGeometry(5.5,0.2,10,48),rm));ring.position.y=7;ring.rotation.y=Math.PI/2;g.add(ring);
+  // Inner ring
+  const ring2=sh(new THREE.Mesh(new THREE.TorusGeometry(2.5,0.12,8,32),rm));ring2.position.y=7;ring2.rotation.y=Math.PI/2;g.add(ring2);
+  // Spokes
+  for(let i=0;i<8;i++){const spk=sh(new THREE.Mesh(new THREE.BoxGeometry(0.12,11,0.12),rm));spk.position.y=7;spk.rotation.z=i*Math.PI/4;g.add(spk);}
+  // Gondolas
+  const gc=['#E34234','#7EC8E3','#F9E05E','#A8D8B9','#C9B1FF','#FF8C69','#FFB6C1','#2ECC71'];
   const gondolas=[];
-  for(let i=0;i<8;i++){const gc=sh(new THREE.Mesh(new THREE.BoxGeometry(0.9,0.6,0.7),mat(gondColors[i])));g.add(gc);gondolas.push(gc);}
-  const legM=mat('#888',0.4,0.5);[[-2,0],[2,0]].forEach(([lx,lz])=>{const leg=sh(cyl(0.15,0.2,6,8,'#888'));leg.position.set(lx,3,lz);g.add(leg);});
-  const hub=sh(cyl(0.4,0.4,0.5,16,'#ffd700'));hub.rotation.x=Math.PI/2;hub.position.y=6;g.add(hub);
+  for(let i=0;i<8;i++){
+    const gondGroup=new THREE.Group();
+    const gcar=sh(new THREE.Mesh(new THREE.BoxGeometry(1.1,0.8,0.8),mat(gc[i],0.6)));gondGroup.add(gcar);
+    // Gondola window
+    const gwm=new THREE.MeshStandardMaterial({color:0xaaddff,transparent:true,opacity:0.6});
+    const gw=new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.55),gwm);gw.position.set(0,0.05,0.41);gondGroup.add(gw);
+    g.add(gondGroup);gondolas.push(gondGroup);
+  }
+  // Support legs
+  const lm=mat('#888',0.4,0.5);
+  [[-2.5,1.5],[2.5,1.5],[-2.5,-1.5],[2.5,-1.5]].forEach(([lx,lz])=>{const leg=sh(cyl(0.18,0.25,8,8,'#888'));leg.position.set(lx,4,lz);g.add(leg);});
+  // Centre hub + glow
+  const hub=sh(new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.7,16),mat('#ffd700',0.1,0.9)));hub.rotation.x=Math.PI/2;hub.position.set(0,7,0);g.add(hub);
+  const hubLight=new THREE.PointLight(0xffd700,1.5,8);hubLight.position.set(0,7,0);g.add(hubLight);
   g.position.set(x,0,z);scene.add(g);
+  // Sign above
+  const sc2=document.createElement('canvas');sc2.width=256;sc2.height=48;const sctx2=sc2.getContext('2d');
+  sctx2.fillStyle='rgba(0,0,0,0.85)';sctx2.fillRect(0,0,256,48);sctx2.fillStyle='#FFD700';sctx2.font='bold 22px Segoe UI';sctx2.textAlign='center';sctx2.textBaseline='middle';sctx2.fillText('🎡 Ferris Wheel',128,24);
+  const st2=new THREE.CanvasTexture(sc2);const sgn=new THREE.Mesh(new THREE.PlaneGeometry(4,0.75),new THREE.MeshBasicMaterial({map:st2,transparent:true}));sgn.position.set(x,14,z);scene.add(sgn);
   return {group:g,gondolas};
 }
-const ferrisWheel=makeFerrisWheel(80,-85);
 
-// Bunting
-function makeBunting(x1,z1,x2,z2){
-  const pts=[new THREE.Vector3(x1,4.5,z1),new THREE.Vector3((x1+x2)/2,3.2,(z1+z2)/2),new THREE.Vector3(x2,4.5,z2)];
-  const curve=new THREE.CatmullRomCurve3(pts);
-  const line=sh(new THREE.Mesh(new THREE.TubeGeometry(curve,30,0.03,4,false),mat('#888')));scene.add(line);
-  const fc=['#E34234','#FFE066','#7EC8E3','#A8D8B9','#C9B1FF'];
-  for(let t=0.1;t<0.9;t+=0.12){const pos=curve.getPointAt(t);const flag=sh(new THREE.Mesh(new THREE.PlaneGeometry(0.55,0.42),mat(fc[Math.floor(t*8)%5])));flag.position.copy(pos);flag.position.y-=0.35;scene.add(flag);}
+function makeCarousel3d(x,z){
+  const g=new THREE.Group();
+  const pm=mat('#FF6B9D',0.5,0.1);
+  // Base platform
+  const base=sh(new THREE.Mesh(new THREE.CylinderGeometry(4.5,4.5,0.5,24),pm));base.position.y=0.25;g.add(base);
+  // Roof
+  const roof=sh(new THREE.Mesh(new THREE.ConeGeometry(5,2.5,24),mat('#E34234',0.6)));roof.position.y=5.5;g.add(roof);
+  // Striped roof panels
+  for(let i=0;i<12;i++){const sp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.4,2.4,0.15),mat(i%2?'#fff':'#FF6B9D',0.6)));sp.position.set(Math.cos(i*Math.PI/6)*4.2,5.3,Math.sin(i*Math.PI/6)*4.2);sp.rotation.y=-i*Math.PI/6;g.add(sp);}
+  // Centre pole
+  const pole=sh(cyl(0.2,0.2,7,10,'#FFD700'));pole.position.y=3.5;g.add(pole);
+  // Top star
+  const star=sh(new THREE.Mesh(new THREE.SphereGeometry(0.4,8,6),mat('#FFD700',0.1,0.9)));star.position.y=7;g.add(star);
+  const starLight=new THREE.PointLight(0xFFD700,1.2,8);starLight.position.y=7;g.add(starLight);
+  // Horses (8 of them on poles)
+  const horseColors=['#ff6b9d','#7ec8e3','#ffe066','#a8d8b9','#c9b1ff','#ff8c69','#ffb6c1','#e34234'];
+  const horses=[];
+  for(let i=0;i<8;i++){
+    const hGroup=new THREE.Group();
+    const hpole=sh(cyl(0.06,0.06,3,6,'#fff'));hpole.position.y=1.5;hGroup.add(hpole);
+    // Horse body
+    const hBody=sh(new THREE.Mesh(new THREE.BoxGeometry(0.6,0.55,1.1),mat(horseColors[i],0.7)));hBody.position.y=3.2;hGroup.add(hBody);
+    // Horse head
+    const hHead=sh(new THREE.Mesh(new THREE.BoxGeometry(0.38,0.4,0.6),mat(horseColors[i],0.7)));hHead.position.set(0,3.65,0.55);hGroup.add(hHead);
+    // Mane
+    const mane=sh(new THREE.Mesh(new THREE.BoxGeometry(0.1,0.35,0.5),mat('#fff',0.8)));mane.position.set(0,3.88,0.3);hGroup.add(mane);
+    // Legs
+    for(let j=0;j<4;j++){const leg=sh(new THREE.Mesh(new THREE.BoxGeometry(0.12,0.4,0.12),mat('#ddd',0.8)));leg.position.set(j<2?-0.2:0.2,2.9+Math.sin(j)*0.05,j%2?0.25:-0.25);hGroup.add(leg);}
+    const a=i*Math.PI/4;hGroup.position.set(Math.cos(a)*3.5,0,Math.sin(a)*3.5);hGroup.rotation.y=-a;
+    g.add(hGroup);horses.push(hGroup);
+  }
+  // Hanging lights
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;const lm=new THREE.MeshStandardMaterial({color:0xffd700,emissive:0xffd700,emissiveIntensity:1.5});const lb=new THREE.Mesh(new THREE.SphereGeometry(0.15,5,4),lm);lb.position.set(Math.cos(a)*4,4.8,Math.sin(a)*4);g.add(lb);}
+  g.position.set(x,0,z);scene.add(g);
+  const sc3=document.createElement('canvas');sc3.width=256;sc3.height=48;const sctx3=sc3.getContext('2d');
+  sctx3.fillStyle='rgba(0,0,0,.85)';sctx3.fillRect(0,0,256,48);sctx3.fillStyle='#FF6B9D';sctx3.font='bold 22px Segoe UI';sctx3.textAlign='center';sctx3.textBaseline='middle';sctx3.fillText('🎠 Carousel',128,24);
+  const st3=new THREE.CanvasTexture(sc3);const sgn2=new THREE.Mesh(new THREE.PlaneGeometry(4,0.75),new THREE.MeshBasicMaterial({map:st3,transparent:true}));sgn2.position.set(x,9,z);scene.add(sgn2);
+  return {group:g,horses};
 }
-makeBunting(65,-75,100,-75);makeBunting(65,-70,65,-95);makeBunting(68,-70,100,-95);
+
+function makeYellOVator(x,z){
+  const g=new THREE.Group();
+  // Tower
+  const tower=sh(new THREE.Mesh(new THREE.BoxGeometry(2,18,2),mat('#888',0.5,0.3)));tower.position.y=9;g.add(tower);
+  // Stripes
+  for(let i=0;i<9;i++){const stripe=sh(new THREE.Mesh(new THREE.BoxGeometry(2.05,0.8,2.05),mat(i%2?'#E34234':'#FFE066',0.6)));stripe.position.y=i*2+0.5;g.add(stripe);}
+  // Ride platform (animated)
+  const platform=sh(new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.6,0.4,16),mat('#FF6B9D',0.5)));platform.position.y=2;g.add(platform);
+  // 4 seats on platform
+  for(let i=0;i<4;i++){const a=i*Math.PI/2;const seat=sh(new THREE.Mesh(new THREE.BoxGeometry(0.5,0.8,0.5),mat('#C9B1FF',0.6)));seat.position.set(Math.cos(a)*1.1,0.6,Math.sin(a)*1.1);platform.add(seat);}
+  // Top cap
+  const cap=sh(new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,0.6,16),mat('#E34234',0.6)));cap.position.y=18.6;g.add(cap);
+  // Top light
+  const tl=new THREE.PointLight(0xff2200,2,10);tl.position.y=19;g.add(tl);
+  g.position.set(x,0,z);scene.add(g);
+  const sc4=document.createElement('canvas');sc4.width=256;sc4.height=48;const sctx4=sc4.getContext('2d');
+  sctx4.fillStyle='rgba(0,0,0,.85)';sctx4.fillRect(0,0,256,48);sctx4.fillStyle='#E34234';sctx4.font='bold 20px Segoe UI';sctx4.textAlign='center';sctx4.textBaseline='middle';sctx4.fillText('⬆️ Yell-O-Vator!',128,24);
+  const st4=new THREE.CanvasTexture(sc4);const sgn3=new THREE.Mesh(new THREE.PlaneGeometry(4,0.75),new THREE.MeshBasicMaterial({map:st4,transparent:true}));sgn3.position.set(x,21,z);scene.add(sgn3);
+  return {group:g,platform,tl,phase:0};
+}
+
+function makeBumperCarRing(x,z){
+  const g=new THREE.Group();
+  // Ring floor
+  const rf=sh(new THREE.Mesh(new THREE.CylinderGeometry(7,7,0.35,32),mat('#4444aa',0.6)));rf.position.y=0.18;g.add(rf);
+  // Outer wall
+  const ow=sh(new THREE.Mesh(new THREE.TorusGeometry(7,0.4,6,32),mat('#E34234',0.5)));ow.rotation.x=Math.PI/2;ow.position.y=0.7;g.add(ow);
+  // Inner bumper cars (4 small cars on the ring)
+  const bcColors=['#E34234','#7EC8E3','#F9E05E','#A8D8B9'];
+  for(let i=0;i<4;i++){
+    const a=i*Math.PI/2;const bcc=new THREE.Group();
+    const bc=sh(new THREE.Mesh(new THREE.BoxGeometry(1.4,0.5,0.9),mat(bcColors[i],0.6)));bc.position.y=0.55;bcc.add(bc);
+    const bct=sh(new THREE.Mesh(new THREE.BoxGeometry(1.0,0.45,0.85),mat(bcColors[i],0.6)));bct.position.set(0,0.95,0);bcc.add(bct);
+    const bcp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.5,0.06,1.05),mat('#111',0.3,0.5)));bcp.position.y=1.3;bcc.add(bcp);
+    bcc.position.set(x+Math.cos(a)*5,0,z+Math.sin(a)*5);bcc.rotation.y=a;scene.add(bcc);
+  }
+  // Overhead grill (visual)
+  const gridMat=mat('#555',0.5,0.5);for(let i=-6;i<=6;i+=2){const bar=sh(new THREE.Mesh(new THREE.BoxGeometry(0.06,0.06,14),gridMat));bar.position.set(i,3.5,0);g.add(bar);}
+  // Pole supports
+  for(let i=0;i<6;i++){const a=i*Math.PI/3;const p=sh(cyl(0.1,0.12,3.8,6,'#555'));p.position.set(Math.cos(a)*7,1.9,Math.sin(a)*7);g.add(p);}
+  g.position.set(x,0,z);scene.add(g);
+  const sc5=document.createElement('canvas');sc5.width=256;sc5.height=48;const sc5ctx=sc5.getContext('2d');
+  sc5ctx.fillStyle='rgba(0,0,0,.85)';sc5ctx.fillRect(0,0,256,48);sc5ctx.fillStyle='#4444ff';sc5ctx.font='bold 22px Segoe UI';sc5ctx.textAlign='center';sc5ctx.textBaseline='middle';sc5ctx.fillText('💥 Bumper Cars!',128,24);
+  const st5=new THREE.CanvasTexture(sc5);const sgn4=new THREE.Mesh(new THREE.PlaneGeometry(4,0.75),new THREE.MeshBasicMaterial({map:st5,transparent:true}));sgn4.position.set(x,5,z);scene.add(sgn4);
+}
+
+function makeShootingGallery(x,z){
+  const g=new THREE.Group();
+  // Booth structure - striped awning
+  const back=sh(new THREE.Mesh(new THREE.BoxGeometry(7,3.5,0.3),mat('#FFE066',0.7)));back.position.y=1.75;g.add(back);
+  const counter=sh(new THREE.Mesh(new THREE.BoxGeometry(7,0.3,1.2),mat('#8B4513',0.9)));counter.position.set(0,1.0,0.8);g.add(counter);
+  // Striped awning
+  for(let i=0;i<7;i++){const stripe=sh(new THREE.Mesh(new THREE.BoxGeometry(0.95,0.08,1.5),mat(i%2?'#E34234':'#FFE066',0.7)));stripe.position.set(-3+i,3.5,0.5);stripe.rotation.x=-0.2;g.add(stripe);}
+  const awningBeam=sh(new THREE.Mesh(new THREE.BoxGeometry(7.1,0.15,0.15),mat('#E34234',0.6)));awningBeam.position.set(0,3.6,1.2);g.add(awningBeam);
+  // Targets (ducks/stars on wire)
+  const tColors=['#E34234','#F9E05E','#7EC8E3','#A8D8B9','#C9B1FF'];
+  for(let i=0;i<5;i++){const target=sh(new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.1),mat(tColors[i],0.6)));target.position.set(-2+i,2.5,0.1);g.add(target);}
+  // Side poles
+  [[-3.5,0],[3.5,0]].forEach(([px,pz])=>{const p=sh(cyl(0.1,0.12,4,6,'#8B4513'));p.position.set(px,2,pz);g.add(p);});
+  // Sign
+  const sc6=document.createElement('canvas');sc6.width=256;sc6.height=48;const sc6ctx=sc6.getContext('2d');
+  sc6ctx.fillStyle='#E34234';sc6ctx.fillRect(0,0,256,48);sc6ctx.fillStyle='#fff';sc6ctx.font='bold 22px Segoe UI';sc6ctx.textAlign='center';sc6ctx.textBaseline='middle';sc6ctx.fillText('🎯 Shooting Gallery',128,24);
+  const st6=new THREE.CanvasTexture(sc6);const sgn5=sh(new THREE.Mesh(new THREE.PlaneGeometry(5,0.9),new THREE.MeshBasicMaterial({map:st6})));sgn5.position.set(0,4.2,0.2);g.add(sgn5);
+  g.position.set(x,0,z);scene.add(g);
+}
+
+function makeCandyStand(x,z){
+  const g=new THREE.Group();
+  // Octagonal booth
+  const booth=sh(new THREE.Mesh(new THREE.CylinderGeometry(2,2,2.5,8),mat('#FF6B9D',0.6)));booth.position.y=1.25;g.add(booth);
+  const roof2=sh(new THREE.Mesh(new THREE.ConeGeometry(2.4,1.8,8),mat('#E34234',0.5)));roof2.position.y=3.4;g.add(roof2);
+  // Cotton candy on top (pink puffs)
+  for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const cc=sh(new THREE.Mesh(new THREE.SphereGeometry(0.5,7,6),mat('#FF6B9D',0.8)));cc.position.set(Math.cos(a)*0.7,4.8+Math.abs(Math.sin(i))*0.3,Math.sin(a)*0.7);g.add(cc);}
+  const cc0=sh(new THREE.Mesh(new THREE.SphereGeometry(0.65,7,6),mat('#C9B1FF',0.8)));cc0.position.y=5.4;g.add(cc0);
+  // Counter window
+  sh(new THREE.Mesh(new THREE.PlaneGeometry(1.5,0.8),new THREE.MeshStandardMaterial({color:0x88ccee,transparent:true,opacity:0.5}))).position.set(0,1.5,2.01);g.add(g.children[g.children.length-1]);
+  // Light inside
+  const cl=new THREE.PointLight(0xFF6B9D,1.5,5);cl.position.y=2;g.add(cl);
+  const sc7=document.createElement('canvas');sc7.width=256;sc7.height=48;const sc7ctx=sc7.getContext('2d');
+  sc7ctx.fillStyle='#FF6B9D';sc7ctx.fillRect(0,0,256,48);sc7ctx.fillStyle='#fff';sc7ctx.font='bold 22px Segoe UI';sc7ctx.textAlign='center';sc7ctx.textBaseline='middle';sc7ctx.fillText('🍭 Candy Floss',128,24);
+  const st7=new THREE.CanvasTexture(sc7);const sgn6=new THREE.Mesh(new THREE.PlaneGeometry(3.5,0.65),new THREE.MeshBasicMaterial({map:st7,transparent:true}));sgn6.position.set(0,4.5,0);scene.add(sgn6);
+  g.position.set(x,0,z);scene.add(g);
+}
+
+function makeTicketBooth(x,z){
+  const g=new THREE.Group();
+  const bm=mat('#FFE066',0.6);
+  const body=sh(new THREE.Mesh(new THREE.BoxGeometry(3.5,3.5,3.5),bm));body.position.y=1.75;g.add(body);
+  const roof=sh(new THREE.Mesh(new THREE.BoxGeometry(4,0.35,4),mat('#E34234',0.5)));roof.position.y=3.68;g.add(roof);
+  const win=new THREE.Mesh(new THREE.PlaneGeometry(1.4,0.9),new THREE.MeshStandardMaterial({color:0x88ccee,transparent:true,opacity:0.6}));win.position.set(0,1.9,1.76);g.add(win);
+  const door=sh(new THREE.Mesh(new THREE.BoxGeometry(1.0,2.2,0.1),mat('#8B4513',0.9)));door.position.set(0,1.1,1.76);g.add(door);
+  const sc8=document.createElement('canvas');sc8.width=256;sc8.height=56;const sc8ctx=sc8.getContext('2d');
+  sc8ctx.fillStyle='#E34234';sc8ctx.fillRect(0,0,256,56);sc8ctx.fillStyle='#FFE066';sc8ctx.font='bold 20px Segoe UI';sc8ctx.textAlign='center';sc8ctx.textBaseline='middle';sc8ctx.fillText('🎟️ TICKETS  $5',128,28);
+  const st8=new THREE.CanvasTexture(sc8);const sgn7=sh(new THREE.Mesh(new THREE.PlaneGeometry(3.8,0.85),new THREE.MeshBasicMaterial({map:st8})));sgn7.position.set(0,4.2,1.76);g.add(sgn7);
+  // Ticket NPC
+  const tNpc=buildChar({nm:'Ticket',sk:'#FDBCB4',ey:'#333',hs:'cap',hc:'#E34234',tc:'#E34234',bc:'#333',hat:'none',ts:'tee',bs:'jeans'});
+  tNpc.position.set(x+0,0,z+3);scene.add(tNpc);
+  g.position.set(x,0,z);scene.add(g);
+}
+
+function makePrizeTent(x,z){
+  const g=new THREE.Group();
+  // Tent sides (3-sided, open front)
+  const tm=mat('#C9B1FF',0.6);
+  const back=sh(new THREE.Mesh(new THREE.BoxGeometry(8,4,0.2),tm));back.position.y=2;g.add(back);
+  const lSide=sh(new THREE.Mesh(new THREE.BoxGeometry(0.2,4,4),tm));lSide.position.set(-4,2,2);g.add(lSide);
+  const rSide=lSide.clone();rSide.position.set(4,2,2);g.add(rSide);
+  // Tent roof (low pitched)
+  const rLeft=sh(new THREE.Mesh(new THREE.BoxGeometry(4.1,0.2,4.2),mat('#9B59B6',0.5)));rLeft.position.set(-2,4.08,2);rLeft.rotation.z=0.2;g.add(rLeft);
+  const rRight=rLeft.clone();rRight.position.set(2,4.08,2);rRight.rotation.z=-0.2;g.add(rRight);
+  // Prize display shelves
+  const shelf=sh(new THREE.Mesh(new THREE.BoxGeometry(7.5,0.15,0.8),mat('#8B4513',0.9)));shelf.position.set(0,2.5,0.3);g.add(shelf);
+  // Prizes on shelf
+  const prizes=['🏆','🎠','🚗','🧸','🎈','⭐','🦄','💎'];
+  prizes.forEach((p,i)=>{
+    const pc=document.createElement('canvas');pc.width=64;pc.height=64;const pctx=pc.getContext('2d');pctx.font='44px serif';pctx.textAlign='center';pctx.textBaseline='middle';pctx.fillText(p,32,32);
+    const pt=new THREE.CanvasTexture(pc);const pm2=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.8),new THREE.MeshBasicMaterial({map:pt,transparent:true,side:THREE.DoubleSide}));
+    pm2.position.set(-3.2+i*0.92,3.0,0.3);g.add(pm2);
+  });
+  const sc9=document.createElement('canvas');sc9.width=256;sc9.height=52;const sc9ctx=sc9.getContext('2d');
+  sc9ctx.fillStyle='#9B59B6';sc9ctx.fillRect(0,0,256,52);sc9ctx.fillStyle='#fff';sc9ctx.font='bold 22px Segoe UI';sc9ctx.textAlign='center';sc9ctx.textBaseline='middle';sc9ctx.fillText('🏆 Prize Tent',128,26);
+  const st9=new THREE.CanvasTexture(sc9);const sgn8=sh(new THREE.Mesh(new THREE.PlaneGeometry(5,0.95),new THREE.MeshBasicMaterial({map:st9})));sgn8.position.set(0,4.8,0.1);g.add(sgn8);
+  g.position.set(x,0,z);scene.add(g);
+}
+
+// Build the carnival
+makeCarnivalGrounds();
 
 setLoad(80);
 
@@ -946,7 +1212,7 @@ function tryInteract(){
     if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<10){
       const lbl=b.label.toLowerCase();
       if(lbl.includes('pet')){buildPetGrid();document.getElementById('petpanel').style.display='block';return;}
-      if(lbl.includes('carnival')){buildCarnival();document.getElementById('carnivalpanel').style.display='block';return;}
+      if(lbl.includes('carnival')){/* handled by zone */return;}
       if(lbl.includes('crèche')||lbl.includes('creche')){buildCrechePanel();document.getElementById('crechepanel').style.display='block';return;}
       if(lbl.includes('shop')){toggleShop();return;}
       showPopup('Entered '+b.label);addChatMsg('System','You entered '+b.label,'sys');return;
@@ -1051,9 +1317,30 @@ function animate(){
   updateDayNight(dayTime);
   moneyT+=dt;if(moneyT>60){money+=25;moneyT=0;document.getElementById('money').textContent=money;}
 
-  // Ferris wheel
-  fwAngle+=dt*0.4;
-  ferrisWheel.gondolas.forEach((gc,i)=>{const a=fwAngle+i*Math.PI/4;gc.position.set(Math.cos(a)*5,6+Math.sin(a)*5,0);});
+  // ── Carnival animations ──
+  fwAngle+=dt*0.35;
+  // Ferris wheel gondolas orbit
+  if(carnivalAnimated.ferrisWheel){
+    carnivalAnimated.ferrisWheel.gondolas.forEach((gc,i)=>{
+      const a=fwAngle+i*Math.PI/4;
+      gc.position.set(Math.cos(a)*5.5,7+Math.sin(a)*5.5,0);
+      gc.rotation.z=0; // keep upright
+    });
+  }
+  // Carousel spin
+  if(carnivalAnimated.carousel){
+    carnivalAnimated.carousel.group.children[0].rotation.y=fwAngle*2; // platform
+    carnivalAnimated.carousel.horses.forEach((h,i)=>{
+      const a=fwAngle*2+i*Math.PI/4;h.position.set(Math.cos(a)*3.5,0,Math.sin(a)*3.5);h.rotation.y=-a+Math.PI/2;
+      h.position.y=Math.sin(fwAngle*3+i)*0.4+0.1; // bob up/down
+    });
+  }
+  // Yell-O-Vator: platform rises and falls
+  if(carnivalAnimated.yellOVator){
+    const yv=carnivalAnimated.yellOVator;yv.phase+=dt*0.8;
+    const h=Math.abs(Math.sin(yv.phase))*14+1.5;yv.platform.position.y=h;
+    yv.tl.intensity=1.5+Math.sin(yv.phase*3)*0.5;
+  }
 
   // NPC wander + walk anim
   for(const n of npcs3d){
@@ -1121,6 +1408,31 @@ function animate(){
   const tc=new THREE.Vector3(pp.x+Math.sin(camAngle)*camDist,pp.y+camH,pp.z+Math.cos(camAngle)*camDist);
   camera.position.lerp(tc,0.1);camera.lookAt(pp.x,pp.y+1.2,pp.z);
 
+  // Carnival zone proximity attractions
+  const cx=CARNIVAL_CX,cz2=CARNIVAL_CZ;
+  const inCarnival=Math.abs(pp.x-cx)<24&&Math.abs(pp.z-cz2)<24;
+  if(inCarnival){
+    // Check each attraction
+    const attracts=[
+      {x:cx-12,z:cz2-8,nm:'🎡 Ferris Wheel',msg:'Hopping on the Ferris Wheel! 🎡 The view up here is STUNNING!'},
+      {x:cx+10,z:cz2-6,nm:'🎠 Carousel',msg:'Wheeee! Round and round on the carousel! 🎠'},
+      {x:cx-16,z:cz2-16,nm:'⬆️ Yell-O-Vator',msg:'3... 2... 1... AAAAAHHHHH!! 😱🎢 That was INSANE!'},
+      {x:cx+10,z:cz2-16,nm:'💥 Bumper Cars',msg:'CRASH! You bumped someone! 💥😂 You earned 20 tickets!'},
+      {x:cx-4,z:cz2+8,nm:'🎯 Shooting Gallery',msg:()=>Math.random()<0.5?'BULLSEYE! 🎯 You win 15 tickets!':'So close... try again! (5 tickets)'},
+      {x:cx+4,z:cz2+8,nm:'🍭 Candy Floss',msg:'Mmm... sugar heaven! 🍭 (costs $5)'},
+      {x:cx,z:cz2+16,nm:'🎟️ Ticket Booth',msg:'Welcome! Earn tickets on rides and games! Current balance: 🎟️ '+((money/10|0)+' tickets')},
+      {x:cx+18,z:cz2,nm:'🏆 Prize Tent',msg:()=>money>=50?'You redeemed a prize! 🏆🎉 -$50':('Need $50 for a prize! You have $'+money)},
+    ];
+    let nearAttract=null;for(const a of attracts){if(pp.distanceTo(new THREE.Vector3(a.x,0,a.z))<5.5){nearAttract=a;break;}}
+    if(nearAttract&&keys['e']){
+      const msg=typeof nearAttract.msg==='function'?nearAttract.msg():nearAttract.msg;
+      if(nearAttract.nm.includes('Bumper')){money+=20;document.getElementById('money').textContent=money;}
+      if(nearAttract.nm.includes('Candy')&&money>=5){money-=5;document.getElementById('money').textContent=money;}
+      if(nearAttract.nm.includes('Prize')&&money>=50){money-=50;document.getElementById('money').textContent=money;}
+      addChatMsg('Carnival',msg,'npc');showPopup(msg.slice(0,50));keys['e']=false;
+    }
+  }
+
   // Near prompt
   let prompt='';
   if(dialogOpen)prompt='Enter → Send | Esc → Close';
@@ -1128,6 +1440,16 @@ function animate(){
   else{
     for(const n of npcs3d){if(pp.distanceTo(n.mesh.position)<4.5){prompt='E → Talk to '+n.cfg.nm;break;}}
     if(!prompt)for(const c of cars3d){if(!c.occupied&&pp.distanceTo(new THREE.Vector3(c.group.position.x,0,c.group.position.z))<4.5){prompt='E → Drive '+c.lb;break;}}
+    if(!prompt&&inCarnival){
+      const attracts2=[
+        {x:cx-12,z:cz2-8,nm:'🎡 Ferris Wheel'},{x:cx+10,z:cz2-6,nm:'🎠 Carousel'},
+        {x:cx-16,z:cz2-16,nm:'⬆️ Yell-O-Vator'},{x:cx+10,z:cz2-16,nm:'💥 Bumper Cars'},
+        {x:cx-4,z:cz2+8,nm:'🎯 Shooting Gallery'},{x:cx+4,z:cz2+8,nm:'🍭 Candy Floss'},
+        {x:cx,z:cz2+16,nm:'🎟️ Ticket Booth'},{x:cx+18,z:cz2,nm:'🏆 Prize Tent'},
+      ];
+      for(const a of attracts2){if(pp.distanceTo(new THREE.Vector3(a.x,0,a.z))<5.5){prompt='E → '+a.nm;break;}}
+      if(!prompt)prompt='🎡 Welcome to the Carnival!';
+    }
     if(!prompt)for(const b of buildingDefs){if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<11){prompt='E → Enter '+b.label;break;}}
   }
   const pel=document.getElementById('prompt');if(prompt!==nearPrompt){nearPrompt=prompt;pel.textContent=prompt;pel.style.opacity=prompt?'1':'0';}
