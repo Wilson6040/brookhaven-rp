@@ -22,8 +22,13 @@ canvas{display:block}
 #chatlog .nm{color:#f8c8d4;font-weight:bold}
 #chatin{display:none;width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:4px;padding:3px 6px;font-size:12px;outline:none}
 /* Wardrobe */
-#wdrobe{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(12,12,32,.97);border:2px solid #f8c8d4;border-radius:14px;padding:12px 16px;color:#fff;display:none;z-index:10;pointer-events:all;width:400px;max-height:88vh;overflow-y:auto}
+#wdrobe{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(12,12,32,.97);border:2px solid #f8c8d4;border-radius:14px;padding:12px 16px;color:#fff;display:none;z-index:10;pointer-events:all;width:560px;max-height:92vh;overflow-y:auto}
 #wdrobe h2{color:#f8c8d4;font-size:.95rem;margin-bottom:10px;text-align:center}
+#wdrobe-inner{display:flex;gap:14px;align-items:flex-start}
+#preview-wrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+#preview-canvas{border-radius:12px;background:linear-gradient(160deg,#1e1e3a,#2a1a3a);border:2px solid rgba(248,200,212,.3);display:block}
+#preview-name{font-size:11px;color:#aaa;text-align:center}
+#wdrobe-opts{flex:1;min-width:0}
 .wtabs{display:flex;gap:3px;margin-bottom:10px;flex-wrap:wrap}
 .wt{flex:1;padding:4px 3px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;font-size:10px;text-align:center;color:#ccc;white-space:nowrap}
 .wt.on{background:#f8c8d4;color:#1a1a2e;font-weight:bold;border-color:#f8c8d4}
@@ -69,7 +74,7 @@ canvas{display:block}
     </div>
     <button id="wbtn" onclick="toggleWdrobe()">👕 Wardrobe (W)</button>
     <div id="ctrl">
-      <b>Arrows</b> Move &nbsp; <b>Space</b> ⚔️ Swing / Exit Car<br>
+      <b>↑↓←→</b> Move &nbsp; <b>Space</b> ⚔️ Swing / Exit Car<br>
       <b>E</b> Enter building &nbsp; <b>T</b> Chat &nbsp; <b>W</b> Wardrobe<br>
       <b>F</b> Feed pet &nbsp; <b>ESC</b> Close
     </div>
@@ -80,6 +85,12 @@ canvas{display:block}
     <!-- Wardrobe -->
     <div id="wdrobe">
       <h2>👕 Wardrobe</h2>
+      <div id="wdrobe-inner">
+      <div id="preview-wrap">
+        <canvas id="preview-canvas" width="130" height="200"></canvas>
+        <div id="preview-name">Your Avatar</div>
+      </div>
+      <div id="wdrobe-opts">
       <div class="wtabs">
         <div class="wt on" onclick="wTab('skin')">🎨 Skin</div>
         <div class="wt" onclick="wTab('hair')">💇 Hair</div>
@@ -112,6 +123,8 @@ canvas{display:block}
         <div class="wgrid" id="ac-gr"></div>
       </div>
       <button class="cbtn" onclick="closeWdrobe()">✓ Done</button>
+      </div><!-- end wdrobe-opts -->
+      </div><!-- end wdrobe-inner -->
     </div>
     <!-- Pet Panel -->
     <div id="petpanel">
@@ -275,7 +288,7 @@ function wTab(t){
   document.querySelectorAll('.wsec').forEach(s=>s.classList.remove('on'));
   document.getElementById('tab-'+t).classList.add('on');
 }
-function toggleWdrobe(){wOpen=!wOpen;document.getElementById('wdrobe').style.display=wOpen?'block':'none';}
+function toggleWdrobe(){wOpen=!wOpen;document.getElementById('wdrobe').style.display=wOpen?'block':'none';if(wOpen)setTimeout(drawPreview,30);}
 function closeWdrobe(){wOpen=false;document.getElementById('wdrobe').style.display='none';}
 function mkSw(id,cols,prop){
   const el=document.getElementById(id);el.innerHTML='';
@@ -289,12 +302,40 @@ function mkAcc(){
   const el=document.getElementById('ac-gr');el.innerHTML='';
   ACCS.forEach(a=>{const d=document.createElement('div');d.className='wi'+(player[a.id]?' on':'');d.innerHTML=`<span class="ico">${a.ico}</span><span>${a.lb}</span>`;d.onclick=()=>{player[a.id]=!player[a.id];d.classList.toggle('on',player[a.id]);};el.appendChild(d);});
 }
-mkSw('sk-sw',SK_C,'sk');mkSw('ey-sw',EY_C,'ey');
-mkGrid('hs-gr',HSTYLES,'hs');mkSw('hc-sw',HC_C,'hc');
-mkGrid('tp-gr',TOPS,'ts');mkSw('tc-sw',TC_C,'tc');
-mkGrid('bt-gr',BOTS,'bs');mkSw('bc-sw',BC_C,'bc');
-mkGrid('ht-gr',HATS,'hat');mkSw('htc-sw',HT_C,'htc');
-mkAcc();
+// ── Live Preview ──────────────────────────────────────────────────────────────
+const pvCanvas=document.getElementById('preview-canvas');
+const pvCtx=pvCanvas.getContext('2d');
+function drawPreview(){
+  pvCtx.clearRect(0,0,130,200);
+  // Background gradient
+  const grad=pvCtx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'#1e1e3a');grad.addColorStop(1,'#2a1a3a');
+  pvCtx.fillStyle=grad;pvCtx.fillRect(0,0,130,200);
+  // Ground shadow
+  pvCtx.fillStyle='rgba(255,255,255,0.04)';pvCtx.fillRect(0,150,130,50);
+  // Floor line
+  pvCtx.strokeStyle='rgba(248,200,212,0.15)';pvCtx.lineWidth=1;
+  pvCtx.beginPath();pvCtx.moveTo(10,160);pvCtx.lineTo(120,160);pvCtx.stroke();
+  // Draw at scale 4, centred horizontally, feet near floor line
+  const sc=4,cw=22*sc,ch=22*sc;
+  const px=130/2-cw/2,py=160-ch-4*sc;
+  // Temporarily clear chat/feed for preview
+  const savedChat=player.chat,savedChatT=player.chatT,savedFeedT=player.feedT,savedFeedMsg=player.feedMsg;
+  player.chat='';player.chatT=0;player.feedT=0;player.feedMsg='';
+  drawChar(pvCtx,player,px,py,sc);
+  player.chat=savedChat;player.chatT=savedChatT;player.feedT=savedFeedT;player.feedMsg=savedFeedMsg;
+}
+// Hook preview update onto swatch/item clicks
+function mkSwP(id,cols,prop){mkSw(id,cols,prop);document.getElementById(id).addEventListener('click',()=>setTimeout(drawPreview,10));}
+function mkGrP(id,items,prop){mkGrid(id,items,prop);document.getElementById(id).addEventListener('click',()=>setTimeout(drawPreview,10));}
+function mkAccP(){mkAcc();document.getElementById('ac-gr').addEventListener('click',()=>setTimeout(drawPreview,10));}
+
+mkSwP('sk-sw',SK_C,'sk');mkSwP('ey-sw',EY_C,'ey');
+mkGrP('hs-gr',HSTYLES,'hs');mkSwP('hc-sw',HC_C,'hc');
+mkGrP('tp-gr',TOPS,'ts');mkSwP('tc-sw',TC_C,'tc');
+mkGrP('bt-gr',BOTS,'bs');mkSwP('bc-sw',BC_C,'bc');
+mkGrP('ht-gr',HATS,'hat');mkSwP('htc-sw',HT_C,'htc');
+mkAccP();
 
 // ── Pets ────────────────────────────────────────────────────────────────────────
 function buildPetPanel(){
