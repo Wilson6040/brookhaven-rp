@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brookhaven RP</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+  h1 { color: #f8c8d4; font-size: 1.4rem; margin-bottom: 8px; letter-spacing: 2px; text-transform: uppercase; }
+  #game-wrapper { position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 0 40px rgba(248,200,212,0.3); }
+  canvas { display: block; cursor: default; }
+  #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  #hud-top { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .hud-box { background: rgba(0,0,0,0.55); color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); }
+  .hud-box span { color: #f9e05e; font-weight: bold; }
+  #minimap { position: absolute; top: 10px; right: 10px; width: 120px; height: 90px; border: 2px solid rgba(255,255,255,0.2); border-radius: 6px; background: rgba(0,0,0,0.5); overflow: hidden; }
+  #minimap canvas { width: 120px; height: 90px; }
+  #controls { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.75); font-size: 11px; padding: 6px 10px; border-radius: 8px; line-height: 1.7; border: 1px solid rgba(255,255,255,0.1); }
+  #controls b { color: #a8d8ea; }
+  #chat-box { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 360px; background: rgba(0,0,0,0.55); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); padding: 6px; pointer-events: all; }
+  #chat-log { height: 60px; overflow-y: auto; font-size: 12px; color: #ddd; margin-bottom: 4px; padding: 2px 4px; }
+  #chat-log div { margin-bottom: 2px; }
+  #chat-log span.name { color: #f8c8d4; font-weight: bold; }
+  #chat-input { display: none; width: 100%; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 4px; padding: 3px 6px; font-size: 12px; outline: none; }
+  #chat-input:focus { border-color: #f8c8d4; }
+  #customise-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(20,20,40,0.95); border: 2px solid #f8c8d4; border-radius: 12px; padding: 16px 24px; color: #fff; display: none; z-index: 10; pointer-events: all; min-width: 240px; }
+  #customise-panel h2 { color: #f8c8d4; font-size: 1rem; margin-bottom: 12px; text-align: center; }
+  .colour-row { margin-bottom: 10px; }
+  .colour-row label { font-size: 12px; color: #aaa; display: block; margin-bottom: 4px; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .swatch { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.15s; }
+  .swatch.active { border-color: #fff; }
+  #customise-panel button { margin-top: 10px; width: 100%; padding: 6px; background: #f8c8d4; color: #1a1a2e; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+  #interior-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,20,40,0.97); display: none; z-index: 20; pointer-events: all; }
+  #interior-screen canvas { width: 100%; height: 100%; }
+  #exit-btn { position: absolute; top: 10px; right: 10px; background: #f8c8d4; color: #1a1a2e; border: none; border-radius: 6px; padding: 6px 14px; font-weight: bold; cursor: pointer; pointer-events: all; z-index: 21; }
+  #location-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #f9e05e; font-size: 1rem; font-weight: bold; text-shadow: 0 0 8px rgba(0,0,0,0.8); opacity: 0; transition: opacity 0.4s; pointer-events: none; background: rgba(0,0,0,0.5); padding: 4px 12px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<h1>🏘️ Brookhaven RP</h1>
+<div id="game-wrapper">
+  <canvas id="gameCanvas" width="800" height="560"></canvas>
+  <div id="ui">
+    <div id="hud-top">
+      <div class="hud-box">💰 $<span id="money">500</span></div>
+      <div class="hud-box" id="vehicle-hud" style="display:none">🚗 <span>Driving</span> — <b>E</b> to exit</div>
+      <div class="hud-box" id="time-hud">🕐 <span id="time-str">12:00 PM</span></div>
+    </div>
+    <div id="minimap"><canvas id="miniCanvas" width="120" height="90"></canvas></div>
+    <div id="controls">
+      <b>WASD</b> Move &nbsp; <b>E</b> Enter/Exit &nbsp; <b>T</b> Chat<br>
+      <b>C</b> Customise &nbsp; <b>ESC</b> Close panel
+    </div>
+    <div id="chat-box">
+      <div id="chat-log"></div>
+      <input id="chat-input" type="text" placeholder="Press T to chat..." maxlength="60">
+    </div>
+    <div id="customise-panel">
+      <h2>✨ Customise</h2>
+      <div class="colour-row">
+        <label>Skin Colour</label>
+        <div class="swatches" id="skin-swatches"></div>
+      </div>
+      <div class="colour-row">
+        <label>Shirt Colour</label>
+        <div class="swatches" id="shirt-swatches"></div>
+      </div>
+      <div class="colour-row">
+        <label>Hair Colour</label>
+        <div class="swatches" id="hair-swatches"></div>
+      </div>
+      <button onclick="closeCustomise()">Done</button>
+    </div>
+    <div id="interior-screen">
+      <canvas id="interiorCanvas" width="800" height="560"></canvas>
+      <button id="exit-btn" onclick="exitInterior()">Exit Building</button>
+    </div>
+    <div id="location-label" id="loc-label"></div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const W = 800, H = 560;
+const WORLD_W = 1600, WORLD_H = 1200;
+const TILE = 40;
+const SPEED = 3;
+const CAR_SPEED = 6;
+
+// ── State ──────────────────────────────────────────────────────────────────
+let player = {
+  x: 400, y: 300, w: 22, h: 22,
+  skin: '#FDBCB4', shirt: '#7EC8E3', hair: '#4A3728',
+  name: 'Player', inCar: null, chatMsg: '', chatTimer: 0
+};
+let camera = { x: 0, y: 0 };
+let money = 500;
+let moneyTimer = 0;
+let dayTime = 0.5; // 0=midnight, 0.5=noon, 1=midnight
+let DAY_SPEED = 1 / (10 * 60 * 60); // 10 min full cycle at 60fps
+let keys = {};
+let chatOpen = false;
+let customiseOpen = false;
+let inInterior = false;
+let currentBuilding = null;
+let bubbleTimer = 0;
+let locLabelTimer = 0;
+let nearLabel = '';
+
+// ── Colours ────────────────────────────────────────────────────────────────
+const SKIN_COLOURS = ['#FDBCB4','#F1C27D','#E0AC69','#C68642','#8D5524','#FFCBA4'];
+const SHIRT_COLOURS = ['#7EC8E3','#F8C8D4','#A8D8B9','#FFE066','#C9B1FF','#FF8C69','#fff','#333'];
+const HAIR_COLOURS = ['#4A3728','#B5651D','#E8D5B7','#2C2C2C','#E34234','#F4D03F','#8B4513'];
+
+// ── Buildings ──────────────────────────────────────────────────────────────
+const buildings = [
+  { id:'house',    label:'🏠 House',          x:80,   y:80,   w:140, h:110, colour:'#F8C8D4', door:{x:150,y:190}, interior:'house' },
+  { id:'school',   label:'🏫 School',         x:320,  y:60,   w:180, h:120, colour:'#C9B1FF', door:{x:410,y:180}, interior:'school' },
+  { id:'hospital', label:'🏥 Hospital',       x:600,  y:60,   w:160, h:120, colour:'#A8D8B9', door:{x:680,y:180}, interior:'hospital' },
+  { id:'police',   label:'🚔 Police Station', x:900,  y:60,   w:150, h:120, colour:'#7EC8E3', door:{x:975,y:180}, interior:'police' },
+  { id:'prison',   label:'⛓️ Prison',         x:1150, y:60,   w:200, h:150, colour:'#aaa',    door:{x:1250,y:210}, interior:'prison' },
+  { id:'pizza',    label:'🍕 Pizza Place',    x:80,   y:380,  w:140, h:110, colour:'#FFE066', door:{x:150,y:490}, interior:'pizza' },
+  { id:'bank',     label:'🏦 Bank',           x:320,  y:400,  w:150, h:110, colour:'#F4D03F', door:{x:395,y:510}, interior:'bank' },
+  { id:'mansion',  label:'🏰 Mansion',        x:600,  y:350,  w:220, h:180, colour:'#E8D5B7', door:{x:710,y:530}, interior:'mansion' },
+  { id:'dealer',   label:'🚗 Car Dealership', x:980,  y:350,  w:200, h:150, colour:'#B5E7A0', door:{x:1080,y:500}, interior:'dealer' },
+];
+
+// ── Cars ───────────────────────────────────────────────────────────────────
+const cars = [
+  { id:0, x:250, y:280, w:44, h:26, colour:'#E34234', angle:0, occupied:false, label:'Red Coupe' },
+  { id:1, x:550, y:300, w:44, h:26, colour:'#7EC8E3', angle:0, occupied:false, label:'Blue Sedan' },
+  { id:2, x:900, y:280, w:50, h:28, colour:'#F9E05E', angle:0, occupied:false, label:'Yellow SUV' },
+  { id:3, x:1100,y:480, w:44, h:26, colour:'#A8D8B9', angle:0, occupied:false, label:'Green Hatch' },
+];
+
+// ── Roads (simple grid layout) ────────────────────────────────────────────
+const roads = [
+  { x:0,    y:240,  w:WORLD_W, h:60 },  // horizontal main
+  { x:0,    y:580,  w:WORLD_W, h:60 },  // horizontal south
+  { x:260,  y:0,    w:60,      h:WORLD_H }, // vertical west
+  { x:560,  y:0,    w:60,      h:WORLD_H }, // vertical mid
+  { x:880,  y:0,    w:60,      h:WORLD_H }, // vertical east
+];
+
+// ── Canvas setup ───────────────────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const miniCanvas = document.getElementById('miniCanvas');
+const mctx = miniCanvas.getContext('2d');
+const intCanvas = document.getElementById('interiorCanvas');
+const ictx = intCanvas.getContext('2d');
+
+// ── Input ──────────────────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if (chatOpen) {
+    if (e.key === 'Enter') submitChat();
+    if (e.key === 'Escape') closeChat();
+    return;
+  }
+  if (customiseOpen && e.key === 'Escape') { closeCustomise(); return; }
+  if (inInterior && e.key === 'Escape') { exitInterior(); return; }
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === 't') { e.preventDefault(); openChat(); }
+  if (e.key.toLowerCase() === 'c') { e.preventDefault(); toggleCustomise(); }
+  if (e.key.toLowerCase() === 'e') { e.preventDefault(); interact(); }
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+// ── Chat ───────────────────────────────────────────────────────────────────
+function openChat() {
+  chatOpen = true;
+  const inp = document.getElementById('chat-input');
+  inp.style.display = 'block'; inp.focus();
+}
+function closeChat() {
+  chatOpen = false;
+  document.getElementById('chat-input').style.display = 'none';
+}
+function submitChat() {
+  const inp = document.getElementById('chat-input');
+  const msg = inp.value.trim();
+  if (msg) {
+    player.chatMsg = msg; player.chatTimer = 180;
+    const log = document.getElementById('chat-log');
+    const div = document.createElement('div');
+    div.innerHTML = `<span class="name">${player.name}:</span> ${msg}`;
+    log.appendChild(div); log.scrollTop = log.scrollHeight;
+    inp.value = '';
+  }
+  closeChat();
+}
+
+// ── Customise ──────────────────────────────────────────────────────────────
+function buildSwatches(id, colours, prop) {
+  const el = document.getElementById(id);
+  colours.forEach(c => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (player[prop] === c ? ' active' : '');
+    s.style.background = c;
+    s.addEventListener('click', () => {
+      player[prop] = c;
+      el.querySelectorAll('.swatch').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+    });
+    el.appendChild(s);
+  });
+}
+function toggleCustomise() {
+  customiseOpen = !customiseOpen;
+  document.getElementById('customise-panel').style.display = customiseOpen ? 'block' : 'none';
+}
+function closeCustomise() {
+  customiseOpen = false;
+  document.getElementById('customise-panel').style.display = 'none';
+}
+buildSwatches('skin-swatches', SKIN_COLOURS, 'skin');
+buildSwatches('shirt-swatches', SHIRT_COLOURS, 'shirt');
+buildSwatches('hair-swatches', HAIR_COLOURS, 'hair');
+
+// ── Interaction ────────────────────────────────────────────────────────────
+function interact() {
+  if (customiseOpen || inInterior) return;
+  // Check cars
+  if (player.inCar) {
+    exitCar(); return;
+  }
+  for (const car of cars) {
+    if (!car.occupied && dist(player.x, player.y, car.x + car.w/2, car.y + car.h/2) < 50) {
+      enterCar(car); return;
+    }
+  }
+  // Check buildings
+  for (const b of buildings) {
+    if (dist(player.x, player.y, b.door.x, b.door.y) < 55) {
+      enterBuilding(b); return;
+    }
+  }
+}
+function enterCar(car) {
+  car.occupied = true;
+  player.inCar = car;
+  document.getElementById('vehicle-hud').style.display = 'block';
+}
+function exitCar() {
+  if (!player.inCar) return;
+  player.inCar.occupied = false;
+  player.x = player.inCar.x + player.inCar.w + 10;
+  player.y = player.inCar.y;
+  player.inCar = null;
+  document.getElementById('vehicle-hud').style.display = 'none';
+}
+function enterBuilding(b) {
+  inInterior = true; currentBuilding = b;
+  document.getElementById('interior-screen').style.display = 'block';
+  drawInterior(b);
+  showLocationLabel('Entered ' + b.label);
+}
+function exitInterior() {
+  inInterior = false;
+  document.getElementById('interior-screen').style.display = 'none';
+  currentBuilding = null;
+}
+function showLocationLabel(text) {
+  const el = document.getElementById('location-label');
+  el.textContent = text; el.style.opacity = '1';
+  locLabelTimer = 150;
+}
+function dist(x1, y1, x2, y2) {
+  return Math.sqrt((x1-x2)**2 + (y1-y2)**2);
+}
+
+// ── Interior Drawing ───────────────────────────────────────────────────────
+const interiorThemes = {
+  house:    { bg:'#F9F0E6', items:[
+    {label:'Sofa',   x:120,y:120,w:160,h:60, c:'#C9B1FF'},
+    {label:'TV',     x:120,y:80, w:160,h:30, c:'#333'},
+    {label:'Table',  x:380,y:150,w:100,h:80, c:'#B5651D'},
+    {label:'Bed',    x:560,y:100,w:140,h:100,c:'#F8C8D4'},
+    {label:'Kitchen',x:560,y:280,w:160,h:80, c:'#A8D8B9'},
+  ]},
+  school:   { bg:'#EAF4FB', items:[
+    {label:'Desks',  x:80, y:100,w:600,h:40, c:'#C9B1FF'},
+    {label:'Desks',  x:80, y:170,w:600,h:40, c:'#C9B1FF'},
+    {label:'Desks',  x:80, y:240,w:600,h:40, c:'#C9B1FF'},
+    {label:'Board',  x:80, y:350,w:500,h:60, c:'#7EC8E3'},
+    {label:'Desk',   x:630,y:350,w:80, h:60, c:'#E8D5B7'},
+  ]},
+  hospital: { bg:'#F0FFF4', items:[
+    {label:'Bed 1',  x:80, y:100,w:120,h:70, c:'#fff'},
+    {label:'Bed 2',  x:240,y:100,w:120,h:70, c:'#fff'},
+    {label:'Bed 3',  x:400,y:100,w:120,h:70, c:'#fff'},
+    {label:'Counter',x:80, y:320,w:400,h:50, c:'#A8D8B9'},
+    {label:'Chairs', x:550,y:200,w:160,h:100,c:'#F8C8D4'},
+  ]},
+  police:   { bg:'#EAF4FB', items:[
+    {label:'Desk',   x:200,y:120,w:200,h:80, c:'#7EC8E3'},
+    {label:'Cells',  x:500,y:80, w:200,h:300,c:'#aaa'},
+    {label:'Lockers',x:80, y:80, w:60, h:250,c:'#555'},
+  ]},
+  prison:   { bg:'#E0E0E0', items:[
+    {label:'Cell 1', x:80, y:80, w:120,h:120,c:'#aaa'},
+    {label:'Cell 2', x:240,y:80, w:120,h:120,c:'#aaa'},
+    {label:'Cell 3', x:400,y:80, w:120,h:120,c:'#aaa'},
+    {label:'Yard',   x:80, y:300,w:500,h:140,c:'#c5c5a0'},
+  ]},
+  pizza:    { bg:'#FFF9E6', items:[
+    {label:'Table 1',x:80, y:120,w:100,h:80, c:'#FFE066'},
+    {label:'Table 2',x:220,y:120,w:100,h:80, c:'#FFE066'},
+    {label:'Table 3',x:360,y:120,w:100,h:80, c:'#FFE066'},
+    {label:'Counter',x:80, y:320,w:450,h:60, c:'#E34234'},
+    {label:'Oven',   x:560,y:120,w:100,h:160,c:'#555'},
+  ]},
+  bank:     { bg:'#FFFFF0', items:[
+    {label:'Tellers',x:80, y:200,w:500,h:60, c:'#F4D03F'},
+    {label:'Vault',  x:600,y:100,w:120,h:180,c:'#888'},
+    {label:'Chairs', x:80, y:100,w:200,h:80, c:'#E8D5B7'},
+  ]},
+  mansion:  { bg:'#F9F3E3', items:[
+    {label:'Grand Piano',x:80, y:80, w:160,h:100,c:'#222'},
+    {label:'Dining Table',x:300,y:120,w:240,h:100,c:'#B5651D'},
+    {label:'Pool',   x:100,y:300,w:300,h:160,c:'#7EC8E3'},
+    {label:'Bar',    x:500,y:280,w:200,h:80, c:'#A8D8B9'},
+    {label:'Fireplace',x:620,y:80,w:100,h:80, c:'#E34234'},
+  ]},
+  dealer:   { bg:'#F0F8FF', items:[
+    {label:'Car Display',x:80, y:120,w:120,h:70, c:'#E34234'},
+    {label:'Car Display',x:240,y:120,w:120,h:70, c:'#7EC8E3'},
+    {label:'Car Display',x:400,y:120,w:120,h:70, c:'#F9E05E'},
+    {label:'Desk',   x:500,y:320,w:200,h:80, c:'#B5E7A0'},
+    {label:'Showroom',x:80,y:280,w:350,h:100,c:'#ddd'},
+  ]},
+};
+function drawInterior(b) {
+  const theme = interiorThemes[b.id] || interiorThemes.house;
+  ictx.fillStyle = theme.bg;
+  ictx.fillRect(0, 0, 800, 560);
+  // Walls
+  ictx.strokeStyle = '#ccc'; ictx.lineWidth = 3;
+  ictx.strokeRect(40, 40, 720, 480);
+  // Floor pattern
+  ictx.strokeStyle = 'rgba(0,0,0,0.05)'; ictx.lineWidth = 1;
+  for (let gx=40;gx<760;gx+=40) { ictx.beginPath(); ictx.moveTo(gx,40); ictx.lineTo(gx,520); ictx.stroke(); }
+  for (let gy=40;gy<520;gy+=40) { ictx.beginPath(); ictx.moveTo(40,gy); ictx.lineTo(760,gy); ictx.stroke(); }
+  // Items
+  theme.items.forEach(item => {
+    ictx.fillStyle = item.c;
+    ictx.beginPath();
+    ictx.roundRect(item.x, item.y, item.w, item.h, 6);
+    ictx.fill();
+    ictx.strokeStyle = 'rgba(0,0,0,0.15)'; ictx.lineWidth = 1;
+    ictx.stroke();
+    ictx.fillStyle = 'rgba(0,0,0,0.5)';
+    ictx.font = '11px Segoe UI';
+    ictx.textAlign = 'center';
+    ictx.fillText(item.label, item.x + item.w/2, item.y + item.h/2 + 4);
+  });
+  // Title
+  ictx.fillStyle = 'rgba(0,0,0,0.7)';
+  ictx.font = 'bold 18px Segoe UI';
+  ictx.textAlign = 'left';
+  ictx.fillText(b.label, 48, 28);
+}
+
+// ── Collision ──────────────────────────────────────────────────────────────
+function rectOverlap(ax,ay,aw,ah, bx,by,bw,bh) {
+  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+}
+function checkCollision(nx, ny, w, h) {
+  for (const b of buildings) {
+    if (rectOverlap(nx, ny, w, h, b.x, b.y, b.w, b.h)) return true;
+  }
+  if (nx < 0 || ny < 0 || nx+w > WORLD_W || ny+h > WORLD_H) return true;
+  return false;
+}
+
+// ── Update ─────────────────────────────────────────────────────────────────
+function update() {
+  if (inInterior || customiseOpen || chatOpen) return;
+  dayTime = (dayTime + DAY_SPEED) % 1;
+  moneyTimer++;
+  if (moneyTimer >= 3600) { money += 50; moneyTimer = 0; document.getElementById('money').textContent = money; }
+  if (locLabelTimer > 0) {
+    locLabelTimer--;
+    if (locLabelTimer === 0) document.getElementById('location-label').style.opacity = '0';
+  }
+  // Time string
+  const h24 = Math.floor(dayTime * 24);
+  const min = Math.floor((dayTime * 24 * 60) % 60);
+  const ampm = h24 >= 12 ? 'PM' : 'AM';
+  const h12 = ((h24 % 12) || 12);
+  document.getElementById('time-str').textContent = `${h12}:${min.toString().padStart(2,'0')} ${ampm}`;
+
+  if (player.inCar) {
+    // Driving
+    const car = player.inCar;
+    let nx = car.x, ny = car.y;
+    if (keys['w'] || keys['arrowup'])    ny -= CAR_SPEED;
+    if (keys['s'] || keys['arrowdown'])  ny += CAR_SPEED;
+    if (keys['a'] || keys['arrowleft'])  nx -= CAR_SPEED;
+    if (keys['d'] || keys['arrowright']) nx += CAR_SPEED;
+    if (!checkCollision(nx, ny, car.w, car.h)) { car.x = nx; car.y = ny; }
+    player.x = car.x + car.w/2 - player.w/2;
+    player.y = car.y + car.h/2 - player.h/2;
+  } else {
+    let nx = player.x, ny = player.y;
+    if (keys['w'] || keys['arrowup'])    ny -= SPEED;
+    if (keys['s'] || keys['arrowdown'])  ny += SPEED;
+    if (keys['a'] || keys['arrowleft'])  nx -= SPEED;
+    if (keys['d'] || keys['arrowright']) nx += SPEED;
+    if (!checkCollision(nx, ny, player.w, player.h)) { player.x = nx; player.y = ny; }
+  }
+  camera.x = Math.max(0, Math.min(player.x - W/2, WORLD_W - W));
+  camera.y = Math.max(0, Math.min(player.y - H/2, WORLD_H - H));
+  if (player.chatTimer > 0) player.chatTimer--;
+
+  // Near label
+  nearLabel = '';
+  for (const car of cars) {
+    if (!car.occupied && !player.inCar && dist(player.x, player.y, car.x+car.w/2, car.y+car.h/2) < 50) {
+      nearLabel = `Press E to enter ${car.label}`; break;
+    }
+  }
+  if (!nearLabel && !player.inCar) {
+    for (const b of buildings) {
+      if (dist(player.x, player.y, b.door.x, b.door.y) < 55) {
+        nearLabel = `Press E to enter ${b.label}`; break;
+      }
+    }
+  }
+  if (player.inCar) nearLabel = 'Press E to exit car';
+}
+
+// ── Draw ───────────────────────────────────────────────────────────────────
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const cx = camera.x, cy = camera.y;
+
+  // Grass background
+  ctx.fillStyle = '#A8D8A8';
+  ctx.fillRect(0, 0, W, H);
+  // Grass texture dots
+  ctx.fillStyle = 'rgba(0,0,0,0.04)';
+  for (let gx=0;gx<WORLD_W;gx+=20) for (let gy=0;gy<WORLD_H;gy+=20) {
+    const sx = gx - cx, sy = gy - cy;
+    if (sx>-10&&sx<W+10&&sy>-10&&sy<H+10) { ctx.beginPath(); ctx.arc(sx,sy,1,0,Math.PI*2); ctx.fill(); }
+  }
+
+  // Roads
+  roads.forEach(r => {
+    ctx.fillStyle = '#C8C8C8';
+    ctx.fillRect(r.x-cx, r.y-cy, r.w, r.h);
+    // Road markings
+    ctx.fillStyle = '#E8E8E8';
+    if (r.h < r.w) { // horizontal
+      for (let dx=r.x;dx<r.x+r.w;dx+=60) {
+        const sx = dx-cx, sy = r.y+r.h/2-cy;
+        if (sx>-60&&sx<W+60) { ctx.fillRect(sx, sy-2, 30, 4); }
+      }
+    } else { // vertical
+      for (let dy=r.y;dy<r.y+r.h;dy+=60) {
+        const sx = r.x+r.w/2-cx, sy = dy-cy;
+        if (sy>-60&&sy<H+60) { ctx.fillRect(sx-2, sy, 4, 30); }
+      }
+    }
+  });
+
+  // Pavements
+  roads.forEach(r => {
+    ctx.fillStyle = '#DCDCDC';
+    if (r.h < r.w) {
+      ctx.fillRect(r.x-cx, r.y-cy, r.w, 8);
+      ctx.fillRect(r.x-cx, r.y+r.h-8-cy, r.w, 8);
+    } else {
+      ctx.fillRect(r.x-cx, r.y-cy, 8, r.h);
+      ctx.fillRect(r.x+r.w-8-cx, r.y-cy, 8, r.h);
+    }
+  });
+
+  // Buildings
+  buildings.forEach(b => {
+    const bx = b.x-cx, by = b.y-cy;
+    if (bx+b.w<0||bx>W||by+b.h<0||by>H) return;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(bx+6, by+6, b.w, b.h);
+    // Body
+    ctx.fillStyle = b.colour;
+    ctx.beginPath(); ctx.roundRect(bx,by,b.w,b.h,8); ctx.fill();
+    // Outline
+    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(bx,by,b.w,b.h,8); ctx.stroke();
+    // Windows
+    ctx.fillStyle = 'rgba(180,220,255,0.7)';
+    [[20,20],[60,20],[20,60],[60,60]].forEach(([wx,wy]) => {
+      if (wx+20 < b.w-10 && wy+20 < b.h-20) {
+        ctx.fillRect(bx+wx, by+wy, 22, 18);
+        ctx.strokeStyle='rgba(100,160,220,0.5)'; ctx.lineWidth=1;
+        ctx.strokeRect(bx+wx,by+wy,22,18);
+      }
+    });
+    // Door
+    ctx.fillStyle = '#8B5E3C';
+    ctx.fillRect(b.door.x-cx-8, b.door.y-cy-20, 16, 20);
+    // Label
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.font = 'bold 11px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(b.label, bx+b.w/2, by+b.h+14);
+  });
+
+  // Cars
+  cars.forEach(car => {
+    const cx2 = car.x-cx, cy2 = car.y-cy;
+    if (cx2+car.w<0||cx2>W||cy2+car.h<0||cy2>H) return;
+    ctx.save();
+    ctx.translate(cx2+car.w/2, cy2+car.h/2);
+    ctx.rotate(car.angle);
+    // Body
+    ctx.fillStyle = car.colour;
+    ctx.beginPath(); ctx.roundRect(-car.w/2,-car.h/2,car.w,car.h,5); ctx.fill();
+    // Roof
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillRect(-car.w/2+8, -car.h/2+4, car.w-16, car.h-8);
+    // Windscreen
+    ctx.fillStyle = 'rgba(180,220,255,0.6)';
+    ctx.fillRect(-car.w/2+6, -car.h/2+4, car.w-12, 8);
+    // Wheels
+    ctx.fillStyle = '#222';
+    [[-car.w/2+2,-car.h/2],[car.w/2-8,-car.h/2],[-car.w/2+2,car.h/2-4],[car.w/2-8,car.h/2-4]].forEach(([wx,wy]) => {
+      ctx.fillRect(wx,wy,6,4);
+    });
+    // Headlights (night)
+    if (dayTime < 0.2 || dayTime > 0.8) {
+      ctx.fillStyle = 'rgba(255,255,200,0.9)';
+      ctx.fillRect(car.w/2-3, -car.h/2+4, 3, 5);
+      ctx.fillRect(car.w/2-3, car.h/2-9, 3, 5);
+    }
+    ctx.restore();
+    // Label
+    if (!car.occupied) {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.font='10px Segoe UI'; ctx.textAlign='center';
+      ctx.fillText(car.label, cx2+car.w/2, cy2-4);
+    }
+  });
+
+  // Player
+  const px = player.x - cx, py = player.y - cy;
+  if (!player.inCar) {
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.beginPath(); ctx.ellipse(px+player.w/2,py+player.h+2,player.w/2,4,0,0,Math.PI*2); ctx.fill();
+    // Body / shirt
+    ctx.fillStyle = player.shirt;
+    ctx.fillRect(px, py+8, player.w, player.h-8);
+    // Head
+    ctx.fillStyle = player.skin;
+    ctx.beginPath(); ctx.roundRect(px+2, py, player.w-4, 14, 7); ctx.fill();
+    // Hair
+    ctx.fillStyle = player.hair;
+    ctx.beginPath(); ctx.roundRect(px+2, py, player.w-4, 7, 7); ctx.fill();
+    // Eyes
+    ctx.fillStyle = '#333';
+    ctx.fillRect(px+5, py+6, 3, 3);
+    ctx.fillRect(px+player.w-8, py+6, 3, 3);
+    // Name tag
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.font='bold 10px Segoe UI'; ctx.textAlign='center';
+    const tw = ctx.measureText(player.name).width + 10;
+    ctx.fillRect(px+player.w/2-tw/2, py-16, tw, 12);
+    ctx.fillStyle='#fff'; ctx.fillText(player.name, px+player.w/2, py-6);
+    // Chat bubble
+    if (player.chatTimer > 0) {
+      const msg = player.chatMsg;
+      ctx.font='11px Segoe UI';
+      const mw = ctx.measureText(msg).width + 14;
+      const bx2=px+player.w/2-mw/2, by2=py-40;
+      ctx.fillStyle='rgba(255,255,255,0.9)';
+      ctx.beginPath(); ctx.roundRect(bx2,by2,mw,20,6); ctx.fill();
+      ctx.fillStyle='#333'; ctx.fillText(msg, px+player.w/2, by2+14);
+      // Tail
+      ctx.beginPath(); ctx.moveTo(px+player.w/2-5,by2+20); ctx.lineTo(px+player.w/2+5,by2+20); ctx.lineTo(px+player.w/2,by2+26); ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
+    }
+  }
+
+  // Nearby prompt
+  if (nearLabel) {
+    ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.font='12px Segoe UI'; ctx.textAlign='center';
+    const nw=ctx.measureText(nearLabel).width+20;
+    ctx.beginPath(); ctx.roundRect(W/2-nw/2, H-90, nw, 22, 6); ctx.fill();
+    ctx.fillStyle='#f9e05e'; ctx.fillText(nearLabel, W/2, H-75);
+  }
+
+  // Day/night overlay
+  let alpha = 0;
+  if (dayTime < 0.2) alpha = 0.55 * (1 - dayTime/0.2);
+  else if (dayTime > 0.8) alpha = 0.55 * ((dayTime-0.8)/0.2);
+  if (alpha > 0) {
+    ctx.fillStyle = `rgba(10,10,40,${alpha})`;
+    ctx.fillRect(0,0,W,H);
+    // Stars at night
+    if (alpha > 0.3) {
+      ctx.fillStyle = `rgba(255,255,255,${(alpha-0.3)*2})`;
+      [[50,30],[150,20],[280,45],[420,15],[560,35],[680,25],[750,50],[100,55],[350,10],[600,55]].forEach(([sx,sy]) => {
+        ctx.beginPath(); ctx.arc(sx,sy,1.5,0,Math.PI*2); ctx.fill();
+      });
+    }
+  }
+}
+
+// ── Minimap ────────────────────────────────────────────────────────────────
+function drawMinimap() {
+  const scaleX = 120/WORLD_W, scaleY = 90/WORLD_H;
+  mctx.fillStyle='#5a8a5a'; mctx.fillRect(0,0,120,90);
+  // Roads
+  roads.forEach(r => { mctx.fillStyle='#aaa'; mctx.fillRect(r.x*scaleX,r.y*scaleY,r.w*scaleX,r.h*scaleY); });
+  // Buildings
+  buildings.forEach(b => { mctx.fillStyle=b.colour; mctx.fillRect(b.x*scaleX,b.y*scaleY,b.w*scaleX,b.h*scaleY); });
+  // Cars
+  cars.forEach(c => { mctx.fillStyle=c.colour; mctx.fillRect(c.x*scaleX,c.y*scaleY,4,3); });
+  // Player
+  mctx.fillStyle='#fff';
+  mctx.beginPath(); mctx.arc(player.x*scaleX,player.y*scaleY,3,0,Math.PI*2); mctx.fill();
+  // Viewport rect
+  mctx.strokeStyle='rgba(255,255,255,0.4)'; mctx.lineWidth=1;
+  mctx.strokeRect(camera.x*scaleX, camera.y*scaleY, W*scaleX, H*scaleY);
+}
+
+// ── Game Loop ──────────────────────────────────────────────────────────────
+function loop() {
+  update();
+  draw();
+  drawMinimap();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
