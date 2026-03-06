@@ -18,11 +18,64 @@ body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif}
 #crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
 #crosshair::after{width:100%;height:2px;top:50%;transform:translateY(-50%)}
 #location-popup{position:absolute;top:42%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#f9e05e;font-size:1rem;font-weight:bold;padding:8px 22px;border-radius:10px;opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;border:1px solid rgba(249,224,94,.3)}
-#prompt{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);color:#f9e05e;font-size:12px;padding:5px 16px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
-#chatbox{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:340px;background:rgba(0,0,0,.65);border-radius:10px;border:1px solid rgba(255,255,255,.12);padding:8px;pointer-events:all;backdrop-filter:blur(4px)}
-#chatlog{height:55px;overflow-y:auto;font-size:11px;color:#ddd;margin-bottom:5px;padding:2px 4px}
-#chatlog div{margin-bottom:2px}#chatlog .nm{color:#f8c8d4;font-weight:bold}
-#chatin{display:none;width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:5px;padding:4px 8px;font-size:12px;outline:none}
+#prompt{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#f9e05e;font-size:12px;padding:6px 18px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;border:1px solid rgba(249,224,94,.3)}
+/* Chat box */
+#chatbox{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:380px;background:rgba(0,0,0,.7);border-radius:10px;border:1px solid rgba(255,255,255,.12);padding:8px;pointer-events:all;backdrop-filter:blur(4px)}
+#chatlog{height:70px;overflow-y:auto;font-size:11px;color:#ddd;margin-bottom:5px;padding:2px 4px}
+#chatlog div{margin-bottom:2px}
+#chatlog .nm{font-weight:bold}
+#chatlog .nm.player{color:#f8c8d4}
+#chatlog .nm.npc{color:#a8d8ea}
+#chatlog .nm.baby{color:#ffb3d9}
+#chatlog .nm.sys{color:#f9e05e}
+#chatin{display:none;width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:5px;padding:4px 8px;font-size:12px;outline:none}
+/* NPC dialogue panel */
+#npc-dialog{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,8,28,.97);border:2px solid #a8d8ea;border-radius:16px;padding:18px 22px;color:#fff;display:none;z-index:25;pointer-events:all;width:420px;backdrop-filter:blur(10px)}
+#npc-dialog-name{color:#a8d8ea;font-size:1.1rem;font-weight:bold;margin-bottom:4px}
+#npc-dialog-role{color:#888;font-size:11px;margin-bottom:12px}
+#npc-dialog-log{height:130px;overflow-y:auto;font-size:12px;color:#ddd;margin-bottom:10px;padding:4px 6px;background:rgba(255,255,255,.04);border-radius:8px;line-height:1.6}
+#npc-dialog-log .you{color:#f8c8d4}
+#npc-dialog-log .them{color:#a8d8ea}
+#npc-dialog-typing{color:#888;font-size:11px;height:14px;margin-bottom:6px;font-style:italic}
+#npc-dialog-input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;margin-bottom:8px}
+#npc-dialog-btns{display:flex;gap:8px}
+.npc-btn{flex:1;padding:6px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold}
+#npc-send{background:#a8d8ea;color:#1a1a2e}
+#npc-close{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+/* Pet shop */
+#petpanel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,28,.97);border:2px solid #FFB347;border-radius:16px;padding:16px 20px;color:#fff;display:none;z-index:25;pointer-events:all;width:480px;max-height:85vh;overflow-y:auto;backdrop-filter:blur(8px)}
+#petpanel h2{color:#FFB347;text-align:center;margin-bottom:12px}
+.pet-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.pet-item{background:rgba(255,179,71,.08);border:2px solid transparent;border-radius:10px;padding:8px 4px;cursor:pointer;text-align:center;font-size:10px}
+.pet-item:hover{background:rgba(255,179,71,.18)}
+.pet-item.owned{border-color:#FFB347}
+.pet-item .pico{font-size:1.8rem;display:block;margin-bottom:3px}
+.pet-item .pnm{color:#ccc}
+.pet-item .pprc{color:#f9e05e;font-size:10px}
+.held-display{background:rgba(255,179,71,.1);border:1px solid rgba(255,179,71,.3);border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px;display:none}
+/* Carnival */
+#carnivalpanel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,28,.97);border:2px solid #FF6B9D;border-radius:16px;padding:16px 20px;color:#fff;display:none;z-index:25;pointer-events:all;width:440px;backdrop-filter:blur(8px)}
+#carnivalpanel h2{color:#FF6B9D;text-align:center;margin-bottom:12px}
+.carnival-act{background:rgba(255,107,157,.08);border:2px solid rgba(255,107,157,.3);border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer;font-size:12px}
+.carnival-act:hover{background:rgba(255,107,157,.18)}
+.carnival-act b{color:#FF6B9D}
+/* Crèche */
+#crechepanel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,28,.97);border:2px solid #ffb3d9;border-radius:16px;padding:16px 20px;color:#fff;display:none;z-index:25;pointer-events:all;width:400px;backdrop-filter:blur(8px)}
+#crechepanel h2{color:#ffb3d9;text-align:center;margin-bottom:12px}
+/* Shop */
+#shoppanel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,28,.97);border:2px solid #f9e05e;border-radius:16px;padding:16px 20px;color:#fff;display:none;z-index:25;pointer-events:all;width:560px;max-height:88vh;overflow-y:auto;backdrop-filter:blur(8px)}
+#shoppanel h2{color:#f9e05e;text-align:center;margin-bottom:10px}
+.shop-tabs{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.shop-tab{flex:1;padding:5px 3px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;font-size:10px;text-align:center;color:#ccc;white-space:nowrap}
+.shop-tab.on{background:#f9e05e;color:#1a1a2e;font-weight:bold}
+.shop-sec{display:none}.shop-sec.on{display:block}
+.shop-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.shop-item{background:rgba(255,255,255,.06);border:2px solid transparent;border-radius:8px;padding:5px 3px;cursor:pointer;text-align:center;font-size:9px;color:#bbb}
+.shop-item:hover{background:rgba(255,255,255,.12)}
+.shop-item.owned{border-color:#f9e05e;background:rgba(249,224,94,.08);color:#fff}
+.shop-item.equipped{border-color:#2ECC71;background:rgba(46,204,113,.1);color:#fff}
+.shop-item .sico{font-size:1.3rem;display:block;margin-bottom:2px}
+.shop-item .sprc{color:#f9e05e;font-size:9px}
 /* Wardrobe */
 #wdrobe{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(10,10,28,.97);border:2px solid #f8c8d4;border-radius:16px;padding:14px 18px;color:#fff;display:none;z-index:20;pointer-events:all;width:580px;max-height:90vh;overflow-y:auto;backdrop-filter:blur(8px)}
 #wdrobe h2{color:#f8c8d4;font-size:1rem;margin-bottom:12px;text-align:center}
@@ -35,55 +88,107 @@ body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif}
 .wt{flex:1;padding:4px 2px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;font-size:10px;text-align:center;color:#ccc;white-space:nowrap}
 .wt.on{background:#f8c8d4;color:#1a1a2e;font-weight:bold}
 .wsec{display:none}.wsec.on{display:block}
-.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.wgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px}
 .wi{background:rgba(255,255,255,.06);border:2px solid transparent;border-radius:8px;padding:5px 3px;cursor:pointer;text-align:center;font-size:9px;color:#bbb}
 .wi:hover{background:rgba(255,255,255,.12)}.wi.on{border-color:#f8c8d4;background:rgba(248,200,212,.1);color:#fff}
-.wi .ico{font-size:1.4rem;display:block;margin-bottom:2px}
+.wi .ico{font-size:1.2rem;display:block;margin-bottom:2px}
 .crow{margin-bottom:9px}.crow label{font-size:11px;color:#aaa;display:block;margin-bottom:4px}
 .swts{display:flex;gap:5px;flex-wrap:wrap}
 .sw{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
 .sw.on{border-color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.3)}
 .cbtn{margin-top:10px;width:100%;padding:7px;background:#f8c8d4;color:#1a1a2e;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:12px}
 /* minimap */
-#minimap{position:absolute;top:14px;right:14px;width:130px;height:100px;border-radius:8px;border:2px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);overflow:hidden}
-#minimap canvas{width:130px;height:100px}
+#minimap{position:absolute;top:14px;right:14px;width:140px;height:110px;border-radius:8px;border:2px solid rgba(255,255,255,.2);background:rgba(0,0,0,.5);overflow:hidden}
+#minimap canvas{width:140px;height:110px}
 /* loading */
 #loading{position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a2e;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity 1s}
 #loading h1{color:#f8c8d4;font-size:1.8rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px}
 #loading p{color:#aaa;font-size:.9rem}
 #loadbar{width:260px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:20px;overflow:hidden}
 #loadfill{height:100%;background:#f8c8d4;border-radius:3px;width:0%;transition:width .3s}
+/* tooltip */
+.close-x{position:absolute;top:10px;right:14px;background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;pointer-events:all}
+.close-x:hover{color:#fff}
 </style>
 </head>
 <body>
-<div id="loading">
-  <h1>🏘️ Brookhaven RP</h1>
-  <p>Loading 3D World...</p>
-  <div id="loadbar"><div id="loadfill"></div></div>
-</div>
+<div id="loading"><h1>🏘️ Brookhaven RP</h1><p>Loading 3D World...</p><div id="loadbar"><div id="loadfill"></div></div></div>
 <canvas id="c"></canvas>
 <div id="ui">
   <div id="hud">
-    <div class="hb">💰 $<b id="money">500</b></div>
-    <div class="hb" id="vhud" style="display:none">🚗 Driving — <b>Space</b> exit</div>
+    <div class="hb">💰 $<b id="money">1000</b></div>
+    <div class="hb" id="vhud" style="display:none">🚗 <b id="car-name">Driving</b> — <b>Space</b> exit | Speed: <b id="spd">0</b></div>
     <div class="hb">🕐 <b id="tstr">12:00 PM</b></div>
-    <div class="hb" id="loc-hud">📍 <b id="loc-name">Town Square</b></div>
+    <div class="hb">📍 <b id="loc-name">Town Square</b></div>
+    <div class="hb" id="pet-hud" style="display:none">🐾 Holding: <b id="pet-nm">—</b></div>
   </div>
-  <div id="minimap"><canvas id="mm" width="130" height="100"></canvas></div>
+  <div id="minimap"><canvas id="mm" width="140" height="110"></canvas></div>
   <div id="crosshair"></div>
   <div id="location-popup"></div>
   <div id="prompt"></div>
   <div id="ctrl">
-    <b>↑↓←→ / WASD</b> Move &nbsp; <b>Mouse</b> Look<br>
-    <b>Space</b> ⚔️ Swing / Exit Car &nbsp; <b>E</b> Enter/Drive<br>
-    <b>T</b> Chat &nbsp; <b>W</b> Wardrobe &nbsp; <b>ESC</b> Close
+    <b>↑↓←→/WASD</b> Move &nbsp; <b>Mouse drag</b> Look &nbsp; <b>Scroll</b> Zoom<br>
+    <b>E</b> Interact/Talk/Enter &nbsp; <b>Space</b> ⚔️ Swing / Exit Car<br>
+    <b>T</b> Chat &nbsp; <b>W</b> Wardrobe &nbsp; <b>S</b> Shop &nbsp; <b>ESC</b> Close
   </div>
   <div id="chatbox">
     <div id="chatlog"></div>
-    <input id="chatin" type="text" placeholder="Press T to chat..." maxlength="60">
+    <input id="chatin" type="text" placeholder="Say something... (Enter to send)" maxlength="80">
   </div>
+
+  <!-- NPC Dialogue -->
+  <div id="npc-dialog">
+    <button class="close-x" onclick="closeNpcDialog()">✕</button>
+    <div id="npc-dialog-name">NPC</div>
+    <div id="npc-dialog-role">Resident</div>
+    <div id="npc-dialog-log"></div>
+    <div id="npc-dialog-typing"></div>
+    <input id="npc-dialog-input" type="text" placeholder="Say something..." maxlength="120">
+    <div id="npc-dialog-btns">
+      <button class="npc-btn" id="npc-send" onclick="sendNpcMsg()">Send 💬</button>
+      <button class="npc-btn" id="npc-close" onclick="closeNpcDialog()">Goodbye 👋</button>
+    </div>
+  </div>
+
+  <!-- Pet Shop -->
+  <div id="petpanel">
+    <button class="close-x" onclick="closePanel('petpanel')">✕</button>
+    <h2>🐾 Pet Shop</h2>
+    <div id="held-pet-display" class="held-display"></div>
+    <div class="pet-grid" id="pet-grid"></div>
+    <button class="cbtn" onclick="closePanel('petpanel')">Close</button>
+  </div>
+
+  <!-- Carnival -->
+  <div id="carnivalpanel">
+    <button class="close-x" onclick="closePanel('carnivalpanel')">✕</button>
+    <h2>🎡 Carnival</h2>
+    <div id="carnival-acts"></div>
+    <button class="cbtn" onclick="closePanel('carnivalpanel')">Leave 🎠</button>
+  </div>
+
+  <!-- Crèche -->
+  <div id="crechepanel">
+    <button class="close-x" onclick="closePanel('crechepanel')">✕</button>
+    <h2>🍼 Little Stars Crèche</h2>
+    <p style="font-size:12px;color:#ccc;text-align:center;margin-bottom:12px">The babies are happy and safe! 👶</p>
+    <div id="creche-babies" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px"></div>
+    <button class="cbtn" onclick="closePanel('crechepanel')">Leave 🍼</button>
+  </div>
+
+  <!-- Shop -->
+  <div id="shoppanel">
+    <button class="close-x" onclick="closePanel('shoppanel')">✕</button>
+    <h2>🛍️ Brookhaven Shop</h2>
+    <div style="text-align:center;font-size:12px;color:#aaa;margin-bottom:8px">Balance: $<b id="shop-bal">1000</b></div>
+    <div class="shop-tabs" id="shop-tabs"></div>
+    <div id="shop-secs"></div>
+    <button class="cbtn" onclick="closePanel('shoppanel')">Close Shop</button>
+  </div>
+
   <!-- Wardrobe -->
   <div id="wdrobe">
+    <button class="close-x" onclick="closeW()">✕</button>
     <h2>👕 Wardrobe</h2>
     <div id="wdrobe-inner">
       <div id="preview-wrap">
@@ -105,23 +210,12 @@ body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif}
         </div>
         <div class="wsec" id="tab-hair">
           <div class="wgrid" id="hs-gr"></div>
-          <div class="crow"><label>Colour</label><div class="swts" id="hc-sw"></div></div>
+          <div class="crow"><label>Hair Colour</label><div class="swts" id="hc-sw"></div></div>
         </div>
-        <div class="wsec" id="tab-tops">
-          <div class="wgrid" id="tp-gr"></div>
-          <div class="crow"><label>Colour</label><div class="swts" id="tc-sw"></div></div>
-        </div>
-        <div class="wsec" id="tab-bots">
-          <div class="wgrid" id="bt-gr"></div>
-          <div class="crow"><label>Colour</label><div class="swts" id="bc-sw"></div></div>
-        </div>
-        <div class="wsec" id="tab-hats">
-          <div class="wgrid" id="ht-gr"></div>
-          <div class="crow"><label>Colour</label><div class="swts" id="htc-sw"></div></div>
-        </div>
-        <div class="wsec" id="tab-acc">
-          <div class="wgrid" id="ac-gr"></div>
-        </div>
+        <div class="wsec" id="tab-tops"><div class="wgrid" id="tp-gr"></div><div class="crow"><label>Colour</label><div class="swts" id="tc-sw"></div></div></div>
+        <div class="wsec" id="tab-bots"><div class="wgrid" id="bt-gr"></div><div class="crow"><label>Colour</label><div class="swts" id="bc-sw"></div></div></div>
+        <div class="wsec" id="tab-hats"><div class="wgrid" id="ht-gr"></div><div class="crow"><label>Colour</label><div class="swts" id="htc-sw"></div></div></div>
+        <div class="wsec" id="tab-acc"><div class="wgrid" id="ac-gr"></div></div>
         <button class="cbtn" onclick="closeW()">✓ Done</button>
       </div>
     </div>
@@ -131,495 +225,768 @@ body{background:#000;overflow:hidden;font-family:'Segoe UI',sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  BROOKHAVEN RP  —  3D Edition
+//  BROOKHAVEN RP  —  3D Edition v3
 // ═══════════════════════════════════════════════════════════════
 
-// ── Loading bar ────────────────────────────────────────────────
-let loadPct = 0;
-function setLoad(p){ loadPct=p; document.getElementById('loadfill').style.width=p+'%'; }
-function hideLoad(){ const el=document.getElementById('loading'); el.style.opacity='0'; setTimeout(()=>el.style.display='none',1000); }
+function setLoad(p){document.getElementById('loadfill').style.width=p+'%';}
+function hideLoad(){const e=document.getElementById('loading');e.style.opacity='0';setTimeout(()=>e.style.display='none',1000);}
 
-// ── Wardrobe data ──────────────────────────────────────────────
+// ── Player state ────────────────────────────────────────────────
+const P={sk:'#FDBCB4',ey:'#333',hs:'short',hc:'#4A3728',ts:'hoodie',tc:'#7EC8E3',bs:'jeans',bc:'#4A6FA5',hat:'none',htc:'#E34234',glasses:false,backpack:false,badge:false,scarf:false,mask:false,wings:false,halo:false,tail:false,earrings:false,necklace:false,nm:'Player'};
+let money=1000,heldPet=null,swingFrame=0;
+const owned={items:new Set(),pets:new Set()};
+
+// ── Wardrobe data (25 per category) ─────────────────────────────
 const SK_C=['#FDBCB4','#F1C27D','#E0AC69','#C68642','#8D5524','#FFCBA4','#A0522D'];
-const EY_C=['#333','#1a5276','#145a32','#784212','#6c3483','#c0392b'];
-const HC_C=['#4A3728','#B5651D','#E8D5B7','#2C2C2C','#E34234','#F4D03F','#FFB6C1','#7B68EE','#00CED1'];
-const TC_C=['#7EC8E3','#F8C8D4','#A8D8B9','#FFE066','#C9B1FF','#FF8C69','#fff','#333','#E34234','#2ECC71','#E67E22','#9B59B6'];
-const BC_C=['#4A6FA5','#333','#8B6914','#A8D8B9','#C8C8C8','#fff','#2C2C2C','#8e44ad','#c0392b','#e67e22'];
-const HT_C=['#E34234','#7EC8E3','#F9E05E','#333','#fff','#A8D8B9','#C9B1FF','#F8C8D4','#8B4513'];
-const HSTYLES=[{id:'none',ico:'🧑',lb:'Bald'},{id:'short',ico:'👱',lb:'Short'},{id:'long',ico:'👩',lb:'Long'},{id:'afro',ico:'🙎',lb:'Afro'},{id:'bun',ico:'👩‍🦱',lb:'Bun'},{id:'spiky',ico:'🦔',lb:'Spiky'},{id:'fringe',ico:'🧑‍🦱',lb:'Fringe'},{id:'curly',ico:'🧑‍🦳',lb:'Curly'}];
-const TOPS=[{id:'tee',ico:'👕',lb:'T-Shirt'},{id:'hoodie',ico:'🧥',lb:'Hoodie'},{id:'shirt',ico:'👔',lb:'Shirt'},{id:'vest',ico:'🦺',lb:'Vest'},{id:'suit',ico:'🤵',lb:'Suit'},{id:'polo',ico:'👗',lb:'Polo'},{id:'tank',ico:'🩱',lb:'Tank'},{id:'jumper',ico:'🧶',lb:'Jumper'}];
-const BOTS=[{id:'jeans',ico:'👖',lb:'Jeans'},{id:'shorts',ico:'🩳',lb:'Shorts'},{id:'skirt',ico:'👗',lb:'Skirt'},{id:'joggers',ico:'🩲',lb:'Joggers'},{id:'trousers',ico:'👔',lb:'Trousers'},{id:'leggings',ico:'🦵',lb:'Leggings'}];
-const HATS=[{id:'none',ico:'🚫',lb:'No Hat'},{id:'cap',ico:'🧢',lb:'Cap'},{id:'beanie',ico:'🎩',lb:'Beanie'},{id:'cowboy',ico:'🤠',lb:'Cowboy'},{id:'crown',ico:'👑',lb:'Crown'},{id:'chef',ico:'👨‍🍳',lb:'Chef'},{id:'police',ico:'👮',lb:'Police'},{id:'party',ico:'🎉',lb:'Party'}];
-const ACCS=[{id:'glasses',ico:'🕶️',lb:'Sunglasses'},{id:'backpack',ico:'🎒',lb:'Backpack'},{id:'badge',ico:'🏅',lb:'Badge'},{id:'scarf',ico:'🧣',lb:'Scarf'}];
+const EY_C=['#222','#1a5276','#145a32','#784212','#6c3483','#c0392b','#008080','#b8860b'];
+const HC_C=['#4A3728','#B5651D','#E8D5B7','#2C2C2C','#E34234','#F4D03F','#FFB6C1','#7B68EE','#00CED1','#228B22','#FF8C00','#800080'];
+const TC_C=['#7EC8E3','#F8C8D4','#A8D8B9','#FFE066','#C9B1FF','#FF8C69','#fff','#333','#E34234','#2ECC71','#E67E22','#9B59B6','#1ABC9C','#E74C3C','#3498DB'];
+const BC_C=['#4A6FA5','#333','#8B6914','#A8D8B9','#C8C8C8','#fff','#2C2C2C','#8e44ad','#c0392b','#e67e22','#1abc9c','#2980b9','#d35400','#16a085','#8e44ad'];
+const HT_C=['#E34234','#7EC8E3','#F9E05E','#333','#fff','#A8D8B9','#C9B1FF','#F8C8D4','#8B4513','#228B22','#FF8C00','#800080','#008080','#4169E1','#DC143C'];
 
-// Player appearance state
-const P = {
-  sk:'#FDBCB4',ey:'#333',hs:'short',hc:'#4A3728',
-  ts:'hoodie',tc:'#7EC8E3',bs:'jeans',bc:'#4A6FA5',
-  hat:'none',htc:'#E34234',
-  glasses:false,backpack:false,badge:false,scarf:false,
-  nm:'Player'
+const HSTYLES=[
+  {id:'none',ico:'🧑',lb:'Bald'},{id:'short',ico:'👱',lb:'Short'},{id:'long',ico:'👩',lb:'Long'},{id:'afro',ico:'🙎',lb:'Afro'},
+  {id:'bun',ico:'👩‍🦱',lb:'Bun'},{id:'spiky',ico:'🦔',lb:'Spiky'},{id:'fringe',ico:'🧑‍🦱',lb:'Fringe'},{id:'curly',ico:'🧑‍🦳',lb:'Curly'},
+  {id:'mohawk',ico:'🧟',lb:'Mohawk'},{id:'bob',ico:'💁',lb:'Bob'},{id:'twists',ico:'🧕',lb:'Twists'},{id:'dreads',ico:'🧑‍🎤',lb:'Dreads'},
+  {id:'pigtails',ico:'👧',lb:'Pigtails'},{id:'ponytail',ico:'💆',lb:'Ponytail'},{id:'side',ico:'🤷',lb:'Side Swept'},
+  {id:'messy',ico:'🤦',lb:'Messy'},{id:'wave',ico:'🌊',lb:'Wavy'},{id:'undercut',ico:'💈',lb:'Undercut'},
+  {id:'cornrows',ico:'✨',lb:'Cornrows'},{id:'fade',ico:'🪒',lb:'Fade'},
+  {id:'ringlets',ico:'🌀',lb:'Ringlets'},{id:'quiff',ico:'🎸',lb:'Quiff'},
+  {id:'bowl',ico:'🍜',lb:'Bowl Cut'},{id:'emo',ico:'🖤',lb:'Emo'},{id:'perm',ico:'🔄',lb:'Perm'}
+];
+const TOPS=[
+  {id:'tee',ico:'👕',lb:'T-Shirt'},{id:'hoodie',ico:'🧥',lb:'Hoodie'},{id:'shirt',ico:'👔',lb:'Shirt'},{id:'vest',ico:'🦺',lb:'Vest'},
+  {id:'suit',ico:'🤵',lb:'Suit'},{id:'polo',ico:'🏌️',lb:'Polo'},{id:'tank',ico:'🩱',lb:'Tank'},{id:'jumper',ico:'🧶',lb:'Jumper'},
+  {id:'crop',ico:'✂️',lb:'Crop Top'},{id:'blazer',ico:'🎩',lb:'Blazer'},{id:'bomber',ico:'💣',lb:'Bomber'},{id:'trench',ico:'🌧️',lb:'Trench'},
+  {id:'kimono',ico:'👘',lb:'Kimono'},{id:'flannel',ico:'🟥',lb:'Flannel'},{id:'band',ico:'🎸',lb:'Band Tee'},
+  {id:'hawaiian',ico:'🌺',lb:'Hawaiian'},{id:'rugby',ico:'🏉',lb:'Rugby'},{id:'tracksuit',ico:'🏃',lb:'Tracksuit'},
+  {id:'varsity',ico:'🏆',lb:'Varsity'},{id:'denim',ico:'👖',lb:'Denim Jacket'},
+  {id:'leather',ico:'🏍️',lb:'Leather'},{id:'puffer',ico:'🧊',lb:'Puffer'},{id:'cape',ico:'🦸',lb:'Cape'},
+  {id:'overalls',ico:'👷',lb:'Overalls'},{id:'cardigan',ico:'🧸',lb:'Cardigan'}
+];
+const BOTS=[
+  {id:'jeans',ico:'👖',lb:'Jeans'},{id:'shorts',ico:'🩳',lb:'Shorts'},{id:'skirt',ico:'👗',lb:'Skirt'},
+  {id:'joggers',ico:'🏃',lb:'Joggers'},{id:'trousers',ico:'👔',lb:'Trousers'},{id:'leggings',ico:'🦵',lb:'Leggings'},
+  {id:'miniskirt',ico:'💃',lb:'Mini Skirt'},{id:'flares',ico:'🎸',lb:'Flares'},{id:'cargos',ico:'🪖',lb:'Cargos'},
+  {id:'boardshorts',ico:'🏄',lb:'Board Shorts'},{id:'culottes',ico:'🌸',lb:'Culottes'},{id:'palazzo',ico:'🌊',lb:'Palazzo'},
+  {id:'capri',ico:'⚓',lb:'Capri'},{id:'bermuda',ico:'🏖️',lb:'Bermuda'},{id:'pleated',ico:'🎀',lb:'Pleated'},
+  {id:'dungarees',ico:'👷',lb:'Dungarees'},{id:'chinos',ico:'👔',lb:'Chinos'},{id:'harem',ico:'🧘',lb:'Harem'},
+  {id:'pleather',ico:'🖤',lb:'Pleather'},{id:'denim-shorts',ico:'🌞',lb:'Denim Shorts'},
+  {id:'maxi',ico:'🌅',lb:'Maxi Skirt'},{id:'cycling',ico:'🚴',lb:'Cycling'},{id:'wrap',ico:'🎁',lb:'Wrap Skirt'},
+  {id:'boho',ico:'🌼',lb:'Boho'},{id:'ripped',ico:'⚡',lb:'Ripped'}
+];
+const HATS=[
+  {id:'none',ico:'🚫',lb:'No Hat'},{id:'cap',ico:'🧢',lb:'Cap'},{id:'beanie',ico:'🎩',lb:'Beanie'},{id:'cowboy',ico:'🤠',lb:'Cowboy'},
+  {id:'crown',ico:'👑',lb:'Crown'},{id:'chef',ico:'👨‍🍳',lb:'Chef'},{id:'police',ico:'👮',lb:'Police'},
+  {id:'party',ico:'🎉',lb:'Party'},{id:'tophat',ico:'🎩',lb:'Top Hat'},{id:'beret',ico:'🎨',lb:'Beret'},
+  {id:'baseball',ico:'⚾',lb:'Baseball'},{id:'sun',ico:'🌞',lb:'Sun Hat'},{id:'bucket',ico:'🪣',lb:'Bucket'},
+  {id:'fedora',ico:'🕵️',lb:'Fedora'},{id:'knight',ico:'⚔️',lb:'Knight'},{id:'wizard',ico:'🧙',lb:'Wizard'},
+  {id:'santa',ico:'🎅',lb:'Santa'},{id:'witch',ico:'🧙‍♀️',lb:'Witch'},{id:'tiara',ico:'💎',lb:'Tiara'},
+  {id:'headphones',ico:'🎧',lb:'Headphones'},{id:'headband',ico:'🎀',lb:'Headband'},
+  {id:'viking',ico:'🪖',lb:'Viking'},{id:'fez',ico:'🇹🇷',lb:'Fez'},{id:'flower',ico:'🌸',lb:'Flower Crown'},
+  {id:'snapback',ico:'🏀',lb:'Snapback'}
+];
+const ACCS=[
+  {id:'glasses',ico:'🕶️',lb:'Sunglasses'},{id:'backpack',ico:'🎒',lb:'Backpack'},{id:'badge',ico:'🏅',lb:'Badge'},{id:'scarf',ico:'🧣',lb:'Scarf'},
+  {id:'mask',ico:'😷',lb:'Mask'},{id:'wings',ico:'🪽',lb:'Wings'},{id:'halo',ico:'😇',lb:'Halo'},{id:'tail',ico:'🦊',lb:'Fox Tail'},
+  {id:'earrings',ico:'💎',lb:'Earrings'},{id:'necklace',ico:'📿',lb:'Necklace'},
+  {id:'umbrella',ico:'☂️',lb:'Umbrella'},{id:'skateboard',ico:'🛹',lb:'Skateboard'},
+  {id:'guitar',ico:'🎸',lb:'Guitar'},{id:'camera',ico:'📷',lb:'Camera'},
+  {id:'roses',ico:'🌹',lb:'Roses'},{id:'balloon',ico:'🎈',lb:'Balloon'},
+  {id:'sword_acc',ico:'⚔️',lb:'Sword'},{id:'shield',ico:'🛡️',lb:'Shield'},
+  {id:'book',ico:'📚',lb:'Bookbag'},{id:'coffee',ico:'☕',lb:'Coffee Cup'},
+  {id:'phone',ico:'📱',lb:'Phone'},{id:'sunflower',ico:'🌻',lb:'Sunflower'},
+  {id:'bow',ico:'🎀',lb:'Hair Bow'},{id:'chains',ico:'⛓️',lb:'Chains'},
+  {id:'jetpack',ico:'🚀',lb:'Jetpack'}
+];
+
+// ── Shop inventory ──────────────────────────────────────────────
+const SHOP_ITEMS={
+  hats:[
+    {id:'cap',ico:'🧢',nm:'Cap',price:80},{id:'beanie',ico:'🎩',nm:'Beanie',price:60},{id:'cowboy',ico:'🤠',nm:'Cowboy',price:120},
+    {id:'crown',ico:'👑',nm:'Crown',price:500},{id:'chef',ico:'👨‍🍳',nm:'Chef',price:90},{id:'police',ico:'👮',nm:'Police Cap',price:110},
+    {id:'party',ico:'🎉',nm:'Party Hat',price:50},{id:'tophat',ico:'🎩',nm:'Top Hat',price:200},{id:'beret',ico:'🎨',nm:'Beret',price:70},
+    {id:'baseball',ico:'⚾',nm:'Baseball',price:65},{id:'sun',ico:'🌞',nm:'Sun Hat',price:85},{id:'bucket',ico:'🪣',nm:'Bucket',price:45},
+    {id:'fedora',ico:'🕵️',nm:'Fedora',price:150},{id:'knight',ico:'⚔️',nm:'Knight Helm',price:350},{id:'wizard',ico:'🧙',nm:'Wizard',price:300},
+    {id:'santa',ico:'🎅',nm:'Santa',price:180},{id:'witch',ico:'🧙‍♀️',nm:'Witch',price:220},{id:'tiara',ico:'💎',nm:'Tiara',price:400},
+    {id:'headphones',ico:'🎧',nm:'Headphones',price:250},{id:'headband',ico:'🎀',nm:'Headband',price:40},
+    {id:'viking',ico:'🪖',nm:'Viking',price:320},{id:'fez',ico:'🇹🇷',nm:'Fez',price:75},{id:'flower',ico:'🌸',nm:'Flower Crown',price:95},
+    {id:'snapback',ico:'🏀',nm:'Snapback',price:100},{id:'mohawk_hat',ico:'🧟',nm:'Mohawk Spikes',price:130}
+  ],
+  acc:[
+    {id:'glasses',ico:'🕶️',nm:'Sunglasses',price:70},{id:'backpack',ico:'🎒',nm:'Backpack',price:100},{id:'badge',ico:'🏅',nm:'Badge',price:60},
+    {id:'scarf',ico:'🧣',nm:'Scarf',price:55},{id:'mask',ico:'😷',nm:'Face Mask',price:35},{id:'wings',ico:'🪽',nm:'Wings',price:450},
+    {id:'halo',ico:'😇',nm:'Halo',price:380},{id:'tail',ico:'🦊',nm:'Fox Tail',price:200},{id:'earrings',ico:'💎',nm:'Earrings',price:85},
+    {id:'necklace',ico:'📿',nm:'Necklace',price:120},{id:'umbrella',ico:'☂️',nm:'Umbrella',price:90},{id:'skateboard',ico:'🛹',nm:'Skateboard',price:300},
+    {id:'guitar',ico:'🎸',nm:'Guitar',price:350},{id:'camera',ico:'📷',nm:'Camera',price:180},{id:'roses',ico:'🌹',nm:'Rose Bouquet',price:65},
+    {id:'balloon',ico:'🎈',nm:'Balloon',price:30},{id:'sword_acc',ico:'⚔️',nm:'Sword',price:420},{id:'shield',ico:'🛡️',nm:'Shield',price:380},
+    {id:'book',ico:'📚',nm:'Book Bag',price:110},{id:'coffee',ico:'☕',nm:'Coffee Cup',price:25},
+    {id:'phone',ico:'📱',nm:'Glowing Phone',price:160},{id:'sunflower',ico:'🌻',nm:'Sunflower',price:45},
+    {id:'bow',ico:'🎀',nm:'Hair Bow',price:50},{id:'chains',ico:'⛓️',nm:'Chains',price:140},{id:'jetpack',ico:'🚀',nm:'Jetpack',price:600}
+  ],
+  tops:[
+    {id:'tee',ico:'👕',nm:'T-Shirt',price:40},{id:'hoodie',ico:'🧥',nm:'Hoodie',price:80},{id:'shirt',ico:'👔',nm:'Shirt',price:60},
+    {id:'suit',ico:'🤵',nm:'Suit',price:200},{id:'blazer',ico:'🎩',nm:'Blazer',price:180},{id:'bomber',ico:'💣',nm:'Bomber',price:150},
+    {id:'trench',ico:'🌧️',nm:'Trench Coat',price:220},{id:'kimono',ico:'👘',nm:'Kimono',price:260},{id:'flannel',ico:'🟥',nm:'Flannel',price:70},
+    {id:'band',ico:'🎸',nm:'Band Tee',price:55},{id:'hawaiian',ico:'🌺',nm:'Hawaiian',price:65},{id:'rugby',ico:'🏉',nm:'Rugby',price:90},
+    {id:'tracksuit',ico:'🏃',nm:'Tracksuit',price:120},{id:'varsity',ico:'🏆',nm:'Varsity',price:160},{id:'denim',ico:'👖',nm:'Denim Jacket',price:140},
+    {id:'leather',ico:'🏍️',nm:'Leather',price:300},{id:'puffer',ico:'🧊',nm:'Puffer',price:130},{id:'cape',ico:'🦸',nm:'Cape',price:250},
+    {id:'overalls',ico:'👷',nm:'Overalls',price:95},{id:'cardigan',ico:'🧸',nm:'Cardigan',price:85},
+    {id:'vest',ico:'🦺',nm:'Vest',price:50},{id:'polo',ico:'🏌️',nm:'Polo',price:75},{id:'tank',ico:'🩱',nm:'Tank Top',price:35},
+    {id:'jumper',ico:'🧶',nm:'Jumper',price:88},{id:'crop',ico:'✂️',nm:'Crop Top',price:48}
+  ],
+  bots:[
+    {id:'jeans',ico:'👖',nm:'Jeans',price:70},{id:'shorts',ico:'🩳',nm:'Shorts',price:45},{id:'skirt',ico:'👗',nm:'Skirt',price:60},
+    {id:'joggers',ico:'🏃',nm:'Joggers',price:55},{id:'trousers',ico:'👔',nm:'Trousers',price:80},{id:'leggings',ico:'🦵',nm:'Leggings',price:50},
+    {id:'miniskirt',ico:'💃',nm:'Mini Skirt',price:65},{id:'flares',ico:'🎸',nm:'Flares',price:90},{id:'cargos',ico:'🪖',nm:'Cargos',price:75},
+    {id:'boardshorts',ico:'🏄',nm:'Board Shorts',price:60},{id:'culottes',ico:'🌸',nm:'Culottes',price:70},{id:'palazzo',ico:'🌊',nm:'Palazzo',price:85},
+    {id:'capri',ico:'⚓',nm:'Capri',price:65},{id:'bermuda',ico:'🏖️',nm:'Bermuda',price:55},{id:'pleated',ico:'🎀',nm:'Pleated',price:72},
+    {id:'dungarees',ico:'👷',nm:'Dungarees',price:95},{id:'chinos',ico:'👔',nm:'Chinos',price:85},{id:'harem',ico:'🧘',nm:'Harem',price:78},
+    {id:'pleather',ico:'🖤',nm:'Pleather',price:120},{id:'denim-shorts',ico:'🌞',nm:'Denim Shorts',price:60},
+    {id:'maxi',ico:'🌅',nm:'Maxi Skirt',price:80},{id:'cycling',ico:'🚴',nm:'Cycling Shorts',price:50},
+    {id:'wrap',ico:'🎁',nm:'Wrap Skirt',price:68},{id:'boho',ico:'🌼',nm:'Boho Skirt',price:88},{id:'ripped',ico:'⚡',nm:'Ripped Jeans',price:95}
+  ]
 };
 
-// ── THREE.js Setup ─────────────────────────────────────────────
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+// ── Pets ────────────────────────────────────────────────────────
+const PETS=[
+  {id:'dog',ico:'🐕',nm:'Dog',price:200,snd:'Woof!'},{id:'cat',ico:'🐈',nm:'Cat',price:180,snd:'Meow!'},{id:'snake',ico:'🐍',nm:'Snake',price:150,snd:'Sssss'},
+  {id:'parrot',ico:'🦜',nm:'Parrot',price:250,snd:'Squawk!'},{id:'rabbit',ico:'🐇',nm:'Rabbit',price:120,snd:'*binkies*'},
+  {id:'hamster',ico:'🐹',nm:'Hamster',price:80,snd:'*squeaks*'},{id:'tortoise',ico:'🐢',nm:'Tortoise',price:160,snd:'...'},{id:'gecko',ico:'🦎',nm:'Gecko',price:130,snd:'*clicks*'},
+  {id:'axolotl',ico:'🦋',nm:'Axolotl',price:300,snd:'*gills wave*'},{id:'chameleon',ico:'🦎',nm:'Chameleon',price:280,snd:'*changes colour*'},
+  {id:'frog',ico:'🐸',nm:'Frog',price:90,snd:'Ribbit!'},{id:'owl',ico:'🦉',nm:'Owl',price:350,snd:'Hoot!'},{id:'fox',ico:'🦊',nm:'Fox',price:320,snd:'*barks*'},
+  {id:'panda',ico:'🐼',nm:'Panda',price:500,snd:'*munches*'},{id:'dragon',ico:'🐉',nm:'Dragon',price:1000,snd:'ROAR!!'},
+  {id:'unicorn',ico:'🦄',nm:'Unicorn',price:999,snd:'*sparkles*'}
+];
+
+// ── NPC data with personalities & dialogue ──────────────────────
+const NPC_CONFIGS=[
+  {x:-40,z:5,nm:'Sam',role:'Skateboarder',col:'#E34234',hair:'spiky',hc:'#E34234',tc:'#333',bc:'#333',hat:'cap',
+   personality:'chill, uses slang, loves skating',
+   greet:["Yo! What's good?","Dude, you seen my skateboard?","This town is fire, ngl.","Skating later if you're down?"],
+   replies:{
+     hi:["Heyyy! 😎","Sup sup sup!","Oh hey, what's the vibe?"],
+     how:["Living my best life bro","Chilling, skating, repeat","Couldn't be better frfr"],
+     skate:["Dude skating is LIFE","I hit the park at 3pm every day","You should try it, no cap"],
+     help:["Always down to help a homie","What you need fam?"],
+     default:["That's lowkey interesting","For real though 🤙","Bro... no way","Valid valid valid","Say less"]
+   }},
+  {x:20,z:-50,nm:'Luna',role:'Florist',col:'#C9B1FF',hair:'long',hc:'#C9B1FF',tc:'#A8D8B9',bc:'#fff',hat:'flower',
+   personality:'gentle, loves nature, very kind',
+   greet:["Hello dear! Beautiful day isn't it?","I just got fresh roses in!","Every flower has a story 🌸","Oh, hello! Would you like a flower?"],
+   replies:{
+     hi:["Hello sweetheart! 🌺","What a lovely surprise!","Oh how wonderful to see you!"],
+     how:["Blooming, thank you! 🌸","Like a daisy in spring!","Just wonderful, dear"],
+     flower:["Roses say I love you 🌹","I grow them myself, with care","Each one is unique, like people"],
+     help:["Of course! What do you need?","I'd be delighted to help!"],
+     default:["How delightful! 🌸","That's so sweet","Nature is full of wonders","I love that for you","Oh my, really?"]
+   }},
+  {x:50,z:5,nm:'Rio',role:'Personal Trainer',col:'#2ECC71',hair:'fade',hc:'#2C2C2C',tc:'#E34234',bc:'#E34234',hat:'none',
+   personality:'energetic, fitness obsessed, motivational',
+   greet:["LETS GO! You ready to train?","No excuses today!","Every rep counts! 💪","You look like you need a workout!"],
+   replies:{
+     hi:["YOOOO! Let's GET IT!","HEY! You're looking fit!","Woooo! What's good!"],
+     how:["AMAZING. Always amazing. 💪","Feeling POWERFUL","Just crushed a 5k, nbd"],
+     train:["Chest day is EVERY day","I do 200 push-ups before breakfast","You can do it — mind over matter!"],
+     help:["ABSOLUTELY. Let's GO.","On it, like a proper squat!"],
+     default:["LETS GOOO 🔥","That's GAINS right there","No pain no gain buddy","PUSH THROUGH IT","Respekt. Absolute respekt."]
+   }},
+  {x:-10,z:25,nm:'Mia',role:'Artist',col:'#F8C8D4',hair:'bob',hc:'#FFB6C1',tc:'#9B59B6',bc:'#9B59B6',hat:'beret',
+   personality:'creative, dreamy, sees art in everything',
+   greet:["Oh! You have such an interesting face to paint...","The light today is *chef's kiss*","Art is everywhere if you look 🎨","I'm working on my magnum opus..."],
+   replies:{
+     hi:["Oh! Hello, beautiful soul 🎨","Salut! You're giving me inspiration!","You arrived like a splash of colour!"],
+     how:["Inspired. Always inspired.","In a creative flow right now","A little chaotic, a lot of art"],
+     art:["Art is how I breathe","My latest piece is about... everything","I see colour in music, sound in paintings"],
+     help:["Ooh I love a creative challenge!","Let me think... *thinks dramatically*"],
+     default:["How fascinating! 🎨","That's very... textural","I feel that in my soul","Oh the DRAMA of it","*gasps and sketches you*"]
+   }},
+  {x:-50,z:-75,nm:'Marcel',role:'Chef',col:'#FFE066',hair:'short',hc:'#4A3728',tc:'#fff',bc:'#fff',hat:'chef',
+   personality:'French accent implied, passionate about food, dramatic',
+   greet:["Ah, bonjour! You look hungry, non?","I am creating a masterpiece in ze kitchen!","Taste zis, tell me what you think 🍽️","Ze secret ingredient? Love. And butter."],
+   replies:{
+     hi:["Ah, bonjour bonjour!","Welcome to my kitchen, mon ami!","Ah, a visitor! Come, sit!"],
+     how:["Magnifique, as always!","Like a perfectly risen soufflé!","Busy! Ze menu does not write itself!"],
+     food:["Food is ze language of love","I use only ze freshest ingredients","My ratatouille? It will change your life"],
+     help:["Oui oui, I will help!","For you, anything, mon ami!"],
+     default:["Sacré bleu!","Très intéressant...","Oh là là!","Magnifique!","Non non non, we do it better!"]
+   }},
+  {x:62,z:-55,nm:'Officer Hayes',role:'Police Officer',col:'#7EC8E3',hair:'short',hc:'#2C2C2C',tc:'#7EC8E3',bc:'#333',hat:'police',
+   personality:'professional but friendly, keeps the peace',
+   greet:["Good day, citizen. Everything okay?","Afternoon. Just doing my rounds.","Nothing to report? Good good.","Stay safe out there!"],
+   replies:{
+     hi:["Afternoon, citizen.","Hello there, all good?","Good to see a friendly face."],
+     how:["Keeping the peace, as always.","On duty, but doing well.","Fine fine. Quiet day, thankfully."],
+     crime:["Zero tolerance here, friend.","We've had no incidents today.","I keep this town safe. That's the job."],
+     help:["Always here to help!","That's what I'm here for.","Consider it handled, citizen."],
+     default:["Duly noted.","I'll keep an eye out.","That's good to know.","Understood, citizen.","We appreciate the tip."]
+   }},
+  // Crèche staff
+  {x:-55,z:60,nm:'Nurse Joy',role:'Crèche Nurse',col:'#ffb3d9',hair:'bun',hc:'#FFB6C1',tc:'#fff',bc:'#fff',hat:'none',
+   personality:'motherly, warm, loves babies',
+   greet:["Shh! Baby's sleeping 🍼","Welcome to Little Stars!","We have the cutest babies today!","Would you like to hold one? 👶"],
+   replies:{
+     hi:["Hello! Welcome to the crèche!","Shh, we whisper here 🤫","So lovely to have visitors!"],
+     how:["Wonderful! The babies keep me going 💕","A bit tired but so happy!","Busy with nappy changes haha"],
+     baby:["They're all so precious!","Baby Leo just said his first word!","They grow so fast 😢💕"],
+     help:["Of course! We love help here!","Could you rock Poppy? She loves it!"],
+     default:["Oh how sweet! 💕","The babies would love that!","*whispers* They're sleeping now...","How adorable!","That's so kind!"]
+   }}
+];
+
+// ── Baby data ───────────────────────────────────────────────────
+const BABIES=[
+  {nm:'Leo',ico:'👶',mood:'😴 sleeping',hair:'none',sk:'#FDBCB4',tc:'#7EC8E3',bc:'#fff'},
+  {nm:'Poppy',ico:'👶',mood:'😊 giggling',hair:'short',sk:'#F1C27D',tc:'#F8C8D4',bc:'#ffb3d9'},
+  {nm:'Finn',ico:'👶',mood:'😢 hungry',hair:'none',sk:'#C68642',tc:'#A8D8B9',bc:'#7EC8E3'},
+  {nm:'Daisy',ico:'👶',mood:'🍼 feeding',hair:'pigtails',sk:'#FFCBA4',tc:'#FFE066',bc:'#fff'},
+  {nm:'Kai',ico:'👶',mood:'🧸 playing',hair:'spiky',sk:'#8D5524',tc:'#E34234',bc:'#333'},
+  {nm:'Bea',ico:'👶',mood:'😴 sleeping',hair:'none',sk:'#F1C27D',tc:'#C9B1FF',bc:'#fff'}
+];
+
+// ── THREE.js setup ──────────────────────────────────────────────
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.FogExp2(0x87CEEB, 0.008);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87CEEB);
+scene.fog=new THREE.FogExp2(0x87CEEB,0.007);
 
-const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 500);
-camera.position.set(0, 8, 15);
+const camera=new THREE.PerspectiveCamera(65,window.innerWidth/window.innerHeight,0.1,500);
+camera.position.set(0,8,15);
 
-window.addEventListener('resize', ()=>{
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-});
+window.addEventListener('resize',()=>{renderer.setSize(window.innerWidth,window.innerHeight);camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();});
 
-// ── Lighting ───────────────────────────────────────────────────
-const ambient = new THREE.AmbientLight(0x8090b0, 0.5);
-scene.add(ambient);
-const sun = new THREE.DirectionalLight(0xfff5e0, 1.4);
-sun.position.set(40, 60, 30);
-sun.castShadow = true;
-sun.shadow.mapSize.width = 2048;
-sun.shadow.mapSize.height = 2048;
-sun.shadow.camera.near = 1;
-sun.shadow.camera.far = 300;
-sun.shadow.camera.left = -80;
-sun.shadow.camera.right = 80;
-sun.shadow.camera.top = 80;
-sun.shadow.camera.bottom = -80;
-sun.shadow.bias = -0.0005;
-scene.add(sun);
-const fill = new THREE.DirectionalLight(0x4060a0, 0.3);
-fill.position.set(-20, 10, -20);
-scene.add(fill);
-
-// Moon light (for night)
-const moon = new THREE.DirectionalLight(0x3050a0, 0);
-moon.position.set(-40, 60, -30);
-scene.add(moon);
+// ── Lighting ────────────────────────────────────────────────────
+const ambient=new THREE.AmbientLight(0x8090b0,0.6);scene.add(ambient);
+const sun=new THREE.DirectionalLight(0xfff5e0,1.4);
+sun.position.set(40,60,30);sun.castShadow=true;
+sun.shadow.mapSize.width=2048;sun.shadow.mapSize.height=2048;
+sun.shadow.camera.near=1;sun.shadow.camera.far=300;
+['left','right','top','bottom'].forEach((s,i)=>sun.shadow.camera[s]=[−80,80,80,-80][i]);
+sun.shadow.bias=-0.0005;scene.add(sun);
+const fill=new THREE.DirectionalLight(0x4060a0,0.3);fill.position.set(-20,10,-20);scene.add(fill);
+const moon=new THREE.DirectionalLight(0x3050c0,0);moon.position.set(-40,60,-30);scene.add(moon);
+// Stars (particles)
+const starGeo=new THREE.BufferGeometry();
+const starVerts=[];for(let i=0;i<800;i++)starVerts.push((Math.random()-0.5)*400,(Math.random()*80+20),(Math.random()-0.5)*400);
+starGeo.setAttribute('position',new THREE.Float32BufferAttribute(starVerts,3));
+const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xffffff,size:0.3,sizeAttenuation:true}));
+stars.visible=false;scene.add(stars);
 
 setLoad(10);
 
-// ── Helpers ────────────────────────────────────────────────────
-function hex(col){ return new THREE.Color(col); }
-function mat(col, rough=0.8, metal=0){ return new THREE.MeshStandardMaterial({color:hex(col),roughness:rough,metalness:metal}); }
-function shadow(mesh){ mesh.castShadow=true; mesh.receiveShadow=true; return mesh; }
-function box(w,h,d,col,rough){ return shadow(new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat(col,rough))); }
+// ── Helpers ─────────────────────────────────────────────────────
+function mat(col,rough=0.75,metal=0){return new THREE.MeshStandardMaterial({color:new THREE.Color(col),roughness:rough,metalness:metal});}
+function sh(m){m.castShadow=true;m.receiveShadow=true;return m;}
+function box(w,h,d,col,rough){return sh(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(col,rough)));}
+function cyl(rt,rb,h,seg,col){return sh(new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat(col)));}
 
-// ── Ground ─────────────────────────────────────────────────────
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(400,400,60,60),
-  new THREE.MeshStandardMaterial({color:0x7ec87e,roughness:0.95})
-);
-ground.rotation.x=-Math.PI/2; ground.receiveShadow=true;
-scene.add(ground);
-
-// ── Roads ──────────────────────────────────────────────────────
+// ── Ground & Roads ──────────────────────────────────────────────
+const gnd=sh(new THREE.Mesh(new THREE.PlaneGeometry(400,400),mat('#7ec87e',0.95)));
+gnd.rotation.x=-Math.PI/2;scene.add(gnd);
 function makeRoad(x,z,w,d){
-  const r = new THREE.Mesh(new THREE.PlaneGeometry(w,d), new THREE.MeshStandardMaterial({color:0x888888,roughness:0.9}));
-  r.rotation.x=-Math.PI/2; r.position.set(x,0.01,z); r.receiveShadow=true; scene.add(r);
-  // Dashes
-  if(w>d){ for(let i=-w/2+4;i<w/2;i+=8){ const dash=new THREE.Mesh(new THREE.PlaneGeometry(4,0.3),new THREE.MeshStandardMaterial({color:0xdddddd})); dash.rotation.x=-Math.PI/2; dash.position.set(x+i,0.02,z); scene.add(dash); } }
-  else{ for(let i=-d/2+4;i<d/2;i+=8){ const dash=new THREE.Mesh(new THREE.PlaneGeometry(0.3,4),new THREE.MeshStandardMaterial({color:0xdddddd})); dash.rotation.x=-Math.PI/2; dash.position.set(x,0.02,z+i); scene.add(dash); } }
+  const r=sh(new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat('#888',0.9)));r.rotation.x=-Math.PI/2;r.position.set(x,0.01,z);scene.add(r);
+  const dm=mat('#ddd',1);if(w>d){for(let i=-w/2+5;i<w/2;i+=8){const dk=sh(new THREE.Mesh(new THREE.PlaneGeometry(4,0.3),dm));dk.rotation.x=-Math.PI/2;dk.position.set(x+i,0.02,z);scene.add(dk);}}
+  else{for(let i=-d/2+5;i<d/2;i+=8){const dk=sh(new THREE.Mesh(new THREE.PlaneGeometry(0.3,4),dm));dk.rotation.x=-Math.PI/2;dk.position.set(x,0.02,z+i);scene.add(dk);}}
 }
-makeRoad(0,0,200,8); makeRoad(0,-40,200,8); makeRoad(0,40,200,8);
-makeRoad(-30,0,8,200); makeRoad(30,0,8,200); makeRoad(70,0,8,200);
-makeRoad(-70,0,8,200);
-// Pavement
-function makePavement(x,z,w,d){ const p=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshStandardMaterial({color:0xd0c8b8,roughness:1.0})); p.rotation.x=-Math.PI/2; p.position.set(x,0.015,z); scene.add(p); }
+makeRoad(0,0,200,8);makeRoad(0,-40,200,8);makeRoad(0,40,200,8);makeRoad(0,75,200,8);
+makeRoad(-30,0,8,220);makeRoad(30,0,8,220);makeRoad(70,0,8,220);makeRoad(-70,0,8,220);
 
-setLoad(20);
-
-// ── Building factory ───────────────────────────────────────────
-const buildingDefs = [];
-function makeBuilding(x,z,w,h,d,wallCol,roofCol,label,glowCol='#aaddff'){
-  const group = new THREE.Group();
-  // Main body
-  const body = box(w,h,d,wallCol,0.75);
-  body.position.y=h/2; group.add(body);
-  // Roof
-  const roof = box(w+0.4,0.4,d+0.4,roofCol,0.6);
-  roof.position.y=h+0.2; group.add(roof);
-  // Windows - front & back faces
-  const winMat = new THREE.MeshStandardMaterial({color:0x88ccee,emissive:0x224466,emissiveIntensity:0.6,roughness:0.1,metalness:0.2});
-  for(let wy=1.2;wy<h-0.8;wy+=2.2){
-    for(let wx=-w/2+1.2;wx<w/2-0.4;wx+=2.0){
-      [d/2+0.02,-d/2-0.02].forEach((zOff,side)=>{
-        const wm = new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.2),winMat.clone());
-        wm.position.set(wx+0.5,wy,zOff); if(side===1)wm.rotation.y=Math.PI;
-        group.add(wm);
-      });
-    }
-  }
-  // Door
-  const doorMat = new THREE.MeshStandardMaterial({color:0x8B4513,roughness:0.9});
-  const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2,2.2),doorMat);
-  door.position.set(0,1.1,d/2+0.02); group.add(door);
-  // Sign
-  const signCanvas = document.createElement('canvas');
-  signCanvas.width=256; signCanvas.height=64;
-  const sc=signCanvas.getContext('2d');
-  sc.fillStyle='rgba(0,0,0,0.8)'; sc.fillRect(0,0,256,64);
-  sc.fillStyle='#f9e05e'; sc.font='bold 22px Segoe UI'; sc.textAlign='center'; sc.textBaseline='middle';
-  sc.fillText(label,128,32);
-  const signTex = new THREE.CanvasTexture(signCanvas);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:signTex,transparent:true}));
-  sign.position.set(0,h+0.8,d/2+0.1); group.add(sign);
-  group.position.set(x,0,z);
-  scene.add(group);
-  buildingDefs.push({group,x,z,w,d,label});
-  return group;
+// ── Buildings ───────────────────────────────────────────────────
+const buildingDefs=[];
+function makeBuilding(x,z,w,h,d,wc,rc,label){
+  const g=new THREE.Group();
+  const body=box(w,h,d,wc,0.75);body.position.y=h/2;g.add(body);
+  const roof=box(w+0.4,0.4,d+0.4,rc,0.6);roof.position.y=h+0.2;g.add(roof);
+  const winMat=new THREE.MeshStandardMaterial({color:0x88ccee,emissive:0x224466,emissiveIntensity:0.6,roughness:0.1,metalness:0.2});
+  for(let wy=1.2;wy<h-0.8;wy+=2.2){for(let wx=-w/2+1.2;wx<w/2-0.5;wx+=2.0){
+    [[d/2+0.02,0],[-d/2-0.02,Math.PI]].forEach(([z0,ry])=>{const wn=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.2),winMat.clone());wn.position.set(wx+0.5,wy,z0);wn.rotation.y=ry;g.add(wn);});
+  }}
+  const door=new THREE.Mesh(new THREE.PlaneGeometry(1.4,2.4),mat('#8B4513',0.9));door.position.set(0,1.2,d/2+0.02);g.add(door);
+  const sc=document.createElement('canvas');sc.width=256;sc.height=52;const cx=sc.getContext('2d');
+  cx.fillStyle='rgba(0,0,0,.85)';cx.fillRect(0,0,256,52);cx.fillStyle='#f9e05e';cx.font='bold 20px Segoe UI';cx.textAlign='center';cx.textBaseline='middle';cx.fillText(label,128,26);
+  const st=new THREE.CanvasTexture(sc);const sign=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1),new THREE.MeshBasicMaterial({map:st,transparent:true}));
+  sign.position.set(0,h+0.9,d/2+0.12);g.add(sign);
+  g.position.set(x,0,z);scene.add(g);
+  buildingDefs.push({group:g,x,z,w,d,label});
+  return g;
 }
-
-// Town layout
 makeBuilding(-55,-20,14,10,12,'#F8C8D4','#c0a0a8','🏠 House');
 makeBuilding(-55,-45,18,12,14,'#C9B1FF','#9080c0','🏫 School');
 makeBuilding(-10,-45,16,14,12,'#A8D8B9','#80b090','🏥 Hospital');
 makeBuilding(45,-45,14,10,12,'#7EC8E3','#5090a8','🚔 Police');
-makeBuilding(80,-40,18,16,14,'#aaaaaa','#888888','⛓️ Prison');
+makeBuilding(80,-40,18,16,14,'#aaa','#888','⛓️ Prison');
 makeBuilding(-55,20,14,8,12,'#FFE066','#c0a830','🍕 Pizza');
 makeBuilding(-10,22,16,10,12,'#F4D03F','#b89020','🏦 Bank');
 makeBuilding(45,20,22,14,16,'#E8D5B7','#c0a878','🏰 Mansion');
 makeBuilding(80,25,20,10,14,'#B5E7A0','#80b060','🚗 Dealer');
 makeBuilding(80,-80,24,12,18,'#FF6B9D','#c04070','🎡 Carnival');
 makeBuilding(-55,-80,16,10,12,'#FFB347','#c07820','🐾 Pet Shop');
+makeBuilding(30,70,20,10,14,'#ffb3d9','#d080a8','🍼 Crèche');
+makeBuilding(-10,70,16,8,12,'#99DDFF','#5599aa','🛍️ Shop');
 
-setLoad(40);
+setLoad(30);
 
-// ── Trees ─────────────────────────────────────────────────────
-function makeTree(x,z,scale=1){
+// ── Trees ───────────────────────────────────────────────────────
+function makeTree(x,z,s=1){
   const g=new THREE.Group();
-  const trunk=shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.18*scale,0.28*scale,1.8*scale,8),mat('#6B3F2A',0.95)));
-  trunk.position.y=0.9*scale; g.add(trunk);
-  const foliage=shadow(new THREE.Mesh(new THREE.SphereGeometry(1.4*scale,8,6),mat('#228B22',0.85)));
-  foliage.position.y=2.8*scale; g.add(foliage);
-  // Second foliage layer
-  const f2=shadow(new THREE.Mesh(new THREE.SphereGeometry(1.0*scale,8,5),mat('#2ecc71',0.85)));
-  f2.position.set(0.4*scale,3.6*scale,0.2*scale); g.add(f2);
-  g.position.set(x,0,z); scene.add(g);
+  const tr=sh(cyl(0.18*s,0.28*s,1.8*s,8,'#6B3F2A'));tr.position.y=0.9*s;g.add(tr);
+  const f1=sh(new THREE.Mesh(new THREE.SphereGeometry(1.4*s,8,6),mat('#228B22',0.85)));f1.position.y=2.8*s;g.add(f1);
+  const f2=sh(new THREE.Mesh(new THREE.SphereGeometry(1.0*s,7,5),mat('#2ecc71',0.85)));f2.position.set(0.4*s,3.6*s,0.2*s);g.add(f2);
+  g.position.set(x,0,z);scene.add(g);
 }
-const treePos=[[-45,5],[45,5],[-45,-30],[20,-60],[60,-60],[-20,30],[55,35],[38,15],[-65,40],[-25,-75],[20,-30],[65,10],[42,-28],[28,35],[-48,35],[-68,-60],[88,-60]];
-treePos.forEach(([x,z])=>makeTree(x,z,0.8+Math.random()*0.5));
+[[-45,5],[45,5],[-45,-30],[20,-60],[60,-60],[-20,30],[55,35],[38,15],[-65,40],[-25,-75],[20,-30],[65,10],[42,-28],[28,35],[-48,35],[-68,-60],[88,-60],[35,65],[0,85],[-30,65],[10,55],[55,55],[85,55],[88,20],[-25,45]].forEach(([x,z])=>makeTree(x,z,0.8+Math.random()*0.5));
 
-// ── Street lights ─────────────────────────────────────────────
+// ── Street lights ───────────────────────────────────────────────
 const streetLights=[];
 function makeStreetLight(x,z){
   const g=new THREE.Group();
-  const pole=shadow(new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,5,8),mat('#555',0.6,0.3)));
-  pole.position.y=2.5; g.add(pole);
-  const arm=shadow(new THREE.Mesh(new THREE.BoxGeometry(1.2,0.1,0.1),mat('#555',0.6,0.3)));
-  arm.position.set(0.5,5,0); g.add(arm);
-  const bulbMat=new THREE.MeshStandardMaterial({color:0xffffaa,emissive:0xffffaa,emissiveIntensity:0.5});
-  const bulb=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,6),bulbMat);
-  bulb.position.set(1.0,4.9,0); g.add(bulb);
-  // Point light (off by default — enabled at night)
-  const pt=new THREE.PointLight(0xffffaa,0,8,1.5);
-  pt.position.set(1.0,4.8,0); g.add(pt);
-  g.position.set(x,0,z); scene.add(g);
-  streetLights.push({bulbMat,pt});
+  const p=sh(cyl(0.08,0.12,5,8,'#555'));p.position.y=2.5;g.add(p);
+  const a=sh(box(1.2,0.1,0.1,'#555'));a.position.set(0.5,5,0);g.add(a);
+  const bm=new THREE.MeshStandardMaterial({color:0xffffaa,emissive:0xffffaa,emissiveIntensity:0.3});
+  const b=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,6),bm);b.position.set(1.0,4.9,0);g.add(b);
+  const pt=new THREE.PointLight(0xffffaa,0,12,1.8);pt.position.set(1.0,4.8,0);g.add(pt);
+  g.position.set(x,0,z);scene.add(g);
+  streetLights.push({bm,pt});
 }
-[[-8,15],[8,15],[-8,-15],[8,-15],[-8,45],[8,45],[38,-55],[38,35],[78,-55],[78,35],[-58,-55],[-58,15]].forEach(([x,z])=>makeStreetLight(x,z));
+[[-8,15],[8,15],[-8,-15],[8,-15],[-8,45],[8,45],[38,-55],[38,35],[78,-55],[78,35],[-58,-55],[-58,15],[20,80],[40,80],[-20,80]].forEach(([x,z])=>makeStreetLight(x,z));
 
-setLoad(55);
-
-// ── Cars ──────────────────────────────────────────────────────
-const CAR_DEFS=[
-  {x:-20,z:0,col:'#E34234',rot:0,lb:'Red Coupe'},
-  {x:15,z:0,col:'#7EC8E3',rot:0,lb:'Blue Sedan'},
-  {x:-20,z:-40,col:'#F9E05E',rot:0,lb:'Yellow SUV'},
-  {x:15,z:40,col:'#A8D8B9',rot:Math.PI/2,lb:'Green Hatch'},
-  {x:60,z:0,col:'#C9B1FF',rot:0,lb:'Purple Van'},
-];
+// ── Cars ────────────────────────────────────────────────────────
 const cars3d=[];
-function makeCar3d(x,z,col,rot,lb){
+const CAR_DEFS=[
+  {x:-20,z:0,col:'#E34234',rot:0,lb:'Red Coupe'},{x:15,z:0,col:'#7EC8E3',rot:0,lb:'Blue Sedan'},
+  {x:-20,z:-40,col:'#F9E05E',rot:0,lb:'Yellow SUV'},{x:15,z:40,col:'#A8D8B9',rot:Math.PI/2,lb:'Green Hatch'},
+  {x:60,z:0,col:'#C9B1FF',rot:0,lb:'Purple Van'},{x:-20,z:75,col:'#FF8C69',rot:0,lb:'Orange Pickup'},
+  {x:50,z:75,col:'#fff',rot:Math.PI/2,lb:'White Sports'},{x:90,z:75,col:'#333',rot:0,lb:'Black SUV'},
+];
+function makeCar3d(def){
   const g=new THREE.Group();
-  const body=shadow(new THREE.Mesh(new THREE.BoxGeometry(3.2,0.9,1.6),mat(col,0.5,0.1)));
-  body.position.y=0.8; g.add(body);
-  const cabin=shadow(new THREE.Mesh(new THREE.BoxGeometry(2.0,0.85,1.5),mat(col,0.5,0.1)));
-  cabin.position.set(-0.2,1.6,0); g.add(cabin);
-  const windshieldMat=new THREE.MeshStandardMaterial({color:0xaaddee,transparent:true,opacity:0.6,roughness:0.05,metalness:0.3});
-  const ws=new THREE.Mesh(new THREE.PlaneGeometry(1.9,0.75),windshieldMat);
-  ws.position.set(0.8,1.6,0.76); ws.rotation.y=0; g.add(ws);
-  const wm=mat('#111',0.9,0.2);
-  const wg=new THREE.CylinderGeometry(0.32,0.32,0.22,14);
-  [[-1.1,0.32,0.92],[-1.1,0.32,-0.92],[1.1,0.32,0.92],[1.1,0.32,-0.92]].forEach(([wx,wy,wz])=>{
-    const wh=shadow(new THREE.Mesh(wg,wm)); wh.rotation.z=Math.PI/2; wh.position.set(wx,wy,wz); g.add(wh);
-  });
-  // Headlights
-  const hlMat=new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffee,emissiveIntensity:0});
-  const hl1=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.2,0.4),hlMat.clone());
-  hl1.position.set(1.6,0.8,0.5); g.add(hl1);
-  const hl2=hl1.clone(); hl2.position.set(1.6,0.8,-0.5); g.add(hl2);
-  g.position.set(x,0,z); g.rotation.y=rot; scene.add(g);
-  cars3d.push({group:g,x,z:z,vx:0,vz:0,occupied:false,lb,col,hlMat:[hl1.material,hl2.material]});
-  return g;
+  const bm=mat(def.col,0.5,0.1);
+  const body=sh(new THREE.Mesh(new THREE.BoxGeometry(3.2,0.9,1.6),bm));body.position.y=0.8;g.add(body);
+  const cab=sh(new THREE.Mesh(new THREE.BoxGeometry(2.0,0.85,1.5),bm));cab.position.set(-0.2,1.6,0);g.add(cab);
+  const wm=new THREE.MeshStandardMaterial({color:0xaaddee,transparent:true,opacity:0.55,roughness:0.05});
+  const ws=new THREE.Mesh(new THREE.PlaneGeometry(1.9,0.7),wm);ws.position.set(0.82,1.62,0.76);g.add(ws);
+  const wg=new THREE.CylinderGeometry(0.32,0.32,0.24,14);const wheelMat=mat('#111',0.9);
+  [[-1.1,0.32,0.92],[-1.1,0.32,-0.92],[1.1,0.32,0.92],[1.1,0.32,-0.92]].forEach(([wx,wy,wz])=>{const w=sh(new THREE.Mesh(wg,wheelMat));w.rotation.z=Math.PI/2;w.position.set(wx,wy,wz);g.add(w);});
+  const hlMat1=new THREE.MeshStandardMaterial({color:0xffffee,emissive:0xffffee,emissiveIntensity:0});
+  const hlMat2=hlMat1.clone();
+  const hl1=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.22,0.44),hlMat1);hl1.position.set(1.62,0.82,0.5);g.add(hl1);
+  const hl2=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.22,0.44),hlMat2);hl2.position.set(1.62,0.82,-0.5);g.add(hl2);
+  // Rear lights
+  const rlMat=new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff2200,emissiveIntensity:0});
+  const rl=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.2,0.4),rlMat);rl.position.set(-1.62,0.82,0.6);g.add(rl);
+  const rl2=rl.clone();rl2.position.set(-1.62,0.82,-0.6);g.add(rl2);
+  g.position.set(def.x,0,def.z);g.rotation.y=def.rot;scene.add(g);
+  cars3d.push({group:g,vx:0,vz:0,speed:0,steer:0,occupied:false,lb:def.lb,hlMats:[hlMat1,hlMat2],rlMats:[rlMat,rl.material]});
 }
-CAR_DEFS.forEach(c=>makeCar3d(c.x,c.z,c.col,c.rot,c.lb));
+CAR_DEFS.forEach(makeCar3d);
 
-// ── Player Character ──────────────────────────────────────────
-function buildPlayerMesh(){
-  const g = new THREE.Group();
-  const c = (hex) => new THREE.MeshStandardMaterial({color:new THREE.Color(hex),roughness:0.7});
+setLoad(50);
+
+// ── Character builder (shared player+NPC) ───────────────────────
+function buildChar(cfg,scale=1){
+  const g=new THREE.Group();
+  const c=(col)=>new THREE.MeshStandardMaterial({color:new THREE.Color(col),roughness:0.7});
+  const s=scale;
+  // Shadow disc
+  const sdm=new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.25});
+  const sd=new THREE.Mesh(new THREE.CircleGeometry(0.6*s,12),sdm);sd.rotation.x=-Math.PI/2;sd.position.y=0.01;g.add(sd);
   // Head
-  const head=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.75,0.75,0.75),c(P.sk)));
-  head.position.y=1.65; g.add(head);
-  // Body
-  const torso=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.75,1.0,0.42),c(P.tc)));
-  torso.position.y=0.95; g.add(torso);
-  // Arms
-  const la=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.28,0.9,0.28),c(P.tc)));
-  la.position.set(-0.52,0.95,0); g.add(la);
-  const ra=la.clone(); ra.position.set(0.52,0.95,0); g.add(ra);
-  // Legs
-  const ll=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.32,0.95,0.32),c(P.bc)));
-  ll.position.set(-0.21,0.05,0); g.add(ll);
-  const rl=ll.clone(); rl.position.set(0.21,0.05,0); g.add(rl);
+  const head=sh(new THREE.Mesh(new THREE.BoxGeometry(0.75*s,0.75*s,0.75*s),c(cfg.sk||'#FDBCB4')));head.position.y=1.65*s;g.add(head);
   // Eyes
-  const eyeMat=new THREE.MeshStandardMaterial({color:new THREE.Color(P.ey)});
-  const le=new THREE.Mesh(new THREE.BoxGeometry(0.12,0.12,0.1),eyeMat);
-  le.position.set(-0.18,1.7,0.38); g.add(le);
-  const re=le.clone(); re.position.set(0.18,1.7,0.38); g.add(re);
+  const eyeMat=new THREE.MeshStandardMaterial({color:new THREE.Color(cfg.ey||'#333')});
+  const le=new THREE.Mesh(new THREE.BoxGeometry(0.13*s,0.13*s,0.05*s),eyeMat);le.position.set(-0.18*s,1.72*s,0.38*s);g.add(le);
+  const re=le.clone();re.position.set(0.18*s,1.72*s,0.38*s);g.add(re);
+  // Mouth (tiny box)
+  const mouth=new THREE.Mesh(new THREE.BoxGeometry(0.22*s,0.06*s,0.04*s),new THREE.MeshStandardMaterial({color:0x993333}));mouth.position.set(0,1.52*s,0.38*s);g.add(mouth);
+  // Body/torso
+  const torso=sh(new THREE.Mesh(new THREE.BoxGeometry(0.75*s,1.0*s,0.42*s),c(cfg.tc||'#7EC8E3')));torso.position.y=0.95*s;g.add(torso);
+  // Arms
+  const la=sh(new THREE.Mesh(new THREE.BoxGeometry(0.28*s,0.9*s,0.28*s),c(cfg.tc||'#7EC8E3')));la.position.set(-0.52*s,0.95*s,0);g.add(la);
+  const ra=la.clone();ra.position.set(0.52*s,0.95*s,0);g.add(ra);
+  // Legs
+  const ll=sh(new THREE.Mesh(new THREE.BoxGeometry(0.32*s,0.95*s,0.32*s),c(cfg.bc||'#4A6FA5')));ll.position.set(-0.21*s,0.05*s,0);g.add(ll);
+  const rl=ll.clone();rl.position.set(0.21*s,0.05*s,0);g.add(rl);
+  // Shoes
+  const shoeM=c('#222');
+  const shoe1=sh(new THREE.Mesh(new THREE.BoxGeometry(0.32*s,0.18*s,0.44*s),shoeM));shoe1.position.set(-0.21*s,-0.45*s,0.08*s);g.add(shoe1);
+  const shoe2=shoe1.clone();shoe2.position.set(0.21*s,-0.45*s,0.08*s);g.add(shoe2);
   // Hair
-  if(P.hs!=='none'){
-    const hairMat=new THREE.MeshStandardMaterial({color:new THREE.Color(P.hc)});
-    const hair=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.25,0.8),hairMat);
-    hair.position.set(0,2.07,0); g.add(hair);
+  const hs=cfg.hs||cfg.hair||'short';const hc=cfg.hc||'#4A3728';
+  if(hs!=='none'){
+    const hairM=new THREE.MeshStandardMaterial({color:new THREE.Color(hc)});
+    if(hs==='afro'){const af=new THREE.Mesh(new THREE.SphereGeometry(0.55*s,8,6),hairM);af.position.y=2.1*s;g.add(sh(af));}
+    else if(hs==='long'){const lh=sh(new THREE.Mesh(new THREE.BoxGeometry(0.82*s,0.28*s,0.82*s),hairM));lh.position.y=2.08*s;g.add(lh);const lb=sh(new THREE.Mesh(new THREE.BoxGeometry(0.16*s,0.9*s,0.16*s),hairM));lb.position.set(0,1.6*s,-0.4*s);g.add(lb);}
+    else if(hs==='bun'){const bh=sh(new THREE.Mesh(new THREE.BoxGeometry(0.82*s,0.28*s,0.82*s),hairM));bh.position.y=2.08*s;g.add(bh);const bun=sh(new THREE.Mesh(new THREE.SphereGeometry(0.22*s,6,5),hairM));bun.position.set(0,2.45*s,0);g.add(bun);}
+    else if(hs==='spiky'){const sh2=sh(new THREE.Mesh(new THREE.BoxGeometry(0.78*s,0.2*s,0.78*s),hairM));sh2.position.y=2.06*s;g.add(sh2);for(let i=0;i<4;i++){const sp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.14*s,0.32*s,0.14*s),hairM));sp.position.set(-0.22*s+i*0.15*s,2.38*s,0);sp.rotation.z=(i-1.5)*0.2;g.add(sp);}}
+    else if(hs==='pigtails'){const pt=sh(new THREE.Mesh(new THREE.BoxGeometry(0.78*s,0.2*s,0.78*s),hairM));pt.position.y=2.06*s;g.add(pt);[[-0.5*s,1.8*s],[0.5*s,1.8*s]].forEach(([px,py])=>{const pig=sh(new THREE.Mesh(new THREE.BoxGeometry(0.16*s,0.5*s,0.16*s),hairM));pig.position.set(px,py,0);g.add(pig);});}
+    else{const dh=sh(new THREE.Mesh(new THREE.BoxGeometry(0.82*s,0.28*s,0.82*s),hairM));dh.position.y=2.08*s;g.add(dh);}
   }
   // Hat
-  if(P.hat==='cap'){
-    const hatMat=new THREE.MeshStandardMaterial({color:new THREE.Color(P.htc)});
-    const brim=new THREE.Mesh(new THREE.BoxGeometry(0.95,0.12,1.1),hatMat);
-    brim.position.set(0.1,2.2,0.1); g.add(brim);
-    const top=new THREE.Mesh(new THREE.BoxGeometry(0.78,0.4,0.78),hatMat);
-    top.position.set(0,2.5,0); g.add(top);
-  }else if(P.hat==='beanie'){
-    const hatMat=new THREE.MeshStandardMaterial({color:new THREE.Color(P.htc)});
-    const b=new THREE.Mesh(new THREE.BoxGeometry(0.82,0.5,0.82),hatMat);
-    b.position.y=2.25; g.add(b);
-  }else if(P.hat==='crown'){
-    const hatMat=new THREE.MeshStandardMaterial({color:0xFFD700});
-    const b=new THREE.Mesh(new THREE.BoxGeometry(0.82,0.35,0.82),hatMat);
-    b.position.y=2.2; g.add(b);
-    for(let i=0;i<3;i++){const s=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.32,0.15),hatMat);s.position.set(-0.28+i*0.28,2.55,0);g.add(s);}
-  }
+  const hat=cfg.hat||'none';const htc=cfg.htc||'#E34234';
+  if(hat==='cap'){const hm=mat(htc);const brim=sh(new THREE.Mesh(new THREE.BoxGeometry(0.95*s,0.12*s,1.1*s),hm));brim.position.set(0.1*s,2.22*s,0.12*s);g.add(brim);const top=sh(new THREE.Mesh(new THREE.BoxGeometry(0.78*s,0.4*s,0.78*s),hm));top.position.set(0,2.52*s,0);g.add(top);}
+  else if(hat==='beanie'){const hm=mat(htc);const b=sh(new THREE.Mesh(new THREE.BoxGeometry(0.82*s,0.5*s,0.82*s),hm));b.position.y=2.28*s;g.add(b);}
+  else if(hat==='crown'){const hm=mat('#FFD700',0.2,0.8);const cb=sh(new THREE.Mesh(new THREE.BoxGeometry(0.82*s,0.3*s,0.82*s),hm));cb.position.y=2.2*s;g.add(cb);for(let i=0;i<3;i++){const sp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.14*s,0.3*s,0.14*s),hm));sp.position.set(-0.25*s+i*0.25*s,2.55*s,0);g.add(sp);}}
+  else if(hat==='chef'){const hm=mat('#fff');const bk=sh(new THREE.Mesh(new THREE.BoxGeometry(0.84*s,0.18*s,0.84*s),hm));bk.position.y=2.12*s;g.add(bk);const tp=sh(new THREE.Mesh(new THREE.SphereGeometry(0.38*s,8,5),hm));tp.position.y=2.5*s;g.add(tp);}
+  else if(hat==='police'){const pm=mat('#1a3a5c');const pk=sh(new THREE.Mesh(new THREE.BoxGeometry(0.84*s,0.22*s,1.0*s),pm));pk.position.set(0.1*s,2.12*s,0);g.add(pk);const pt=sh(new THREE.Mesh(new THREE.BoxGeometry(0.78*s,0.32*s,0.78*s),pm));pt.position.y=2.42*s;g.add(pt);}
+  else if(hat==='flower'){const sm=mat(htc||'#FFB3D9');const fc=sh(new THREE.Mesh(new THREE.SphereGeometry(0.18*s,6,5),mat('#FFE066')));fc.position.set(0.3*s,2.4*s,0.2*s);g.add(fc);for(let i=0;i<5;i++){const fp=sh(new THREE.Mesh(new THREE.SphereGeometry(0.12*s,5,4),sm));fp.position.set(0.3*s+Math.cos(i*Math.PI*2/5)*0.18*s,2.4*s,0.2*s+Math.sin(i*Math.PI*2/5)*0.18*s);g.add(fp);}}
   // Backpack
-  if(P.backpack){
-    const bpMat=new THREE.MeshStandardMaterial({color:0xE34234});
-    const bp=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.6,0.2),bpMat);
-    bp.position.set(0,0.95,-0.32); g.add(bp);
-  }
+  if(cfg.backpack){const bpm=mat('#E34234');const bp=sh(new THREE.Mesh(new THREE.BoxGeometry(0.4*s,0.6*s,0.18*s),bpm));bp.position.set(0,0.95*s,-0.33*s);g.add(bp);}
+  // Scarf
+  if(cfg.scarf){const sm=mat('#C9B1FF');const sc=sh(new THREE.Mesh(new THREE.BoxGeometry(0.78*s,0.22*s,0.48*s),sm));sc.position.set(0,1.45*s,0);g.add(sc);}
+  // Wings (tiny)
+  if(cfg.wings){const wm=mat('#fff',0.2);const wl=sh(new THREE.Mesh(new THREE.BoxGeometry(0.12*s,0.5*s,0.7*s),wm));wl.position.set(-0.5*s,1.2*s,-0.25*s);wl.rotation.z=0.3;g.add(wl);const wr=wl.clone();wr.position.set(0.5*s,1.2*s,-0.25*s);wr.rotation.z=-0.3;g.add(wr);}
+  // Halo
+  if(cfg.halo){const halo=sh(new THREE.Mesh(new THREE.TorusGeometry(0.35*s,0.04*s,6,20),mat('#FFD700',0.1,0.8)));halo.position.y=2.35*s;halo.rotation.x=Math.PI/6;g.add(halo);}
+  // Tail
+  if(cfg.tail){const tm=mat('#E34234');const tb=sh(new THREE.Mesh(new THREE.CylinderGeometry(0.06*s,0.12*s,0.9*s,8),tm));tb.position.set(0,0.4*s,-0.38*s);tb.rotation.x=0.6;g.add(tb);}
   // Glasses
-  if(P.glasses){
-    const gMat=new THREE.MeshStandardMaterial({color:0x111111});
-    const gl=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,0.05),gMat);
-    gl.position.set(-0.2,1.68,0.41); g.add(gl);
-    const gr=gl.clone(); gr.position.set(0.2,1.68,0.41); g.add(gr);
-  }
-  // Store refs for animation
-  g.userData = {la,ra,ll,rl,head};
+  if(cfg.glasses){const gm=mat('#111',0.2);const gl=sh(new THREE.Mesh(new THREE.BoxGeometry(0.28*s,0.18*s,0.06*s),gm));gl.position.set(-0.2*s,1.68*s,0.4*s);g.add(gl);const gr=gl.clone();gr.position.set(0.2*s,1.68*s,0.4*s);g.add(gr);}
+  // Badge
+  if(cfg.badge){const bdm=mat('#F4D03F',0.2,0.8);const bdg=new THREE.Mesh(new THREE.CylinderGeometry(0.12*s,0.12*s,0.04*s,8),bdm);bdg.position.set(0.28*s,0.95*s,0.22*s);g.add(bdg);}
+  // Nametag
+  const nc=document.createElement('canvas');nc.width=180;nc.height=36;
+  const nctx=nc.getContext('2d');nctx.fillStyle='rgba(0,0,0,0.75)';nctx.fillRect(0,0,180,36);
+  nctx.fillStyle='#fff';nctx.font='bold 17px Segoe UI';nctx.textAlign='center';nctx.textBaseline='middle';nctx.fillText(cfg.nm||'NPC',90,18);
+  const nt=new THREE.CanvasTexture(nc);
+  const ns=new THREE.Sprite(new THREE.SpriteMaterial({map:nt,sizeAttenuation:true}));
+  ns.scale.set(2.4,0.48,1);ns.position.y=2.7*s;g.add(ns);
+  g.userData={la,ra,ll,rl,head,nameSprite:ns};
   return g;
 }
 
-let playerMesh = buildPlayerMesh();
-const playerContainer = new THREE.Group();
+// ── Player mesh ─────────────────────────────────────────────────
+let playerMesh=buildChar(P);
+const playerContainer=new THREE.Group();
 playerContainer.add(playerMesh);
 playerContainer.position.set(0,0,8);
 scene.add(playerContainer);
-let playerCar = null;
+let playerCar=null;
+function rebuildPlayer(){playerContainer.remove(playerMesh);playerMesh=buildChar(P);playerContainer.add(playerMesh);}
+
+// ── Baby characters in crèche ───────────────────────────────────
+const babyMeshes=[];
+const crechePos={x:30,z:70};
+BABIES.forEach((b,i)=>{
+  const bm=buildChar({...b,nm:b.nm,sc:0.55,ts:'tee',tc:b.tc,bs:'jeans',bc:b.bc,hat:'none'});
+  bm.scale.setScalar(0.52);
+  const a=(i/BABIES.length)*Math.PI*2,r=3.5;
+  bm.position.set(crechePos.x+Math.cos(a)*r,0,crechePos.z+Math.sin(a)*r);
+  scene.add(bm);babyMeshes.push({mesh:bm,walkT:Math.random()*100,vx:(Math.random()-.5)*0.008,vz:(Math.random()-.5)*0.008,timer:40+Math.random()*80,data:b});
+});
 
 setLoad(65);
 
-// ── NPCs (avatar sprites) ─────────────────────────────────────
-const NPC_CONFIGS=[
-  {x:-40,z:5,nm:'Sam',file:'avatars/npc1.png',c:'#E34234'},
-  {x:20,z:-50,nm:'Luna',file:'avatars/npc2.png',c:'#C9B1FF'},
-  {x:50,z:5,nm:'Rio',file:'avatars/npc3.png',c:'#2ECC71'},
-  {x:-10,z:25,nm:'Mia',file:'avatars/npc4.png',c:'#F8C8D4'},
-  {x:-50,z:-75,nm:'Chef',file:'avatars/npc5.png',c:'#FFE066'},
-  {x:62,z:-55,nm:'Officer',file:'avatars/npc6.png',c:'#7EC8E3'},
-];
+// ── NPCs as 3D characters ────────────────────────────────────────
 const npcs3d=[];
-const loader=new THREE.TextureLoader();
-function makeNPC(cfg){
-  const g=new THREE.Group();
-  // Sprite with generated avatar image
-  loader.load(cfg.file,
-    (tex)=>{
-      tex.colorSpace=THREE.SRGBColorSpace;
-      const spriteMat=new THREE.SpriteMaterial({map:tex,alphaTest:0.1,sizeAttenuation:true});
-      const sprite=new THREE.Sprite(spriteMat);
-      sprite.scale.set(1.8,2.4,1); sprite.position.y=1.2;
-      g.add(sprite);
-    },
-    null,
-    ()=>{
-      // Fallback: block character
-      const fb=buildFallbackNPC(cfg.c);
-      g.add(fb);
-    }
-  );
-  // Name tag (sprite)
-  const nc=document.createElement('canvas'); nc.width=180; nc.height=36;
-  const nctx=nc.getContext('2d');
-  nctx.fillStyle='rgba(0,0,0,0.7)'; nctx.fillRect(0,0,180,36);
-  nctx.fillStyle='#fff'; nctx.font='bold 18px Segoe UI'; nctx.textAlign='center'; nctx.textBaseline='middle';
-  nctx.fillText(cfg.nm,90,18);
-  const ntex=new THREE.CanvasTexture(nc);
-  const nsprite=new THREE.Sprite(new THREE.SpriteMaterial({map:ntex,sizeAttenuation:true}));
-  nsprite.scale.set(2.2,0.44,1); nsprite.position.y=2.8;
-  g.add(nsprite);
-  g.position.set(cfg.x,0,cfg.z);
-  scene.add(g);
-  npcs3d.push({group:g,vx:(Math.random()-.5)*0.03,vz:(Math.random()-.5)*0.03,timer:60+Math.random()*120});
-}
-function buildFallbackNPC(col){
-  const g=new THREE.Group();
-  const c=new THREE.MeshStandardMaterial({color:new THREE.Color(col)});
-  const head=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.7),new THREE.MeshStandardMaterial({color:0xFFDBAC})));
-  head.position.y=1.65; g.add(head);
-  const torso=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.7,1.0,0.4),c));
-  torso.position.y=0.95; g.add(torso);
-  ['ll','rl'].forEach((s,i)=>{const l=shadow(new THREE.Mesh(new THREE.BoxGeometry(0.3,0.9,0.3),new THREE.MeshStandardMaterial({color:0x334499})));l.position.set(i?0.2:-0.2,0.05,0);g.add(l);});
-  return g;
-}
-NPC_CONFIGS.forEach(makeNPC);
+NPC_CONFIGS.forEach(cfg=>{
+  const mesh=buildChar(cfg);
+  mesh.position.set(cfg.x,0,cfg.z);
+  scene.add(mesh);
+  npcs3d.push({mesh,vx:(Math.random()-.5)*0.03,vz:(Math.random()-.5)*0.03,timer:80+Math.random()*120,chatT:0,chat:'',cfg});
+});
 
-setLoad(80);
-
-// ── Carnival outdoor features ──────────────────────────────────
+// ── Ferris wheel ────────────────────────────────────────────────
 function makeFerrisWheel(x,z){
   const g=new THREE.Group();
-  // Frame circles
-  const ringGeo=new THREE.TorusGeometry(5,0.15,8,40);
-  const ringMat=new THREE.MeshStandardMaterial({color:0xffd700,metalness:0.5,roughness:0.4});
-  const ring=new THREE.Mesh(ringGeo,ringMat); ring.position.y=6; g.add(ring);
-  // Spokes
-  for(let i=0;i<8;i++){const spoke=new THREE.Mesh(new THREE.BoxGeometry(0.1,10,0.1),ringMat);spoke.position.y=6;spoke.rotation.z=i*Math.PI/4;g.add(spoke);}
-  // Gondolas
-  const gondolaColors=['#E34234','#7EC8E3','#F9E05E','#A8D8B9','#C9B1FF','#FF8C69','#FFB6C1','#2ECC71'];
-  for(let i=0;i<8;i++){
-    const a=i*Math.PI/4;
-    const gond=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.6,0.6),new THREE.MeshStandardMaterial({color:new THREE.Color(gondolaColors[i])}));
-    gond.position.set(Math.cos(a)*5,6+Math.sin(a)*5,0);
-    g.add(gond);
-  }
-  // Legs
-  const legM=new THREE.MeshStandardMaterial({color:0x888888,metalness:0.5});
-  [[-2,0],[2,0]].forEach(([lx,lz])=>{const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.2,6,8),legM);leg.position.set(lx,3,lz);g.add(leg);});
-  // Hub
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,0.5,16),ringMat);hub.rotation.x=Math.PI/2;hub.position.y=6;g.add(hub);
-  g.position.set(x,0,z); scene.add(g);
-  return g;
+  const rm=mat('#ffd700',0.4,0.5);
+  const ring=sh(new THREE.Mesh(new THREE.TorusGeometry(5,0.15,8,40),rm));ring.position.y=6;ring.rotation.y=Math.PI/2;g.add(ring);
+  for(let i=0;i<8;i++){const spk=sh(new THREE.Mesh(new THREE.BoxGeometry(0.1,10,0.1),rm));spk.position.y=6;spk.rotation.z=i*Math.PI/4;g.add(spk);}
+  const gondColors=['#E34234','#7EC8E3','#F9E05E','#A8D8B9','#C9B1FF','#FF8C69','#FFB6C1','#2ECC71'];
+  const gondolas=[];
+  for(let i=0;i<8;i++){const gc=sh(new THREE.Mesh(new THREE.BoxGeometry(0.9,0.6,0.7),mat(gondColors[i])));g.add(gc);gondolas.push(gc);}
+  const legM=mat('#888',0.4,0.5);[[-2,0],[2,0]].forEach(([lx,lz])=>{const leg=sh(cyl(0.15,0.2,6,8,'#888'));leg.position.set(lx,3,lz);g.add(leg);});
+  const hub=sh(cyl(0.4,0.4,0.5,16,'#ffd700'));hub.rotation.x=Math.PI/2;hub.position.y=6;g.add(hub);
+  g.position.set(x,0,z);scene.add(g);
+  return {group:g,gondolas};
 }
 const ferrisWheel=makeFerrisWheel(80,-85);
 
-// Bunting flags
-function makeBunting(x1,z1,x2,z2,col){
-  const pts=[new THREE.Vector3(x1,4,z1),new THREE.Vector3((x1+x2)/2,3,(z1+z2)/2),new THREE.Vector3(x2,4,z2)];
+// Bunting
+function makeBunting(x1,z1,x2,z2){
+  const pts=[new THREE.Vector3(x1,4.5,z1),new THREE.Vector3((x1+x2)/2,3.2,(z1+z2)/2),new THREE.Vector3(x2,4.5,z2)];
   const curve=new THREE.CatmullRomCurve3(pts);
-  const line=new THREE.Mesh(new THREE.TubeGeometry(curve,30,0.03,4,false),new THREE.MeshStandardMaterial({color:0x888888}));
-  scene.add(line);
-  const flagColors=['#E34234','#FFE066','#7EC8E3','#A8D8B9','#C9B1FF'];
-  for(let t=0.1;t<0.9;t+=0.12){
-    const pos=curve.getPointAt(t);
-    const flag=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.4),new THREE.MeshStandardMaterial({color:new THREE.Color(flagColors[Math.floor(t*8)%5]),side:THREE.DoubleSide}));
-    flag.position.copy(pos); flag.position.y-=0.3;
-    scene.add(flag);
-  }
+  const line=sh(new THREE.Mesh(new THREE.TubeGeometry(curve,30,0.03,4,false),mat('#888')));scene.add(line);
+  const fc=['#E34234','#FFE066','#7EC8E3','#A8D8B9','#C9B1FF'];
+  for(let t=0.1;t<0.9;t+=0.12){const pos=curve.getPointAt(t);const flag=sh(new THREE.Mesh(new THREE.PlaneGeometry(0.55,0.42),mat(fc[Math.floor(t*8)%5])));flag.position.copy(pos);flag.position.y-=0.35;scene.add(flag);}
 }
-makeBunting(65,-75,100,-75,'carnival');
-makeBunting(65,-70,65,-95,'carnival');
+makeBunting(65,-75,100,-75);makeBunting(65,-70,65,-95);makeBunting(68,-70,100,-95);
 
-setLoad(90);
+setLoad(80);
 
-// ── Input ─────────────────────────────────────────────────────
+// ── Sword swing mesh ────────────────────────────────────────────
+const swingGroup=new THREE.Group();scene.add(swingGroup);
+const blade=sh(new THREE.Mesh(new THREE.BoxGeometry(0.08,1.9,0.06),new THREE.MeshStandardMaterial({color:0x88aaff,emissive:0x4466ff,emissiveIntensity:1.5,transparent:true,opacity:0.85})));
+blade.position.y=0.95;swingGroup.add(blade);
+sh(new THREE.Mesh(new THREE.BoxGeometry(0.7,0.1,0.1),new THREE.MeshStandardMaterial({color:0xddaa00,emissive:0x886600,emissiveIntensity:0.8}))).position.set(0,0,0);
+swingGroup.add(swingGroup.children[0]);swingGroup.visible=false;
+
+// ── Input ───────────────────────────────────────────────────────
 const keys={};
-let chatOpen=false,wOpen=false;
-let camAngle=0,camPitch=0.35;
+let chatOpen=false,wOpen=false,shopOpen=false;
+let camAngle=0,camPitch=0.35,camDist=12;
 let isDrag=false,lastMX=0,lastMY=0;
-let swingFrame=0;
-let money=500,moneyT=0;
-let dayTime=0.5,DAY_SPD=1/(10*60*60);
+let dayTime=0.5,DAY_SPD=1/(15*60*60);
+let activeNpc=null,dialogOpen=false;
+let nearPrompt='',moneyT=0;
 
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
+  if(dialogOpen){if(e.key==='Enter'){sendNpcMsg();return;}if(e.key==='Escape'){closeNpcDialog();return;}return;}
   if(chatOpen){if(e.key==='Enter')submitChat();if(e.key==='Escape')closeChat();return;}
   if(wOpen&&e.key==='Escape'){closeW();return;}
+  if(shopOpen&&e.key==='Escape'){closePanel('shoppanel');return;}
+  if(document.getElementById('petpanel').style.display==='block'&&e.key==='Escape'){closePanel('petpanel');return;}
+  if(document.getElementById('carnivalpanel').style.display==='block'&&e.key==='Escape'){closePanel('carnivalpanel');return;}
+  if(document.getElementById('crechepanel').style.display==='block'&&e.key==='Escape'){closePanel('crechepanel');return;}
   keys[k]=true;
   if(k==='t'){e.preventDefault();openChat();return;}
-  if(k==='w'&&!chatOpen){e.preventDefault();toggleW();return;}
+  if(k==='w'){e.preventDefault();toggleW();return;}
+  if(k==='s'&&!chatOpen){e.preventDefault();toggleShop();return;}
   if(k==='e'){e.preventDefault();tryInteract();return;}
-  if(e.code==='Space'){e.preventDefault();if(playerCar){exitCar3d();}else{swingFrame=30;}return;}
-  if(e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight')e.preventDefault();
+  if(e.code==='Space'){e.preventDefault();if(playerCar)exitCar3d();else swingFrame=28;return;}
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault();
 });
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 canvas.addEventListener('mousedown',e=>{if(e.button===0){isDrag=true;lastMX=e.clientX;lastMY=e.clientY;}});
 window.addEventListener('mouseup',()=>isDrag=false);
-window.addEventListener('mousemove',e=>{
-  if(!isDrag)return;
-  camAngle-=(e.clientX-lastMX)*0.008;
-  camPitch=Math.max(0.1,Math.min(0.85,camPitch+(e.clientY-lastMY)*0.004));
-  lastMX=e.clientX;lastMY=e.clientY;
-});
-canvas.addEventListener('wheel',e=>{camPitch=Math.max(0.1,Math.min(0.85,camPitch+e.deltaY*0.001));});
+window.addEventListener('mousemove',e=>{if(!isDrag)return;camAngle-=(e.clientX-lastMX)*0.008;camPitch=Math.max(0.08,Math.min(0.88,camPitch+(e.clientY-lastMY)*0.004));lastMX=e.clientX;lastMY=e.clientY;});
+canvas.addEventListener('wheel',e=>{camDist=Math.max(6,Math.min(30,camDist+e.deltaY*0.02));});
 canvas.addEventListener('touchstart',e=>{isDrag=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;});
-canvas.addEventListener('touchmove',e=>{e.preventDefault();const dx=e.touches[0].clientX-lastMX,dy=e.touches[0].clientY-lastMY;camAngle-=dx*0.008;camPitch=Math.max(0.1,Math.min(0.85,camPitch+dy*0.004));lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();camAngle-=(e.touches[0].clientX-lastMX)*0.008;camPitch=Math.max(0.08,Math.min(0.88,camPitch+(e.touches[0].clientY-lastMY)*0.004));lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;},{passive:false});
 
-// ── Chat ───────────────────────────────────────────────────────
+// ── Chat (world) ─────────────────────────────────────────────────
 function openChat(){chatOpen=true;const i=document.getElementById('chatin');i.style.display='block';i.focus();}
 function closeChat(){chatOpen=false;document.getElementById('chatin').style.display='none';}
 function submitChat(){
   const i=document.getElementById('chatin'),msg=i.value.trim();
-  if(msg){const l=document.getElementById('chatlog');const d=document.createElement('div');d.innerHTML=`<span class="nm">${P.nm}:</span> ${msg}`;l.appendChild(d);l.scrollTop=l.scrollHeight;i.value='';}
-  closeChat();
+  if(msg){addChatMsg(P.nm,msg,'player');}
+  i.value='';closeChat();
+}
+function addChatMsg(nm,msg,cls='npc'){
+  const l=document.getElementById('chatlog');
+  const d=document.createElement('div');d.innerHTML=`<span class="nm ${cls}">${nm}:</span> ${msg}`;
+  l.appendChild(d);l.scrollTop=l.scrollHeight;
+  // Trim log
+  while(l.children.length>20)l.removeChild(l.firstChild);
 }
 
-// ── Wardrobe 2D preview ────────────────────────────────────────
-const pvc=document.getElementById('pvc');const pvctx=pvc.getContext('2d');
+// ── NPC dialogue ─────────────────────────────────────────────────
+function openNpcDialog(npc){
+  activeNpc=npc;dialogOpen=true;
+  document.getElementById('npc-dialog-name').textContent=npc.cfg.nm+' '+getEmoji(npc.cfg.nm);
+  document.getElementById('npc-dialog-role').textContent='📍 '+npc.cfg.role;
+  document.getElementById('npc-dialog-log').innerHTML='';
+  document.getElementById('npc-dialog-typing').textContent='';
+  document.getElementById('npc-dialog').style.display='block';
+  // Initial greeting
+  const g=npc.cfg.greet;const greet=g[Math.floor(Math.random()*g.length)];
+  addDialogMsg(npc.cfg.nm,greet,false);
+}
+function getEmoji(nm){const map={Sam:'🛹',Luna:'🌸',Rio:'💪',Mia:'🎨',Marcel:'👨‍🍳','Officer Hayes':'👮','Nurse Joy':'👩‍⚕️'};return map[nm]||'💬';}
+function addDialogMsg(nm,msg,isPlayer){
+  const l=document.getElementById('npc-dialog-log');
+  const d=document.createElement('div');d.style.marginBottom='6px';
+  d.innerHTML=`<b style="color:${isPlayer?'#f8c8d4':'#a8d8ea'}">${nm}:</b> ${msg}`;
+  l.appendChild(d);l.scrollTop=l.scrollHeight;
+  if(!isPlayer)addChatMsg(nm,msg,'npc');
+}
+function closeNpcDialog(){dialogOpen=false;document.getElementById('npc-dialog').style.display='none';activeNpc=null;}
+function sendNpcMsg(){
+  if(!activeNpc)return;
+  const inp=document.getElementById('npc-dialog-input');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  addDialogMsg(P.nm,msg,true);
+  addChatMsg(P.nm,msg,'player');
+  // NPC reply
+  document.getElementById('npc-dialog-typing').textContent=activeNpc.cfg.nm+' is typing...';
+  const reply=getNpcReply(activeNpc.cfg,msg.toLowerCase());
+  setTimeout(()=>{document.getElementById('npc-dialog-typing').textContent='';if(activeNpc)addDialogMsg(activeNpc.cfg.nm,reply,false);},600+Math.random()*800);
+}
+function getNpcReply(cfg,msg){
+  const r=cfg.replies;
+  // Check keywords
+  const checks={
+    hi:['hi','hello','hey','hiya','sup','yo','howdy'],
+    how:['how are','how do','how you','you ok','all good','feeling'],
+    skate:['skate','board','trick','grind','ollie'],
+    flower:['flower','rose','plant','garden','petal'],
+    train:['train','workout','gym','exercise','fitness','run'],
+    art:['art','paint','draw','colour','creative','design'],
+    food:['food','eat','cook','taste','recipe','hungry'],
+    crime:['crime','law','police','arrest','safe','trouble'],
+    baby:['baby','child','kid','little','toddler','nappy','feed'],
+    help:['help','please','need','can you','would you']
+  };
+  for(const [key,words] of Object.entries(checks)){
+    if(words.some(w=>msg.includes(w))&&r[key]){const a=r[key];return a[Math.floor(Math.random()*a.length)];}
+  }
+  const def=r.default;return def[Math.floor(Math.random()*def.length)];
+}
+document.getElementById('npc-dialog-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();sendNpcMsg();}});
+
+// ── Pet shop ────────────────────────────────────────────────────
+function buildPetGrid(){
+  const g=document.getElementById('pet-grid');g.innerHTML='';
+  const hd=document.getElementById('held-pet-display');
+  if(heldPet){hd.style.display='block';hd.innerHTML=`Holding: <b>${heldPet.ico} ${heldPet.nm}</b> — Press <b>F</b> to feed | <button style="background:#E34234;color:#fff;border:none;border-radius:4px;padding:2px 8px;cursor:pointer" onclick="dropPet()">Drop</button>`;}
+  else hd.style.display='none';
+  PETS.forEach(p=>{
+    const d=document.createElement('div');d.className='pet-item'+(owned.pets.has(p.id)?' owned':'');
+    d.innerHTML=`<span class="pico">${p.ico}</span><span class="pnm">${p.nm}</span><br><span class="pprc">${owned.pets.has(p.id)?'✓ Owned':'$'+p.price}</span>`;
+    d.onclick=()=>buyOrPickPet(p);g.appendChild(d);
+  });
+}
+function buyOrPickPet(p){
+  if(owned.pets.has(p.id)){heldPet=p;document.getElementById('pet-hud').style.display='block';document.getElementById('pet-nm').textContent=p.ico+' '+p.nm;buildPetGrid();addChatMsg('System','You picked up your '+p.nm+'! 🐾','sys');}
+  else if(money>=p.price){money-=p.price;owned.pets.add(p.id);heldPet=p;document.getElementById('money').textContent=money;document.getElementById('pet-hud').style.display='block';document.getElementById('pet-nm').textContent=p.ico+' '+p.nm;buildPetGrid();addChatMsg('System','Bought '+p.nm+'! '+p.ico,'sys');}
+  else addChatMsg('System','Not enough money! Need $'+p.price,'sys');
+}
+function dropPet(){heldPet=null;document.getElementById('pet-hud').style.display='none';buildPetGrid();}
+window.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='f'&&heldPet&&!chatOpen&&!dialogOpen){addChatMsg(P.nm,P.nm+' feeds '+heldPet.nm+' 🐾','player');setTimeout(()=>addChatMsg(heldPet.nm,heldPet.snd,'npc'),400);}});
+
+// ── Carnival ────────────────────────────────────────────────────
+function buildCarnival(){
+  const div=document.getElementById('carnival-acts');div.innerHTML='';
+  const acts=[
+    {ico:'🎡',nm:'Ferris Wheel',desc:'Ride high above Brookhaven!',cost:20,fun:'Wheeee! The view is amazing up here! 🌍'},
+    {ico:'🎠',nm:'Carousel',desc:'Classic spinning fun',cost:15,fun:'Round and round and round! 🎠'},
+    {ico:'🎯',nm:'Shooting Gallery',desc:'Hit the targets, win prizes',cost:25,fun:()=>Math.random()<0.5?'Bullseye! You win a stuffed bear! 🧸':'So close... try again!'},
+    {ico:'🎭',nm:'Hall of Mirrors',desc:'See yourself distorted',cost:10,fun:'You look very... interesting 😂'},
+    {ico:'🍭',nm:'Candy Floss Stand',desc:'Pink and fluffy sugar heaven',cost:8,fun:'Mmm... sugary perfection! 🍭'},
+    {ico:'🎪',nm:'Magic Show',desc:'Prepare to be amazed',cost:30,fun:'Ta-da! The rabbit disappeared! 🐇✨'},
+    {ico:'🎢',nm:'Rollercoaster',desc:'Hold on tight!',cost:35,fun:'AAAAAHHHHH! 🎢 Worth it!'},
+    {ico:'🎳',nm:'Bowling',desc:'Strike it lucky',cost:20,fun:()=>Math.random()<0.4?'STRIKE! 🎳🎉':'Split... awkward 😬'},
+  ];
+  acts.forEach(a=>{
+    const d=document.createElement('div');d.className='carnival-act';
+    d.innerHTML=`<b>${a.ico} ${a.nm}</b> — $${a.cost}<br><span style="color:#ccc;font-size:11px">${a.desc}</span>`;
+    d.onclick=()=>{
+      if(money<a.cost){addChatMsg('System','Need $'+a.cost+' for this!','sys');return;}
+      money-=a.cost;document.getElementById('money').textContent=money;
+      const msg=typeof a.fun==='function'?a.fun():a.fun;addChatMsg('Carnival',msg,'npc');showPopup(a.ico+' '+msg.slice(0,30));
+    };div.appendChild(d);
+  });
+}
+
+// ── Crèche panel ────────────────────────────────────────────────
+function buildCrechePanel(){
+  const div=document.getElementById('creche-babies');div.innerHTML='';
+  BABIES.forEach(b=>{
+    const d=document.createElement('div');d.style.cssText='background:rgba(255,179,217,.08);border:1px solid rgba(255,179,217,.2);border-radius:10px;padding:10px;text-align:center;font-size:12px;';
+    d.innerHTML=`<div style="font-size:2rem">👶</div><b style="color:#ffb3d9">${b.nm}</b><br><span style="color:#ccc">${b.mood}</span>`;
+    d.onclick=()=>{
+      const msgs=[`${b.nm} giggles at you! 😄`,`${b.nm} reaches for your hand 💕`,`${b.nm} says "ba ba!" 👶`,`${b.nm} blows a raspberry 😂`,`${b.nm} falls asleep on you 😴💕`];
+      addChatMsg('Crèche',msgs[Math.floor(Math.random()*msgs.length)],'npc');
+    };div.appendChild(d);
+  });
+}
+
+// ── Shop ────────────────────────────────────────────────────────
+function buildShop(){
+  const tabs=document.getElementById('shop-tabs');const secs=document.getElementById('shop-secs');
+  tabs.innerHTML='';secs.innerHTML='';
+  let firstTab=true;
+  Object.entries(SHOP_ITEMS).forEach(([cat,items])=>{
+    const tn=document.createElement('div');tn.className='shop-tab'+(firstTab?' on':'');tn.textContent={hats:'🎩 Hats',acc:'🕶️ Accessories',tops:'👕 Tops',bots:'👖 Bottoms'}[cat];
+    tn.onclick=()=>{document.querySelectorAll('.shop-tab').forEach(t=>t.classList.remove('on'));tn.classList.add('on');document.querySelectorAll('.shop-sec').forEach(s=>s.classList.remove('on'));document.getElementById('shop-'+cat).classList.add('on');};
+    tabs.appendChild(tn);
+    const sec=document.createElement('div');sec.className='shop-sec'+(firstTab?' on':'');sec.id='shop-'+cat;
+    const grid=document.createElement('div');grid.className='shop-grid';
+    items.forEach(item=>{
+      const d=document.createElement('div');d.className='shop-item';d.id='sitem-'+item.id;
+      const isOwned=owned.items.has(item.id);const isEquipped=isItemEquipped(cat,item.id);
+      if(isOwned)d.classList.add('owned');if(isEquipped)d.classList.add('equipped');
+      d.innerHTML=`<span class="sico">${item.ico}</span><span>${item.nm}</span><br><span class="sprc">${isOwned?(isEquipped?'✓ Wearing':'✓ Own'):'$'+item.price}</span>`;
+      d.onclick=()=>buyOrEquipItem(cat,item,d);grid.appendChild(d);
+    });sec.appendChild(grid);secs.appendChild(sec);firstTab=false;
+  });
+}
+function isItemEquipped(cat,id){
+  if(cat==='hats')return P.hat===id;
+  if(cat==='tops')return P.ts===id;
+  if(cat==='bots')return P.bs===id;
+  if(cat==='acc')return !!P[id];
+  return false;
+}
+function buyOrEquipItem(cat,item,el){
+  if(!owned.items.has(item.id)){
+    if(money<item.price){addChatMsg('Shop','Not enough money! Need $'+item.price,'sys');return;}
+    money-=item.price;owned.items.add(item.id);document.getElementById('money').textContent=money;document.getElementById('shop-bal').textContent=money;
+    addChatMsg('Shop','Bought '+item.ico+' '+item.nm+'!','npc');el.classList.add('owned');
+  }
+  // Equip
+  if(cat==='hats'){P.hat=item.id;}else if(cat==='tops'){P.ts=item.id;}else if(cat==='bots'){P.bs=item.id;}
+  else if(cat==='acc'){P[item.id]=!P[item.id];}
+  rebuildPlayer();drawPv();buildShop();addChatMsg('Shop','Equipped '+item.nm+'! Looking good 😎','npc');
+}
+function toggleShop(){shopOpen=!shopOpen;document.getElementById('shoppanel').style.display=shopOpen?'block':'none';if(shopOpen){document.getElementById('shop-bal').textContent=money;buildShop();}}
+
+// ── Panel utility ───────────────────────────────────────────────
+function closePanel(id){document.getElementById(id).style.display='none';if(id==='shoppanel')shopOpen=false;}
+
+// ── Interaction ─────────────────────────────────────────────────
+function tryInteract(){
+  if(dialogOpen){closeNpcDialog();return;}
+  const pp=playerContainer.position;
+  // NPC talk
+  for(const npc of npcs3d){if(pp.distanceTo(npc.mesh.position)<4){openNpcDialog(npc);return;}}
+  // Car
+  if(!playerCar){for(const car of cars3d){if(!car.occupied&&pp.distanceTo(new THREE.Vector3(car.group.position.x,0,car.group.position.z))<4.5){enterCar3d(car);return;}}}
+  // Buildings
+  for(const b of buildingDefs){
+    if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<10){
+      const lbl=b.label.toLowerCase();
+      if(lbl.includes('pet')){buildPetGrid();document.getElementById('petpanel').style.display='block';return;}
+      if(lbl.includes('carnival')){buildCarnival();document.getElementById('carnivalpanel').style.display='block';return;}
+      if(lbl.includes('crèche')||lbl.includes('creche')){buildCrechePanel();document.getElementById('crechepanel').style.display='block';return;}
+      if(lbl.includes('shop')){toggleShop();return;}
+      showPopup('Entered '+b.label);addChatMsg('System','You entered '+b.label,'sys');return;
+    }
+  }
+}
+function enterCar3d(car){car.occupied=true;playerCar=car;document.getElementById('vhud').style.display='block';document.getElementById('car-name').textContent=car.lb;}
+function exitCar3d(){if(!playerCar)return;playerContainer.position.set(playerCar.group.position.x+3,0,playerCar.group.position.z);playerCar.occupied=false;playerCar=null;document.getElementById('vhud').style.display='none';}
+function showPopup(t){const e=document.getElementById('location-popup');e.textContent=t;e.style.opacity='1';setTimeout(()=>e.style.opacity='0',2200);}
+
+// ── Wardrobe ─────────────────────────────────────────────────────
+const pvc=document.getElementById('pvc'),pvctx=pvc.getContext('2d');
 function drawPv(){
   pvctx.clearRect(0,0,130,210);
-  const g=pvctx.createLinearGradient(0,0,0,210);g.addColorStop(0,'#1e1e3a');g.addColorStop(1,'#2a1a3a');pvctx.fillStyle=g;pvctx.fillRect(0,0,130,210);
-  pvctx.strokeStyle='rgba(248,200,212,.15)';pvctx.lineWidth=1;pvctx.beginPath();pvctx.moveTo(15,170);pvctx.lineTo(115,170);pvctx.stroke();
-  const sc=4,w=22*sc,h=22*sc,px=130/2-w/2,py=168-h-4*sc;
-  // Draw 2D character at scale 4 (reusing 2D drawChar logic inline)
-  draw2DChar(pvctx,px,py,sc);
+  const gr=pvctx.createLinearGradient(0,0,0,210);gr.addColorStop(0,'#1e1e3a');gr.addColorStop(1,'#2a1a3a');pvctx.fillStyle=gr;pvctx.fillRect(0,0,130,210);
+  pvctx.strokeStyle='rgba(248,200,212,.15)';pvctx.lineWidth=1;pvctx.beginPath();pvctx.moveTo(15,172);pvctx.lineTo(115,172);pvctx.stroke();
+  const s=4,w=22*s,px=130/2-w/2,py=168-w-4*s;
+  // Inline mini-draw
+  if(P.backpack){pvctx.fillStyle='#E34234';pvctx.fillRect(px-4*s,py+8*s,8*s,14*s);}
+  if(P.scarf){pvctx.fillStyle='#C9B1FF';pvctx.fillRect(px+2*s,py+12*s,w-4*s,5*s);}
+  pvctx.fillStyle=P.bc;pvctx.fillRect(px,py+w-12*s,w/2-1,12*s);pvctx.fillRect(px+w/2+1,py+w-12*s,w/2-1,12*s);
+  pvctx.fillStyle='#222';pvctx.fillRect(px-1,py+w,w/2+1,4*s);pvctx.fillRect(px+w/2,py+w,w/2+1,4*s);
+  pvctx.fillStyle=P.tc;pvctx.fillRect(px,py+8*s,w,w-8*s);
+  pvctx.fillStyle=P.sk;pvctx.fillRect(px-3*s,py+9*s,3*s,12*s);pvctx.fillRect(px+w,py+9*s,3*s,12*s);
+  pvctx.fillStyle=P.sk;pvctx.beginPath();pvctx.roundRect(px+s,py,w-2*s,14*s,7);pvctx.fill();
+  if(P.hs!=='none'){pvctx.fillStyle=P.hc;pvctx.fillRect(px,py-2*s,w,7*s);}
+  pvctx.fillStyle=P.ey;pvctx.fillRect(px+4*s,py+5*s,3*s,3*s);pvctx.fillRect(px+w-7*s,py+5*s,3*s,3*s);
+  if(P.hat!=='none'){pvctx.fillStyle=P.htc;if(P.hat==='crown'){pvctx.fillStyle='#F4D03F';pvctx.fillRect(px+2*s,py-5*s,w-4*s,5*s);for(let i=0;i<3;i++){pvctx.beginPath();pvctx.moveTo(px+4*s+i*6*s,py-5*s);pvctx.lineTo(px+7*s+i*6*s,py-10*s);pvctx.lineTo(px+10*s+i*6*s,py-5*s);pvctx.fill();}}else{pvctx.fillRect(px,py-7*s,w,8*s);}}
+  if(P.halo){pvctx.strokeStyle='#FFD700';pvctx.lineWidth=2;pvctx.beginPath();pvctx.ellipse(px+w/2,py-11*s,w/3,5,0,0,Math.PI*2);pvctx.stroke();}
+  if(P.wings){pvctx.fillStyle='rgba(255,255,255,0.7)';pvctx.fillRect(px-9*s,py+10*s,7*s,14*s);pvctx.fillRect(px+w+2*s,py+10*s,7*s,14*s);}
+  pvctx.fillStyle='rgba(0,0,0,.6)';pvctx.font=`bold ${9*s}px Segoe UI`;pvctx.textAlign='center';pvctx.textBaseline='alphabetic';
+  const tw=pvctx.measureText(P.nm).width+8*s;pvctx.fillRect(px+w/2-tw/2,py-21*s,tw,12*s);pvctx.fillStyle='#fff';pvctx.fillText(P.nm,px+w/2,py-11*s);
 }
-function draw2DChar(c,px,py,sc){
-  const w=22*sc,h=22*sc;
-  if(P.backpack){c.fillStyle='#E34234';c.fillRect(px-4*sc,py+8*sc,8*sc,14*sc);}
-  if(P.scarf){c.fillStyle='#C9B1FF';c.fillRect(px+2*sc,py+12*sc,w-4*sc,6*sc);}
-  c.fillStyle=P.bc;c.fillRect(px,py+h-12*sc,w/2-1,12*sc);c.fillRect(px+w/2+1,py+h-12*sc,w/2-1,12*sc);
-  c.fillStyle='#333';c.fillRect(px-1,py+h,w/2+1,4*sc);c.fillRect(px+w/2,py+h,w/2+1,4*sc);
-  c.fillStyle=P.tc;c.fillRect(px,py+8*sc,w,h-8*sc);
-  c.fillStyle=P.sk;c.fillRect(px-3*sc,py+9*sc,3*sc,12*sc);c.fillRect(px+w,py+9*sc,3*sc,12*sc);
-  c.fillStyle=P.sk;c.beginPath();c.roundRect(px+sc,py,w-2*sc,14*sc,7);c.fill();
-  if(P.hs!=='none'){c.fillStyle=P.hc;if(P.hs==='afro'){c.beginPath();c.ellipse(px+w/2,py-2*sc,w/2+4*sc,10*sc,0,0,Math.PI*2);c.fill();}else if(P.hs==='long'){c.fillRect(px,py-2*sc,w,7*sc);c.fillRect(px,py+4*sc,3*sc,16*sc);c.fillRect(px+w-3*sc,py+4*sc,3*sc,16*sc);}else if(P.hs==='bun'){c.fillRect(px,py-2*sc,w,7*sc);c.beginPath();c.arc(px+w/2,py-3*sc,5*sc,0,Math.PI*2);c.fill();}else if(P.hs==='spiky'){for(let i=0;i<5;i++){c.beginPath();c.moveTo(px+4*sc+i*3.5*sc,py);c.lineTo(px+2*sc+i*3.5*sc,py-7*sc);c.lineTo(px+6*sc+i*3.5*sc,py);c.fill();}}else{c.fillRect(px,py-2*sc,w,7*sc);}}
-  c.fillStyle=P.ey;c.fillRect(px+4*sc,py+5*sc,3*sc,3*sc);c.fillRect(px+w-7*sc,py+5*sc,3*sc,3*sc);
-  if(P.glasses){c.strokeStyle='rgba(0,0,0,.7)';c.lineWidth=1.5;c.strokeRect(px+2*sc,py+4*sc,6*sc,5*sc);c.strokeRect(px+w-8*sc,py+4*sc,6*sc,5*sc);}
-  if(P.badge){c.fillStyle='#F4D03F';c.beginPath();c.arc(px+w-4*sc,py+14*sc,3*sc,0,Math.PI*2);c.fill();}
-  if(P.hat!=='none'){c.fillStyle=P.htc;if(P.hat==='cap'){c.fillRect(px-sc,py-4*sc,w+2*sc,5*sc);c.fillRect(px+w/2,py-5*sc,w/2+3*sc,3*sc);}else if(P.hat==='beanie'){c.fillRect(px,py-7*sc,w,8*sc);}else if(P.hat==='crown'){c.fillStyle='#F4D03F';for(let i=0;i<3;i++){c.beginPath();c.moveTo(px+3*sc+i*6*sc,py-2*sc);c.lineTo(px+6*sc+i*6*sc,py-9*sc);c.lineTo(px+9*sc+i*6*sc,py-2*sc);c.fill();}c.fillRect(px+2*sc,py-4*sc,w-4*sc,4*sc);}else if(P.hat==='chef'){c.fillStyle='#fff';c.fillRect(px+sc,py-4*sc,w-2*sc,4*sc);c.beginPath();c.ellipse(px+w/2,py-6*sc,w/2-2*sc,5*sc,0,0,Math.PI*2);c.fill();}else if(P.hat==='cowboy'){c.fillRect(px-2*sc,py-3*sc,w+4*sc,3*sc);c.fillRect(px+2*sc,py-9*sc,w-4*sc,7*sc);}else if(P.hat==='party'){c.beginPath();c.moveTo(px+w/2,py-14*sc);c.lineTo(px+2*sc,py-2*sc);c.lineTo(px+w-2*sc,py-2*sc);c.fill();}}
-  c.fillStyle='rgba(0,0,0,.55)';c.font=`bold ${10*sc}px Segoe UI`;c.textAlign='center';c.textBaseline='alphabetic';
-  const tw=c.measureText(P.nm).width+10*sc;c.fillRect(px+w/2-tw/2,py-18*sc,tw,12*sc);c.fillStyle='#fff';c.fillText(P.nm,px+w/2,py-8*sc);
-}
-
 let wtab='skin';
 function wTab(t){wtab=t;document.querySelectorAll('.wt').forEach((el,i)=>el.classList.toggle('on',['skin','hair','tops','bots','hats','acc'][i]===t));document.querySelectorAll('.wsec').forEach(s=>s.classList.remove('on'));document.getElementById('tab-'+t).classList.add('on');}
-function toggleW(){wOpen=!wOpen;document.getElementById('wdrobe').style.display=wOpen?'flex':'none';if(wOpen)setTimeout(()=>{drawPv();rebuildPlayer();},30);}
+function toggleW(){wOpen=!wOpen;document.getElementById('wdrobe').style.display=wOpen?'flex':'none';if(wOpen)setTimeout(()=>{drawPv();},30);}
 function closeW(){wOpen=false;document.getElementById('wdrobe').style.display='none';}
-function mkSw(id,cols,prop){const el=document.getElementById(id);el.innerHTML='';cols.forEach(c=>{const s=document.createElement('div');s.className='sw'+(P[prop]===c?' on':'');s.style.background=c;s.onclick=()=>{P[prop]=c;el.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));s.classList.add('on');setTimeout(()=>{drawPv();rebuildPlayer();},10);};el.appendChild(s);});}
-function mkGrid(id,items,prop){const el=document.getElementById(id);el.innerHTML='';items.forEach(item=>{const d=document.createElement('div');d.className='wi'+(P[prop]===item.id?' on':'');d.innerHTML=`<span class="ico">${item.ico}</span><span>${item.lb}</span>`;d.onclick=()=>{P[prop]=item.id;el.querySelectorAll('.wi').forEach(x=>x.classList.remove('on'));d.classList.add('on');setTimeout(()=>{drawPv();rebuildPlayer();},10);};el.appendChild(d);});}
-function mkAcc(){const el=document.getElementById('ac-gr');el.innerHTML='';ACCS.forEach(a=>{const d=document.createElement('div');d.className='wi'+(P[a.id]?' on':'');d.innerHTML=`<span class="ico">${a.ico}</span><span>${a.lb}</span>`;d.onclick=()=>{P[a.id]=!P[a.id];d.classList.toggle('on',P[a.id]);setTimeout(()=>{drawPv();rebuildPlayer();},10);};el.appendChild(d);});}
+function mkSw(id,cols,prop){const el=document.getElementById(id);el.innerHTML='';cols.forEach(c=>{const s=document.createElement('div');s.className='sw'+(P[prop]===c?' on':'');s.style.background=c;s.onclick=()=>{P[prop]=c;el.querySelectorAll('.sw').forEach(x=>x.classList.remove('on'));s.classList.add('on');rebuildPlayer();drawPv();};el.appendChild(s);});}
+function mkGrid(id,items,prop){const el=document.getElementById(id);el.innerHTML='';items.forEach(item=>{const d=document.createElement('div');d.className='wi'+(P[prop]===item.id?' on':'');d.innerHTML=`<span class="ico">${item.ico}</span><span>${item.lb}</span>`;d.onclick=()=>{P[prop]=item.id;el.querySelectorAll('.wi').forEach(x=>x.classList.remove('on'));d.classList.add('on');rebuildPlayer();drawPv();};el.appendChild(d);});}
+function mkAcc(){const el=document.getElementById('ac-gr');el.innerHTML='';ACCS.forEach(a=>{const d=document.createElement('div');d.className='wi'+(P[a.id]?' on':'');d.innerHTML=`<span class="ico">${a.ico}</span><span>${a.lb}</span>`;d.onclick=()=>{P[a.id]=!P[a.id];d.classList.toggle('on',P[a.id]);rebuildPlayer();drawPv();};el.appendChild(d);});}
 mkSw('sk-sw',SK_C,'sk');mkSw('ey-sw',EY_C,'ey');
 mkGrid('hs-gr',HSTYLES,'hs');mkSw('hc-sw',HC_C,'hc');
 mkGrid('tp-gr',TOPS,'ts');mkSw('tc-sw',TC_C,'tc');
@@ -627,226 +994,146 @@ mkGrid('bt-gr',BOTS,'bs');mkSw('bc-sw',BC_C,'bc');
 mkGrid('ht-gr',HATS,'hat');mkSw('htc-sw',HT_C,'htc');
 mkAcc();
 
-function rebuildPlayer(){
-  playerContainer.remove(playerMesh);
-  playerMesh=buildPlayerMesh();
-  playerContainer.add(playerMesh);
-}
-
-// ── Interaction ────────────────────────────────────────────────
-let nearPrompt='';
-function tryInteract(){
-  if(playerCar){exitCar3d();return;}
-  const pp=playerContainer.position;
-  for(const car of cars3d){if(!car.occupied&&pp.distanceTo(new THREE.Vector3(car.group.position.x,0,car.group.position.z))<4){enterCar3d(car);return;}}
-  for(const b of buildingDefs){if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<10){showLocationPopup('Entered '+b.label);return;}}
-}
-function enterCar3d(car){
-  car.occupied=true;playerCar=car;
-  document.getElementById('vhud').style.display='block';
-  playerContainer.position.set(car.group.position.x,0,car.group.position.z);
-}
-function exitCar3d(){
-  if(!playerCar)return;
-  playerCar.occupied=false;
-  playerContainer.position.set(playerCar.group.position.x+3,0,playerCar.group.position.z);
-  playerCar=null;
-  document.getElementById('vhud').style.display='none';
-}
-function showLocationPopup(t){const el=document.getElementById('location-popup');el.textContent=t;el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2000);}
-
-// ── Sword swing effect ─────────────────────────────────────────
-const swingGroup=new THREE.Group();
-scene.add(swingGroup);
-const bladeMat=new THREE.MeshStandardMaterial({color:0x88aaff,emissive:0x4466ff,emissiveIntensity:1.5,transparent:true,opacity:0.85});
-const blade=new THREE.Mesh(new THREE.BoxGeometry(0.08,1.8,0.08),bladeMat);
-blade.position.y=0.9; swingGroup.add(blade);
-const guardMat=new THREE.MeshStandardMaterial({color:0xddaa00,emissive:0x886600,emissiveIntensity:0.8});
-const guard=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.12,0.12),guardMat);
-swingGroup.add(guard);
-swingGroup.visible=false;
-
-// ── Collision ──────────────────────────────────────────────────
-function checkBuildingCollision(nx,nz){
-  for(const b of buildingDefs){
-    const hw=b.w/2+0.8,hd=b.d/2+0.8;
-    if(Math.abs(nx-b.x)<hw&&Math.abs(nz-b.z)<hd)return true;
+// ── Day/night ────────────────────────────────────────────────────
+const SKY_DAY=new THREE.Color(0x87CEEB),SKY_SUNSET=new THREE.Color(0xFF7733),SKY_NIGHT=new THREE.Color(0x06091a);
+function updateDayNight(t){
+  let skyCol,sunI,ambI,moonI;
+  const isNight=(t<0.22||t>0.78);
+  if(isNight){
+    const n=t<0.22?(1-t/0.22):((t-0.78)/0.22);
+    // KEY FIX: never go completely dark — minimum ambient so you can see
+    skyCol=SKY_NIGHT.clone();sunI=0;ambI=0.28+n*0.15;moonI=0.5*n;// raised from 0.12
+    ambient.color.setHex(0x3040a0);stars.visible=true;
+    streetLights.forEach(sl=>{sl.pt.intensity=2.0*n;sl.bm.emissiveIntensity=0.9*n;});
+    cars3d.forEach(c=>{c.hlMats.forEach(m=>m.emissiveIntensity=1.5*n);c.rlMats.forEach(m=>m.emissiveIntensity=n);});
+  }else if(t<0.3||t>0.7){
+    const s=t<0.3?(t-0.22)/0.08:(0.78-t)/0.08;
+    skyCol=SKY_SUNSET.clone().lerp(SKY_DAY,s);sunI=0.7+0.7*s;ambI=0.35+0.25*s;moonI=0;
+    ambient.color.setHex(0x7080a0);stars.visible=s<0.5;
+    streetLights.forEach(sl=>{sl.pt.intensity=0;sl.bm.emissiveIntensity=0;});
+    cars3d.forEach(c=>{c.hlMats.forEach(m=>m.emissiveIntensity=0);c.rlMats.forEach(m=>m.emissiveIntensity=0);});
+  }else{
+    skyCol=SKY_DAY.clone();sunI=1.4;ambI=0.6;moonI=0;
+    ambient.color.setHex(0x8090b0);stars.visible=false;
+    streetLights.forEach(sl=>{sl.pt.intensity=0;sl.bm.emissiveIntensity=0;});
+    cars3d.forEach(c=>{c.hlMats.forEach(m=>m.emissiveIntensity=0);c.rlMats.forEach(m=>m.emissiveIntensity=0);});
   }
-  if(Math.abs(nx)>95||Math.abs(nz)>95)return true;
+  scene.background.copy(skyCol);scene.fog.color.copy(skyCol);
+  sun.intensity=sunI;sun.color.setHex(sunI>0?0xfff5e0:0x000000);ambient.intensity=ambI;moon.intensity=moonI||0;
+  const h24=Math.floor(t*24),mi=Math.floor((t*24*60)%60),ampm=h24>=12?'PM':'AM',h12=(h24%12)||12;
+  document.getElementById('tstr').textContent=`${h12}:${mi.toString().padStart(2,'0')} ${ampm}`;
+}
+
+// ── Collision ────────────────────────────────────────────────────
+function collides(nx,nz){
+  for(const b of buildingDefs){const hw=b.w/2+0.9,hd=b.d/2+0.9;if(Math.abs(nx-b.x)<hw&&Math.abs(nz-b.z)<hd)return true;}
+  if(Math.abs(nx)>98||Math.abs(nz)>98)return true;
   return false;
 }
 
-// ── Minimap ────────────────────────────────────────────────────
-const mmCanvas=document.getElementById('mm');const mmCtx=mmCanvas.getContext('2d');
+// ── Minimap ──────────────────────────────────────────────────────
+const mmC=document.getElementById('mm'),mmX=mmC.getContext('2d');
 function drawMinimap(){
-  const S=130/200,OFF=65;
-  mmCtx.fillStyle='#5a8a5a';mmCtx.fillRect(0,0,130,100);
-  mmCtx.fillStyle='#888';
-  [[0,0,200,8],[0,-40,200,8],[0,40,200,8],[-30,0,8,200],[30,0,8,200],[70,0,8,200],[-70,0,8,200]].forEach(([x,z,w,d])=>{
-    mmCtx.fillRect((x-w/2+OFF)*S,(z-d/2+50)*S,w*S,d*S);
-  });
-  buildingDefs.forEach(b=>{mmCtx.fillStyle='rgba(248,200,212,0.5)';mmCtx.fillRect((b.x-b.w/2+OFF)*S,(b.z-b.d/2+50)*S,b.w*S,b.d*S);});
-  npcs3d.forEach(n=>{mmCtx.fillStyle='#f9e05e';mmCtx.fillRect((n.group.position.x+OFF)*S-2,(n.group.position.z+50)*S-2,4,4);});
-  const pp=playerContainer.position;
-  mmCtx.fillStyle='#fff';mmCtx.beginPath();mmCtx.arc((pp.x+OFF)*S,(pp.z+50)*S,4,0,Math.PI*2);mmCtx.fill();
-  // View cone
-  mmCtx.strokeStyle='rgba(255,255,255,0.3)';mmCtx.lineWidth=1;
-  mmCtx.beginPath();mmCtx.arc((pp.x+OFF)*S,(pp.z+50)*S,12,camAngle-0.4,camAngle+0.4);mmCtx.stroke();
+  const S=140/200,OX=70,OZ=55;
+  mmX.fillStyle='#5a8a5a';mmX.fillRect(0,0,140,110);
+  mmX.fillStyle='#888';[[0,0,200,8],[0,-40,200,8],[0,40,200,8],[0,75,200,8],[-30,0,8,220],[30,0,8,220],[70,0,8,220],[-70,0,8,220]].forEach(([x,z,w,d])=>{mmX.fillRect((x-w/2+OX)*S,(z-d/2+OZ)*S,w*S,d*S);});
+  buildingDefs.forEach(b=>{mmX.fillStyle='rgba(248,200,212,.45)';mmX.fillRect((b.x-b.w/2+OX)*S,(b.z-b.d/2+OZ)*S,b.w*S,b.d*S);});
+  npcs3d.forEach(n=>{mmX.fillStyle='#f9e05e';mmX.fillRect((n.mesh.position.x+OX)*S-2,(n.mesh.position.z+OZ)*S-2,4,4);});
+  const pp=playerContainer.position;mmX.fillStyle='#fff';mmX.beginPath();mmX.arc((pp.x+OX)*S,(pp.z+OZ)*S,4,0,Math.PI*2);mmX.fill();
 }
 
-// ── Day/Night cycle ────────────────────────────────────────────
-const SKY_DAY=new THREE.Color(0x87CEEB);
-const SKY_SUNSET=new THREE.Color(0xFF8C42);
-const SKY_NIGHT=new THREE.Color(0x0a0a1f);
-function updateDayNight(t){
-  // t: 0=midnight, 0.5=noon, 1=midnight
-  let skyCol,sunInt,ambInt,sunCol;
-  if(t<0.2||t>0.8){ // night
-    const n=t<0.2?1-t/0.2:(t-0.8)/0.2;
-    skyCol=SKY_NIGHT.clone(); sunInt=0; ambInt=0.12; sunCol=new THREE.Color(0x3050a0);
-    moon.intensity=0.4*n; ambient.color.setHex(0x202060);
-    streetLights.forEach(sl=>{sl.pt.intensity=1.5*n;sl.bulbMat.emissiveIntensity=n;});
-  }else if(t<0.3||t>0.7){ // dawn/dusk
-    const s=t<0.3?(t-0.2)/0.1:(0.8-t)/0.1;
-    skyCol=SKY_SUNSET.clone().lerp(SKY_DAY,s); sunInt=0.6+0.8*s; ambInt=0.3+0.2*s;
-    sunCol=new THREE.Color(0xff8855).lerp(new THREE.Color(0xfff5e0),s);
-    moon.intensity=0; ambient.color.setHex(0x7080a0);
-    streetLights.forEach(sl=>{sl.pt.intensity=0;sl.bulbMat.emissiveIntensity=0;});
-  }else{ // day
-    skyCol=SKY_DAY.clone(); sunInt=1.4; ambInt=0.5; sunCol=new THREE.Color(0xfff5e0);
-    moon.intensity=0; ambient.color.setHex(0x8090b0);
-    streetLights.forEach(sl=>{sl.pt.intensity=0;sl.bulbMat.emissiveIntensity=0;});
-  }
-  scene.background.copy(skyCol);
-  scene.fog.color.copy(skyCol);
-  sun.intensity=sunInt; sun.color.copy(sunCol); ambient.intensity=ambInt;
-  // Car headlights at night
-  const night=(t<0.25||t>0.75);
-  cars3d.forEach(car=>{car.hlMat.forEach(m=>m.emissiveIntensity=night?1.5:0);});
-  // Time string
-  const h24=Math.floor(t*24),min=Math.floor((t*24*60)%60),ampm=h24>=12?'PM':'AM',h12=(h24%12)||12;
-  document.getElementById('tstr').textContent=`${h12}:${min.toString().padStart(2,'0')} ${ampm}`;
-}
-
-// ── NPC update ─────────────────────────────────────────────────
-function updateNPCs(){
-  for(const n of npcs3d){
-    n.timer--;
-    if(n.timer<=0){const a=Math.random()*Math.PI*2;n.vx=Math.cos(a)*0.04;n.vz=Math.sin(a)*0.04;n.timer=80+Math.random()*120;}
-    const nx=n.group.position.x+n.vx,nz=n.group.position.z+n.vz;
-    if(!checkBuildingCollision(nx,nz)){n.group.position.x=nx;n.group.position.z=nz;}
-    else{n.vx*=-1;n.vz*=-1;n.timer=20;}
-    // Face movement direction
-    if(Math.abs(n.vx)>0.001||Math.abs(n.vz)>0.001)n.group.rotation.y=Math.atan2(n.vx,n.vz);
-    // NPCs always face camera (sprites)
-  }
-}
-
-// ── Ferris wheel animation ─────────────────────────────────────
-let fwAngle=0;
-
-// ── Main animation loop ────────────────────────────────────────
-const clock=new THREE.Clock();
-let walkT=0;
-
+// ── Animation loop ───────────────────────────────────────────────
+const clock=new THREE.Clock();let walkT=0,fwAngle=0;
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),0.05);
-
-  // Day/night
   dayTime=(dayTime+DAY_SPD)%1;
   updateDayNight(dayTime);
+  moneyT+=dt;if(moneyT>60){money+=25;moneyT=0;document.getElementById('money').textContent=money;}
 
-  // Money
-  moneyT+=dt;
-  if(moneyT>60){money+=50;moneyT=0;document.getElementById('money').textContent=money;}
+  // Ferris wheel
+  fwAngle+=dt*0.4;
+  ferrisWheel.gondolas.forEach((gc,i)=>{const a=fwAngle+i*Math.PI/4;gc.position.set(Math.cos(a)*5,6+Math.sin(a)*5,0);});
 
-  // Ferris wheel spin
-  fwAngle+=dt*0.3;
-  ferrisWheel.rotation.y=fwAngle*0.1;
-  // Rotate gondolas (children at index >8 are gondolas)
-  ferrisWheel.children.forEach((c,i)=>{if(i>=2&&i<10){const a=fwAngle+i*Math.PI/4;c.position.x=Math.cos(a)*5;c.position.y=6+Math.sin(a)*5;}});
+  // NPC wander + walk anim
+  for(const n of npcs3d){
+    n.timer-=1;
+    if(n.timer<=0){const a=Math.random()*Math.PI*2;n.vx=Math.cos(a)*0.04;n.vz=Math.sin(a)*0.04;n.timer=80+Math.random()*120;}
+    const nx=n.mesh.position.x+n.vx,nz=n.mesh.position.z+n.vz;
+    if(!collides(nx,nz)){n.mesh.position.x=nx;n.mesh.position.z=nz;}
+    else{n.vx*=-1;n.vz*=-1;n.timer=30;}
+    if(Math.abs(n.vx)>.001||Math.abs(n.vz)>.001)n.mesh.rotation.y=Math.atan2(n.vx,n.vz);
+    // Walk anim
+    n.chatT+=dt;const ns=Math.sin(n.chatT*7)*0.35;
+    if(n.mesh.userData.la){n.mesh.userData.la.rotation.x=ns;n.mesh.userData.ra.rotation.x=-ns;n.mesh.userData.ll.rotation.x=-ns;n.mesh.userData.rl.rotation.x=ns;}
+  }
 
-  // Movement
-  const SPD=playerCar?0.18:0.08;
-  let moved=false;
-  if(!chatOpen&&!wOpen){
+  // Baby wander
+  for(const b of babyMeshes){
+    b.timer-=1;if(b.timer<=0){const a=Math.random()*Math.PI*2;b.vx=Math.cos(a)*0.006;b.vz=Math.sin(a)*0.006;b.timer=60+Math.random()*80;}
+    const bx=b.mesh.position.x+b.vx,bz=b.mesh.position.z+b.vz;
+    const cr=crechePos;if(Math.sqrt((bx-cr.x)**2+(bz-cr.z)**2)<7&&!collides(bx,bz)){b.mesh.position.x=bx;b.mesh.position.z=bz;}
+    else{b.vx*=-1;b.vz*=-1;}
+    b.walkT+=dt;const bs=Math.sin(b.walkT*6)*0.25;
+    if(b.mesh.userData.la){b.mesh.userData.la.rotation.x=bs;b.mesh.userData.ra.rotation.x=-bs;b.mesh.userData.ll.rotation.x=-bs;b.mesh.userData.rl.rotation.x=bs;}
+    b.mesh.position.y=Math.abs(Math.sin(b.walkT*6))*0.04;
+  }
+
+  // Player movement
+  const SPEED=playerCar?0.20:0.09;let moved=false;
+  if(!chatOpen&&!wOpen&&!dialogOpen&&!shopOpen){
     const fwd=new THREE.Vector3(-Math.sin(camAngle),0,-Math.cos(camAngle));
     const right=new THREE.Vector3(-Math.cos(camAngle),0,Math.sin(camAngle));
-    let mv=new THREE.Vector3();
+    const mv=new THREE.Vector3();
     if(keys['arrowup']||keys['w'])mv.add(fwd);
     if(keys['arrowdown']||keys['s'])mv.sub(fwd);
     if(keys['arrowleft']||keys['a'])mv.sub(right);
     if(keys['arrowright']||keys['d'])mv.add(right);
     if(mv.lengthSq()>0){
-      mv.normalize().multiplyScalar(SPD);
+      mv.normalize().multiplyScalar(SPEED);
       const pp=playerContainer.position;
-      const nx=pp.x+mv.x,nz=pp.z+mv.z;
       if(playerCar){
-        if(!checkBuildingCollision(nx,nz)){playerContainer.position.set(nx,0,nz);playerCar.group.position.set(nx,0,nz);}
+        const nx=pp.x+mv.x,nz=pp.z+mv.z;
+        if(!collides(nx,nz)){pp.x=nx;pp.z=nz;playerCar.group.position.set(nx,0,nz);}
       }else{
-        if(!checkBuildingCollision(nx,pp.z))pp.x=nx;
-        if(!checkBuildingCollision(pp.x,nz))pp.z=nz;
+        if(!collides(pp.x+mv.x,pp.z))pp.x+=mv.x;
+        if(!collides(pp.x,pp.z+mv.z))pp.z+=mv.z;
       }
-      // Face direction of movement
-      playerContainer.rotation.y=Math.atan2(mv.x,mv.z);
-      moved=true;
-      walkT+=dt*8;
+      playerContainer.rotation.y=Math.atan2(mv.x,mv.z);moved=true;walkT+=dt*8;
     }
   }
-
-  // Walk animation
-  if(moved&&playerMesh.userData.la){
-    const swing=Math.sin(walkT)*0.4;
-    playerMesh.userData.la.rotation.x=swing;
-    playerMesh.userData.ra.rotation.x=-swing;
-    playerMesh.userData.ll.rotation.x=-swing;
-    playerMesh.userData.rl.rotation.x=swing;
-    // Bob
-    playerContainer.position.y=Math.abs(Math.sin(walkT))*0.06;
-  }else{
-    if(playerMesh.userData.la){['la','ra','ll','rl'].forEach(k=>{if(playerMesh.userData[k])playerMesh.userData[k].rotation.x*=0.8;});}
-    playerContainer.position.y*=0.8;
+  // Walk anim player
+  if(playerMesh.userData.la){
+    const tgt=moved?Math.sin(walkT)*0.45:0;
+    ['la','ra','ll','rl'].forEach((k,i)=>{if(playerMesh.userData[k]){playerMesh.userData[k].rotation.x+=(([tgt,-tgt,-tgt,tgt][i])-playerMesh.userData[k].rotation.x)*0.25;}});
+    playerContainer.position.y+=(moved?Math.abs(Math.sin(walkT))*0.07:0-playerContainer.position.y)*0.2;
   }
 
-  // Sword swing
+  // Sword
   if(swingFrame>0){
-    swingGroup.visible=true;
-    swingGroup.position.copy(playerContainer.position);
-    swingGroup.position.y+=1.0;
-    const progress=1-swingFrame/30;
-    swingGroup.rotation.y=playerContainer.rotation.y+(-0.8+progress*1.6)*Math.PI;
-    swingGroup.rotation.z=(-0.3+progress*0.6)*Math.PI;
-    bladeMat.opacity=swingFrame/30*0.9;
-    swingFrame--;
+    swingGroup.visible=true;swingGroup.position.copy(playerContainer.position);swingGroup.position.y+=1.0;
+    const prog=1-swingFrame/28;swingGroup.rotation.y=playerContainer.rotation.y+(-0.8+prog*1.6)*Math.PI;
+    swingGroup.rotation.z=(-0.3+prog*0.6)*Math.PI;blade.material.opacity=swingFrame/28*0.9;swingFrame--;
   }else swingGroup.visible=false;
 
-  // Camera follow
-  const pp=playerContainer.position;
-  const camDist=12,camH=6+camPitch*8;
-  const targetCam=new THREE.Vector3(
-    pp.x+Math.sin(camAngle)*camDist,
-    pp.y+camH,
-    pp.z+Math.cos(camAngle)*camDist
-  );
-  camera.position.lerp(targetCam,0.1);
-  camera.lookAt(pp.x,pp.y+1.2,pp.z);
-
-  // NPC update
-  updateNPCs();
+  // Camera
+  const pp=playerContainer.position;const camH=4+camPitch*10;
+  const tc=new THREE.Vector3(pp.x+Math.sin(camAngle)*camDist,pp.y+camH,pp.z+Math.cos(camAngle)*camDist);
+  camera.position.lerp(tc,0.1);camera.lookAt(pp.x,pp.y+1.2,pp.z);
 
   // Near prompt
   let prompt='';
-  if(!playerCar){
-    for(const car of cars3d){if(!car.occupied&&pp.distanceTo(new THREE.Vector3(car.group.position.x,0,car.group.position.z))<4){prompt=`E → Drive ${car.lb}`;break;}}
-    if(!prompt){for(const b of buildingDefs){if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<10){prompt=`E → Enter ${b.label}`;break;}}}
-  }else prompt='Space → Exit Car';
-  const pel=document.getElementById('prompt');
-  if(prompt!==nearPrompt){nearPrompt=prompt;pel.textContent=prompt;pel.style.opacity=prompt?'1':'0';}
+  if(dialogOpen)prompt='Enter → Send | Esc → Close';
+  else if(playerCar)prompt='Space → Exit Car';
+  else{
+    for(const n of npcs3d){if(pp.distanceTo(n.mesh.position)<4.5){prompt='E → Talk to '+n.cfg.nm;break;}}
+    if(!prompt)for(const c of cars3d){if(!c.occupied&&pp.distanceTo(new THREE.Vector3(c.group.position.x,0,c.group.position.z))<4.5){prompt='E → Drive '+c.lb;break;}}
+    if(!prompt)for(const b of buildingDefs){if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<11){prompt='E → Enter '+b.label;break;}}
+  }
+  const pel=document.getElementById('prompt');if(prompt!==nearPrompt){nearPrompt=prompt;pel.textContent=prompt;pel.style.opacity=prompt?'1':'0';}
 
   // Location name
-  let locName='Town Square';
-  for(const b of buildingDefs){if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<16){locName=b.label.split(' ').slice(1).join(' ')||b.label;break;}}
+  let locName='Town Square';for(const b of buildingDefs){if(pp.distanceTo(new THREE.Vector3(b.x,0,b.z))<14){locName=b.label.replace(/^[^\s]+\s/,'');break;}}
   document.getElementById('loc-name').textContent=locName;
 
   drawMinimap();
