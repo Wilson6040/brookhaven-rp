@@ -353,8 +353,9 @@
     #wardrobeTabs {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
+      align-content: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
     }
 
     .tabBtn {
@@ -362,9 +363,11 @@
       border-radius: 7px;
       background: rgba(255, 255, 255, 0.08);
       color: var(--text);
-      padding: 6px 10px;
+      padding: 8px 12px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 14px;
+      min-height: 44px;
+      min-width: 44px;
     }
 
     .tabBtn.active { background: rgba(255, 212, 91, 0.24); }
@@ -381,11 +384,11 @@
     .swatchBtn {
       border: 1px solid var(--ui-border);
       border-radius: 8px;
-      padding: 6px;
+      padding: 8px;
       cursor: pointer;
       color: var(--text);
       text-align: left;
-      font-size: 11px;
+      font-size: 12px;
       background: rgba(255, 255, 255, 0.08);
       min-width: 64px;
       min-height: 64px;
@@ -444,39 +447,25 @@
       touch-action: none;
     }
 
-    #touchDpad {
-      position: absolute;
-      left: 16px;
-      bottom: 16px;
-      width: 224px;
-      height: 224px;
-      pointer-events: auto;
-      touch-action: none;
-    }
-
-    #touchRun {
-      position: absolute;
+    #touchPanZone {
+      position: fixed;
       left: 0;
-      top: -68px;
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.45);
-      background: rgba(14, 22, 28, 0.8);
-      color: #fff;
+      top: 0;
+      bottom: 0;
+      right: 38%;
       pointer-events: auto;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.8px;
       touch-action: none;
-      text-transform: uppercase;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     }
 
-    .touchBtn {
-      position: absolute;
-      width: 72px;
-      height: 72px;
+    #touchDpad {
+      pointer-events: none;
+    }
+
+    .touchBtn,
+    .touch-btn {
+      position: fixed;
+      width: 70px;
+      height: 70px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.4);
       background: rgba(14, 22, 28, 0.8);
@@ -492,31 +481,28 @@
       transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     }
 
-    .touchBtn.active {
+    .touchBtn.active,
+    .touch-btn.active {
       transform: scale(0.9);
       border-color: #64d8ff;
       box-shadow: 0 0 18px rgba(100, 216, 255, 0.85);
     }
 
-    #touchUp { left: 76px; top: 0; }
-    #touchLeft { left: 0; top: 76px; }
-    #touchRight { left: 152px; top: 76px; }
-    #touchDown { left: 76px; top: 152px; }
+    #touchUp { right: 90px; bottom: 160px; }
+    #touchLeft { right: 160px; bottom: 90px; }
+    #touchRight { right: 20px; bottom: 90px; }
+    #touchDown { right: 90px; bottom: 20px; }
 
     #touchActions {
-      position: absolute;
-      right: 16px;
-      bottom: 16px;
-      display: flex;
-      gap: 12px;
-      pointer-events: auto;
+      pointer-events: none;
       touch-action: none;
     }
 
     #touchE,
     #touchSpace {
-      width: 72px;
-      height: 72px;
+      position: fixed;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       border: 1px solid rgba(255, 255, 255, 0.5);
       color: #111;
@@ -530,16 +516,43 @@
       transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     }
 
+    #touchE { right: 160px; bottom: 260px; }
+    #touchSpace { right: 20px; bottom: 260px; }
+
     #touchE { background: rgba(255, 212, 91, 0.95); }
     #touchSpace { background: rgba(255, 255, 255, 0.92); }
 
-    #touchRun.active,
     #touchE.active,
     #touchSpace.active {
       transform: scale(0.9);
       border-color: #64d8ff;
       box-shadow: 0 0 18px rgba(100, 216, 255, 0.85);
     }
+
+    .touchUtilityBtn {
+      position: fixed;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(14, 22, 28, 0.86);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.1;
+      padding: 6px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: normal;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #touchWardrobe { right: 160px; bottom: 350px; }
+    #touchMap { right: 20px; bottom: 350px; }
 
     body.touch-device #hudTopLeft,
     body.touch-device #hudTopRight,
@@ -576,21 +589,14 @@
       #interactionPrompt { bottom: 68px; }
       #minimapWrap { width: 130px; height: 130px; }
       #minimapCanvas { width: 130px; height: 130px; }
-      #touchDpad {
-        width: 224px;
-        height: 224px;
+      .touchBtn,
+      .touch-btn {
+        width: 70px;
+        height: 70px;
       }
-      .touchBtn {
-        width: 72px;
-        height: 72px;
-      }
-      #touchUp { left: 76px; top: 0; }
-      #touchLeft { left: 0; top: 76px; }
-      #touchRight { left: 152px; top: 76px; }
-      #touchDown { left: 76px; top: 152px; }
       #touchE, #touchSpace {
-        width: 72px;
-        height: 72px;
+        width: 70px;
+        height: 70px;
       }
     }
   </style>
@@ -709,17 +715,19 @@
     </div>
 
     <div id="touchControls">
+      <div id="touchPanZone"></div>
       <div id="touchDpad">
-        <button id="touchRun">RUN</button>
-        <button id="touchUp" class="touchBtn" aria-label="Move up">&#9650;</button>
-        <button id="touchLeft" class="touchBtn" aria-label="Move left">&#9664;</button>
-        <button id="touchRight" class="touchBtn" aria-label="Move right">&#9654;</button>
-        <button id="touchDown" class="touchBtn" aria-label="Move down">&#9660;</button>
+        <button id="touchUp" class="touchBtn touch-btn" aria-label="Move up">&#9650;</button>
+        <button id="touchLeft" class="touchBtn touch-btn" aria-label="Move left">&#9664;</button>
+        <button id="touchRight" class="touchBtn touch-btn" aria-label="Move right">&#9654;</button>
+        <button id="touchDown" class="touchBtn touch-btn" aria-label="Move down">&#9660;</button>
       </div>
       <div id="touchActions">
         <button id="touchE" aria-label="Interact">E<br>Action</button>
         <button id="touchSpace" aria-label="Jump or handbrake">&#11014;<br>Jump</button>
       </div>
+      <button id="touchWardrobe" class="touchUtilityBtn" aria-label="Open wardrobe">&#128085; Wardrobe</button>
+      <button id="touchMap" class="touchUtilityBtn" aria-label="Open map">&#128506; Map</button>
     </div>
   </div>
 
@@ -766,18 +774,16 @@
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x8fc8ff);
     const isTouchDevice = "ontouchstart" in window;
-    const isMobileRenderTarget = isTouchDevice;
     const devicePixelRatio = window.devicePixelRatio || 1;
-    const mainAntialias = !(isMobileRenderTarget && devicePixelRatio > 1);
 
     const renderer = new THREE.WebGLRenderer({
       canvas: document.getElementById("gameCanvas"),
-      antialias: mainAntialias,
+      antialias: !isTouchDevice,
       powerPreference: "high-performance"
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-    renderer.shadowMap.enabled = true;
+    renderer.setPixelRatio(Math.min(devicePixelRatio, isTouchDevice ? 1.0 : 1.5));
+    renderer.shadowMap.enabled = !isTouchDevice;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const miniRenderer = new THREE.WebGLRenderer({
@@ -1046,14 +1052,33 @@
       }
       return out;
     }
+
+    function makeSkinSet() {
+      const out = [];
+      for (let i = 0; i < 25; i++) {
+        const tone = new THREE.Color().setHSL(0.075 + i * 0.003, 0.45 - (i % 5) * 0.03, 0.72 - (i % 6) * 0.045);
+        out.push(Number(tone.getHex()));
+      }
+      return out;
+    }
+
+    function makeHairStyleSet() {
+      const base = ["bob", "afro", "ponytail", "short", "long", "buzz", "curly", "bun", "mohawk", "bald"];
+      const out = [];
+      for (let i = 0; i < 25; i++) {
+        out.push(base[i % base.length]);
+      }
+      return out;
+    }
+
     const wardrobeOptions = {
       Tops: makeColorSet(0.57),
       Bottoms: makeColorSet(0.08),
       Shoes: makeColorSet(0.66),
       Hats: makeColorSet(0.02),
       Accessories: makeColorSet(0.84),
-      Skin: [0xf2c8a0, 0xd9a67f, 0xb47a52, 0x8f5b37, 0xffd8bf, 0x6e3f26, 0xcf8d68, 0xe4b391, 0x7c4b2f, 0xa16846],
-      Hair: ["bob", "afro", "ponytail", "short", "long", "buzz", "curly", "bun", "mohawk", "bald"]
+      Skin: makeSkinSet(),
+      Hair: makeHairStyleSet()
     };
     const wardrobeCategories = Object.keys(wardrobeOptions);
     let activeWardrobeCategory = "Tops";
@@ -1084,15 +1109,19 @@
     const cameraTarget = new THREE.Vector3();
     let canJump = true;
 
-    let orbitYaw = Math.PI;
-    let orbitPitch = 0.28;
+    let cameraAzimuth = Math.PI;
+    let cameraElevation = 0.28;
     let cameraDistance = 8;
     let rotatingCamera = false;
+    let touchPanActive = false;
+    let touchPanIdentifier = null;
+    let touchPanLastX = 0;
+    let touchPanLastY = 0;
 
     const sun = new THREE.DirectionalLight(0xffffff, 1.1);
     sun.position.set(120, 160, 40);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(isMobileRenderTarget ? 512 : 1024, isMobileRenderTarget ? 512 : 1024);
+    sun.castShadow = !isTouchDevice;
+    sun.shadow.mapSize.set(isTouchDevice ? 512 : 1024, isTouchDevice ? 512 : 1024);
     sun.shadow.camera.left = -320;
     sun.shadow.camera.right = 320;
     sun.shadow.camera.top = 320;
@@ -1207,20 +1236,30 @@
       body.position.set(cx, h / 2, cz);
       addBuildingBox(body);
 
+      const upperColor = new THREE.Color(color).offsetHSL(0, 0, 0.08).getHex();
+      const upperStorey = new THREE.Mesh(
+        new THREE.BoxGeometry(w, 3, d),
+        new THREE.MeshStandardMaterial({ color: upperColor })
+      );
+      upperStorey.position.set(cx, h + 1.5, cz);
+      addBuildingBox(upperStorey);
+
       let roof;
+      const roofRadius = w * 0.75;
       if (roofType % 2 === 0) {
         roof = new THREE.Mesh(
-          new THREE.ConeGeometry(Math.max(w, d) * 0.62, 1.9, 4),
-          new THREE.MeshStandardMaterial({ color: 0x5b2f26 })
+          new THREE.ConeGeometry(roofRadius, 3, 4),
+          new THREE.MeshStandardMaterial({ color: 0x5b3d33 })
         );
         roof.rotation.y = Math.PI * 0.25;
       } else {
         roof = new THREE.Mesh(
-          new THREE.BoxGeometry(w + 0.7, 1.2, d + 0.7),
-          new THREE.MeshStandardMaterial({ color: 0x70433a })
+          new THREE.CylinderGeometry(roofRadius, roofRadius, 3, 3),
+          new THREE.MeshStandardMaterial({ color: 0x644137 })
         );
+        roof.rotation.y = Math.PI * 0.5;
       }
-      roof.position.set(cx, h + 0.9, cz);
+      roof.position.set(cx, h + 4.5, cz);
       roof.castShadow = true;
       scene.add(roof);
 
@@ -1237,6 +1276,14 @@
       makeWindow(cx - w * 0.2, 1.7, cz + d / 2 + 0.06);
       makeWindow(cx + w * 0.2, 1.7, cz + d / 2 + 0.06);
       makeWindow(cx, 1.8, cz - d / 2 - 0.06, Math.PI);
+      makeWindow(cx - w * 0.24, h + 1.8, cz + d / 2 + 0.06);
+      makeWindow(cx + w * 0.24, h + 1.8, cz + d / 2 + 0.06);
+      makeWindow(cx - w * 0.24, h + 1.8, cz - d / 2 - 0.06, Math.PI);
+      makeWindow(cx + w * 0.24, h + 1.8, cz - d / 2 - 0.06, Math.PI);
+      makeWindow(cx - w / 2 - 0.06, h + 1.8, cz - d * 0.22, Math.PI / 2);
+      makeWindow(cx - w / 2 - 0.06, h + 1.8, cz + d * 0.22, Math.PI / 2);
+      makeWindow(cx + w / 2 + 0.06, h + 1.8, cz - d * 0.22, -Math.PI / 2);
+      makeWindow(cx + w / 2 + 0.06, h + 1.8, cz + d * 0.22, -Math.PI / 2);
     }
 
     function createResidential() {
@@ -2147,7 +2194,7 @@
       createInteriorRoom("office", 620, 0xc7cfdb);
     }
 
-    function makeNameSprite(text, color = "#ffffff", bg = "rgba(0,0,0,0.55)", size = 72) {
+    function makeNameSprite(text, color = "#ffffff", bg = "rgba(0,0,0,0.55)", size = 50) {
       const canvas = document.createElement("canvas");
       canvas.width = 384;
       canvas.height = 128;
@@ -2203,7 +2250,7 @@
         const npcMesh = spawnNpcBody(new THREE.Color().setHSL((i * 0.083) % 1, 0.45, 0.5));
         const first = def.waypoints[0];
         npcMesh.position.set(first[0], 0, first[1]);
-        const name = makeNameSprite(def.name, "#ffffff", "rgba(10,20,30,0.6)", 48);
+        const name = makeNameSprite(def.name, "#ffffff", "rgba(10,20,30,0.6)", 34);
         name.position.set(0, 2.8, 0);
         npcMesh.add(name);
         scene.add(npcMesh);
@@ -2447,14 +2494,19 @@
       weatherText.textContent = nextWeather;
       rain.visible = nextWeather === "rain";
       snowMesh.visible = nextWeather === "snow";
-      const fogDensityMultiplier = isMobileRenderTarget ? 0.75 : 1;
+
+      if (isTouchDevice) {
+        scene.fog = new THREE.Fog(0x8fc8ff, 200, 600);
+        updateRainNoiseState();
+        return;
+      }
 
       if (nextWeather === "fog") {
-        scene.fog = new THREE.FogExp2(0xa9b5c4, 0.03 * fogDensityMultiplier);
+        scene.fog = new THREE.FogExp2(0xa9b5c4, 0.03);
       } else if (nextWeather === "rain") {
-        scene.fog = new THREE.FogExp2(0x93a1b2, 0.008 * fogDensityMultiplier);
+        scene.fog = new THREE.FogExp2(0x93a1b2, 0.008);
       } else if (nextWeather === "snow") {
-        scene.fog = new THREE.FogExp2(0xc8d2e2, 0.006 * fogDensityMultiplier);
+        scene.fog = new THREE.FogExp2(0xc8d2e2, 0.006);
       } else {
         scene.fog = null;
       }
@@ -2977,7 +3029,7 @@
       const inputZ = (moveForwardKey() ? 1 : 0) - (moveBackKey() ? 1 : 0);
       let moving = inputX !== 0 || inputZ !== 0;
 
-      const forward = new THREE.Vector3(Math.sin(orbitYaw), 0, Math.cos(orbitYaw));
+      const forward = new THREE.Vector3(Math.sin(cameraAzimuth), 0, Math.cos(cameraAzimuth));
       const right = new THREE.Vector3(forward.z, 0, -forward.x);
 
       moveVector.set(0, 0, 0);
@@ -3107,6 +3159,7 @@
     function updateNPCs(dt) {
       const bob = Math.sin(performance.now() * 0.004) * 0.03;
       for (const npc of npcs) {
+        if (isTouchDevice && npc.mesh.position.distanceToSquared(player.position) > 80 * 80) continue;
         const targetWP = npc.waypoints[npc.waypointIndex];
         if (!targetWP) continue;
         const target = tempVec3A.set(targetWP[0], 0, targetWP[1]);
@@ -3288,9 +3341,9 @@
       const headPos = new THREE.Vector3(player.position.x, player.position.y + 0.85, player.position.z);
       if (state.firstPerson) {
         const lookDir = new THREE.Vector3(
-          Math.sin(orbitYaw) * Math.cos(orbitPitch),
-          Math.sin(orbitPitch),
-          Math.cos(orbitYaw) * Math.cos(orbitPitch)
+          Math.sin(cameraAzimuth) * Math.cos(cameraElevation),
+          Math.sin(cameraElevation),
+          Math.cos(cameraAzimuth) * Math.cos(cameraElevation)
         );
         camera.position.lerp(headPos, Math.min(1, dt * 16));
         camera.lookAt(headPos.clone().add(lookDir.multiplyScalar(10)));
@@ -3299,9 +3352,9 @@
 
       cameraTarget.set(player.position.x, player.position.y + 1.2, player.position.z);
       const offset = new THREE.Vector3(
-        Math.sin(orbitYaw) * Math.cos(orbitPitch),
-        Math.sin(orbitPitch),
-        Math.cos(orbitYaw) * Math.cos(orbitPitch)
+        Math.sin(cameraAzimuth) * Math.cos(cameraElevation),
+        Math.sin(cameraElevation),
+        Math.cos(cameraAzimuth) * Math.cos(cameraElevation)
       ).multiplyScalar(-cameraDistance);
       offset.y += 4;
 
@@ -3633,6 +3686,7 @@
     }
 
     let firstFrameRendered = false;
+    let frameCount = 0;
     function animate() {
       requestAnimationFrame(animate);
       if (state.paused) return;
@@ -3653,7 +3707,8 @@
       updateInteractionTimers(dt);
       updateZoneName(dt);
       updateCamera(dt);
-      updateMinimap();
+      frameCount += 1;
+      if (!isTouchDevice || frameCount % 2 === 0) updateMinimap();
       updateHUD();
       if (state.wardrobeOpen) renderWardrobePreview();
 
@@ -3840,16 +3895,30 @@
       bindTouchButton("touchDown", "ArrowDown");
       bindTouchButton("touchLeft", "ArrowLeft");
       bindTouchButton("touchRight", "ArrowRight");
-      bindTouchButton("touchRun", "ShiftLeft");
       bindTouchButton("touchE", "KeyE", { onPress: () => handleActionKey("KeyE") });
       bindTouchButton("touchSpace", "Space", { onPress: () => handleActionKey("Space") });
+      const wardrobeBtn = document.getElementById("touchWardrobe");
+      if (wardrobeBtn) {
+        wardrobeBtn.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          toggleWardrobe(true);
+        }, { passive: false });
+        wardrobeBtn.addEventListener("click", () => toggleWardrobe(true));
+      }
+      const mapBtn = document.getElementById("touchMap");
+      if (mapBtn) {
+        mapBtn.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          toggleMap(true);
+        }, { passive: false });
+        mapBtn.addEventListener("click", () => toggleMap(true));
+      }
 
       window.addEventListener("blur", () => {
         keys.ArrowUp = false;
         keys.ArrowDown = false;
         keys.ArrowLeft = false;
         keys.ArrowRight = false;
-        keys.ShiftLeft = false;
         keys.KeyE = false;
         keys.Space = false;
         document.querySelectorAll("#touchControls button.active").forEach((btn) => btn.classList.remove("active"));
@@ -3864,6 +3933,64 @@
       gameCanvas.addEventListener("touchstart", preventCanvasTouch, { passive: false });
       gameCanvas.addEventListener("touchmove", preventCanvasTouch, { passive: false });
     }
+
+    function isBlockedTouchTarget(target) {
+      if (!target || !(target instanceof Element)) return false;
+      return Boolean(
+        target.closest(".touch-btn") ||
+        target.closest(".touchBtn") ||
+        target.closest(".touchUtilityBtn") ||
+        target.closest("#touchControls button") ||
+        target.closest("#pauseOverlay") ||
+        target.closest("#mapOverlay") ||
+        target.closest("#wardrobeOverlay") ||
+        target.closest("#hudTopLeft") ||
+        target.closest("#hudTopRight")
+      );
+    }
+
+    window.addEventListener("touchstart", (e) => {
+      if (!isTouchDevice || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const target = document.elementFromPoint(t.clientX, t.clientY) || e.target;
+      if (isBlockedTouchTarget(target)) {
+        touchPanActive = false;
+        touchPanIdentifier = null;
+        return;
+      }
+      touchPanActive = true;
+      touchPanIdentifier = t.identifier;
+      touchPanLastX = t.clientX;
+      touchPanLastY = t.clientY;
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      if (!touchPanActive || !isTouchDevice) return;
+      const t = Array.from(e.touches).find((touch) => touch.identifier === touchPanIdentifier);
+      if (!t) return;
+      const deltaX = t.clientX - touchPanLastX;
+      const deltaY = t.clientY - touchPanLastY;
+      touchPanLastX = t.clientX;
+      touchPanLastY = t.clientY;
+      cameraAzimuth -= deltaX * 0.005;
+      cameraElevation -= deltaY * 0.003;
+      cameraElevation = THREE.MathUtils.clamp(cameraElevation, -0.38, 0.9);
+      e.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener("touchend", (e) => {
+      if (!touchPanActive) return;
+      const stillActive = Array.from(e.touches).some((touch) => touch.identifier === touchPanIdentifier);
+      if (!stillActive) {
+        touchPanActive = false;
+        touchPanIdentifier = null;
+      }
+    }, { passive: true });
+
+    window.addEventListener("touchcancel", () => {
+      touchPanActive = false;
+      touchPanIdentifier = null;
+    }, { passive: true });
 
     document.addEventListener("keydown", (e) => {
       if (e.code === "Escape") {
@@ -3908,9 +4035,9 @@
 
     window.addEventListener("mousemove", (e) => {
       if (!rotatingCamera) return;
-      orbitYaw -= e.movementX * 0.0045;
-      orbitPitch -= e.movementY * 0.003;
-      orbitPitch = THREE.MathUtils.clamp(orbitPitch, -0.38, 0.9);
+      cameraAzimuth -= e.movementX * 0.0045;
+      cameraElevation -= e.movementY * 0.003;
+      cameraElevation = THREE.MathUtils.clamp(cameraElevation, -0.38, 0.9);
     });
 
     window.addEventListener("wheel", (e) => {
@@ -3922,7 +4049,7 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouchDevice ? 1.0 : 1.5));
     });
 
     document.getElementById("resumeBtn").addEventListener("click", () => togglePause(false));
