@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' wss: ws:; worker-src 'self' blob:; frame-ancestors 'none';" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <link rel="manifest" href="manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -821,9 +824,18 @@
       var idx = 0;
       function tryNext() {
         if (idx >= cdns.length) {
-          document.getElementById("loadingOverlay").innerHTML =
-            "<div style='color:#ff6e6e;font-size:1.2rem;text-align:center;padding:2rem'>" +
-            "⚠️ Failed to load game engine.<br>Check your internet connection and refresh.</div>";
+          const loading = document.getElementById("loadingOverlay");
+          if (loading) {
+            const msg = document.createElement("div");
+            msg.style.color = "#ff6e6e";
+            msg.style.fontSize = "1.2rem";
+            msg.style.textAlign = "center";
+            msg.style.padding = "2rem";
+            msg.append(document.createTextNode("Failed to load game engine."));
+            msg.append(document.createElement("br"));
+            msg.append(document.createTextNode("Check your internet connection and refresh."));
+            loading.replaceChildren(msg);
+          }
           return;
         }
         var s = document.createElement("script");
@@ -909,9 +921,60 @@
     const mapBoard = document.getElementById("mapBoard");
     const hotbarSlots = Array.from(document.querySelectorAll("#hotbar .slot"));
     const gameCanvas = document.getElementById("gameCanvas");
+    const MAX_POSITION_MAGNITUDE = 1000;
+    const MULTIPLAYER_TYPES = new Set(["position", "skin", "emote", "chat"]);
+    const PLAYER_ID_PATTERN = /^[a-zA-Z0-9]{1,16}$/;
     const urlParams = new URLSearchParams(window.location.search);
-    const initialRoomCode = /^\d{4}$/.test(urlParams.get("room") || "") ? String(urlParams.get("room")) : "";
-    const playerClientId = `p_${Math.random().toString(36).slice(2, 10)}`;
+    const playerClientId = `p${Math.random().toString(36).slice(2, 11)}`;
+    const initialRoomCode = sanitizeRoomCode(urlParams.get("room"));
+
+    function sanitizeRoomCode(code) {
+      return String(code || "").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
+    }
+
+    function stripHtmlTags(text) {
+      return String(text || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    }
+
+    function parseFiniteNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function parseBoundedNumber(value, min, max) {
+      const n = parseFiniteNumber(value);
+      if (n === null || n < min || n > max) return null;
+      return n;
+    }
+
+    function sanitizeMultiplayerMessage(msg) {
+      if (!msg || typeof msg !== "object" || Array.isArray(msg)) return null;
+      const type = String(msg.type || "");
+      if (!MULTIPLAYER_TYPES.has(type)) return null;
+      const playerId = String(msg.playerId || "");
+      if (!PLAYER_ID_PATTERN.test(playerId)) return null;
+      const position = msg.position;
+      if (!position || typeof position !== "object" || Array.isArray(position)) return null;
+      const x = parseBoundedNumber(position.x, -MAX_POSITION_MAGNITUDE, MAX_POSITION_MAGNITUDE);
+      const y = parseBoundedNumber(position.y, -MAX_POSITION_MAGNITUDE, MAX_POSITION_MAGNITUDE);
+      const z = parseBoundedNumber(position.z, -MAX_POSITION_MAGNITUDE, MAX_POSITION_MAGNITUDE);
+      if (x === null || y === null || z === null) return null;
+      const normalized = {
+        type,
+        playerId,
+        position: { x, y, z },
+        rotation: parseFiniteNumber(msg.rotation) || 0,
+        code: sanitizeRoomCode(msg.code || "")
+      };
+      if (type === "chat") {
+        normalized.text = stripHtmlTags(msg.text || "").slice(0, 200);
+      }
+      return normalized;
+    }
+
+    function validateMultiplayerMessage(msg) {
+      return sanitizeMultiplayerMessage(msg) !== null;
+    }
 
     if (isTouchDevice) {
       document.body.classList.add("touch-device");
@@ -2978,6 +3041,87 @@
     }
 
     const saveKey = "ellas-world_phase4_save";
+    const SAVE_POSITION_BOUNDS = { min: -1000, max: 1000 };
+    const SAVE_WEATHER_ALLOWLIST = new Set(["sunny", "rain", "snow", "fog"]);
+    const SAVE_POTION_NAMES = new Set(["Health Potion", "Poison Potion", "Magic Blast", "Shield Potion"]);
+    const SAVE_FURNITURE_NAMES = new Set(furnitureCatalog.map((item) => item.name));
+    const SAVE_HAIR_STYLES = new Set(makeHairStyleSet());
+    const SAVE_FACE_STYLES = new Set(faceOptions.map((opt) => opt.name));
+    const SAVE_INVENTORY_STRINGS = new Set(["Apple", "Burger", "Grocery-1", "Grocery-2", "Grocery-3", "Grocery-4", "Grocery-5", "Grocery-6"]);
+
+    function isSafeHexColor(value) {
+      return Number.isInteger(value) && value >= 0x000000 && value <= 0xffffff;
+    }
+
+    function isSafeNumberInBounds(value, min = SAVE_POSITION_BOUNDS.min, max = SAVE_POSITION_BOUNDS.max) {
+      return Number.isFinite(value) && value >= min && value <= max;
+    }
+
+    function isSafeVec3Array(value) {
+      return Array.isArray(value) &&
+        value.length === 3 &&
+        isSafeNumberInBounds(Number(value[0])) &&
+        isSafeNumberInBounds(Number(value[1])) &&
+        isSafeNumberInBounds(Number(value[2]));
+    }
+
+    function isValidSaveInventoryItem(item) {
+      if (item === null) return true;
+      if (typeof item === "string") return SAVE_INVENTORY_STRINGS.has(item);
+      if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+      if (item.type === "potion") {
+        return SAVE_POTION_NAMES.has(String(item.name)) && isSafeHexColor(Number(item.color)) && Number.isFinite(Number(item.price));
+      }
+      if (item.type === "furniture") {
+        return SAVE_FURNITURE_NAMES.has(String(item.name)) && isSafeHexColor(Number(item.color)) && Number.isFinite(Number(item.price));
+      }
+      return false;
+    }
+
+    function isValidEquippedOutfit(value) {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+      return isSafeHexColor(Number(value.skinColor)) &&
+        isSafeHexColor(Number(value.shirtColor)) &&
+        isSafeHexColor(Number(value.trouserColor)) &&
+        isSafeHexColor(Number(value.shoeColor)) &&
+        isSafeHexColor(Number(value.hairColor)) &&
+        SAVE_HAIR_STYLES.has(String(value.hairStyle)) &&
+        SAVE_FACE_STYLES.has(String(value.faceStyle));
+    }
+
+    function validateSaveData(data) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+      if (!isSafeVec3Array(data.playerPos)) return false;
+      if (!Number.isFinite(Number(data.playerRot))) return false;
+      if (!Number.isFinite(Number(data.balance))) return false;
+      if (!Number.isFinite(Number(data.timeOfDay))) return false;
+      if (!SAVE_WEATHER_ALLOWLIST.has(String(data.weather))) return false;
+      if (!Array.isArray(data.inventory) || data.inventory.length > 6 || !data.inventory.every(isValidSaveInventoryItem)) return false;
+      if (!Array.isArray(data.ownedVehicles) || !data.ownedVehicles.every((id) => typeof id === "string" && id.length <= 24 && /^[a-z0-9-]+$/i.test(id))) return false;
+      if (!Number.isFinite(Number(data.tickets)) || !Number.isFinite(Number(data.fuel))) return false;
+      if (!isSafeHexColor(Number(data.activeOutfitColor))) return false;
+      if (!isValidEquippedOutfit(data.equippedOutfit)) return false;
+      if (data.pet !== null) {
+        if (!data.pet || typeof data.pet !== "object" || Array.isArray(data.pet)) return false;
+        if (typeof data.pet.type !== "string" || !petDefinitions.some((p) => p.id === data.pet.type)) return false;
+        if (typeof data.pet.name !== "string" || data.pet.name.length > 40) return false;
+      }
+      if (!Array.isArray(data.vehiclePositions)) return false;
+      for (const saved of data.vehiclePositions) {
+        if (!saved || typeof saved !== "object" || Array.isArray(saved)) return false;
+        if (typeof saved.id !== "string" || saved.id.length > 24) return false;
+        if (!isSafeVec3Array(saved.p)) return false;
+        if (!Number.isFinite(Number(saved.r))) return false;
+      }
+      if (!Array.isArray(data.jobs)) return false;
+      for (const saved of data.jobs) {
+        if (!saved || typeof saved !== "object" || Array.isArray(saved)) return false;
+        if (typeof saved.id !== "string" || saved.id.length > 32) return false;
+        if (!Number.isFinite(Number(saved.readyAt))) return false;
+      }
+      return true;
+    }
+
     function saveGame() {
       const data = {
         playerPos: [player.position.x, player.position.y, player.position.z],
@@ -3010,16 +3154,23 @@
       if (!raw) return;
       try {
         const data = JSON.parse(raw);
+        if (!validateSaveData(data)) {
+          localStorage.removeItem(saveKey);
+          console.warn("Invalid save data removed");
+          return;
+        }
+        const validVehicleIds = new Set(vehicleEntities.map((v) => v.id));
         if (Array.isArray(data.playerPos) && data.playerPos.length === 3) {
-          player.position.set(data.playerPos[0], data.playerPos[1], data.playerPos[2]);
+          player.position.set(Number(data.playerPos[0]), Number(data.playerPos[1]), Number(data.playerPos[2]));
         }
         player.rotation.y = Number(data.playerRot) || 0;
         state.balance = Number(data.balance) || 500;
         state.timeOfDay = Number(data.timeOfDay) || 0.25;
         state.inventory = Array.isArray(data.inventory) ? data.inventory.slice(0, 6) : [null, null, null, null, null, null];
+        while (state.inventory.length < 6) state.inventory.push(null);
         state.fuel = THREE.MathUtils.clamp(Number(data.fuel) || 100, 0, 100);
         state.tickets = Math.max(0, Number(data.tickets) || 0);
-        if (Array.isArray(data.ownedVehicles)) state.ownedVehicles = [...new Set(data.ownedVehicles)];
+        if (Array.isArray(data.ownedVehicles)) state.ownedVehicles = [...new Set(data.ownedVehicles.filter((id) => validVehicleIds.has(id)))];
         if (Number.isFinite(data.activeOutfitColor)) {
           state.activeOutfitColor = data.activeOutfitColor;
           playerConfig.shirtColor = state.activeOutfitColor;
@@ -3033,7 +3184,7 @@
           for (const saved of data.vehiclePositions) {
             const v = vehicleMap.get(saved.id);
             if (!v || !Array.isArray(saved.p) || saved.p.length !== 3) continue;
-            v.mesh.position.set(saved.p[0], saved.p[1], saved.p[2]);
+            v.mesh.position.set(Number(saved.p[0]), Number(saved.p[1]), Number(saved.p[2]));
             v.mesh.rotation.y = Number(saved.r) || 0;
           }
         }
@@ -3056,6 +3207,7 @@
         setWeather(typeof data.weather === "string" ? data.weather : "sunny");
         showToast("Game loaded");
       } catch (err) {
+        localStorage.removeItem(saveKey);
         console.warn("Load failed", err);
       }
     }
@@ -3241,24 +3393,24 @@
     }
 
     function upsertRemotePlayer(source, payload) {
-      if (!payload?.id || payload.id === playerClientId) return;
-      const key = `${source}:${payload.id}`;
+      if (!payload?.playerId || payload.playerId === playerClientId) return;
+      const key = `${source}:${payload.playerId}`;
       let remote = remotePlayers.get(key);
       if (!remote) {
-        const color = Number(new THREE.Color().setHSL(Math.abs(payload.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360) / 360, 0.68, 0.55).getHex());
-        const mesh = createRemoteCapsule(payload.id, color);
+        const color = Number(new THREE.Color().setHSL(Math.abs(payload.playerId.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360) / 360, 0.68, 0.55).getHex());
+        const mesh = createRemoteCapsule(payload.playerId, color);
         remote = {
-          id: payload.id,
+          id: payload.playerId,
           source,
           mesh,
-          target: new THREE.Vector3(payload.x || 0, payload.y || 1, payload.z || 0),
-          rot: payload.rot || 0,
+          target: new THREE.Vector3(payload.position.x, payload.position.y, payload.position.z),
+          rot: payload.rotation || 0,
           lastSeen: performance.now()
         };
         remotePlayers.set(key, remote);
       }
-      remote.target.set(payload.x || 0, payload.y || 1, payload.z || 0);
-      remote.rot = Number(payload.rot) || 0;
+      remote.target.set(payload.position.x, payload.position.y, payload.position.z);
+      remote.rot = parseFiniteNumber(payload.rotation) || 0;
       remote.lastSeen = performance.now();
     }
 
@@ -3267,8 +3419,8 @@
       try {
         localBroadcastChannel = new BroadcastChannel("ella-world-channel");
         localBroadcastChannel.onmessage = (e) => {
-          const data = e.data;
-          if (!data || data.type !== "pos") return;
+          const data = sanitizeMultiplayerMessage(e.data);
+          if (!data || !validateMultiplayerMessage(data) || data.type !== "position") return;
           upsertRemotePlayer("local", data);
         };
       } catch (err) {
@@ -3277,8 +3429,9 @@
     }
 
     function initOnlineMultiplayer(roomCode) {
-      if (!/^\d{4}$/.test(roomCode)) return;
-      state.onlineRoomCode = roomCode;
+      const safeRoomCode = sanitizeRoomCode(roomCode);
+      if (!safeRoomCode) return;
+      state.onlineRoomCode = safeRoomCode;
       try {
         onlineSocket = new WebSocket("wss://ws.vi-server.org/mirror/");
       } catch (err) {
@@ -3286,12 +3439,14 @@
         return;
       }
       onlineSocket.addEventListener("open", () => {
-        showToast(`Online room ${roomCode} joined`);
+        showToast(`Online room ${safeRoomCode} joined`);
       });
       onlineSocket.addEventListener("message", (e) => {
         try {
-          const data = JSON.parse(String(e.data || "{}"));
-          if (data.type !== "pos" || data.code !== state.onlineRoomCode) return;
+          const raw = JSON.parse(String(e.data || "{}"));
+          const data = sanitizeMultiplayerMessage(raw);
+          if (!data || !validateMultiplayerMessage(data) || data.type !== "position") return;
+          if (data.code !== state.onlineRoomCode) return;
           upsertRemotePlayer("online", data);
         } catch (_err) {
           // ignore malformed relay messages
@@ -3305,14 +3460,17 @@
     function broadcastMultiplayerState() {
       const pos = getPlayerOrVehiclePosition();
       const payload = {
-        type: "pos",
-        code: state.onlineRoomCode || "",
-        id: playerClientId,
-        x: pos.x,
-        y: pos.y,
-        z: pos.z,
-        rot: activeVehicle ? activeVehicle.mesh.rotation.y : player.rotation.y
+        type: "position",
+        code: sanitizeRoomCode(state.onlineRoomCode || ""),
+        playerId: playerClientId,
+        position: {
+          x: parseBoundedNumber(pos.x, -MAX_POSITION_MAGNITUDE, MAX_POSITION_MAGNITUDE),
+          y: parseBoundedNumber(pos.y, -MAX_POSITION_MAGNITUDE, MAX_POSITION_MAGNITUDE),
+          z: parseBoundedNumber(pos.z, -MAX_POSITION_MAGNITUDE, MAX_POSITION_MAGNITUDE)
+        },
+        rotation: parseFiniteNumber(activeVehicle ? activeVehicle.mesh.rotation.y : player.rotation.y) || 0
       };
+      if (!validateMultiplayerMessage(payload)) return;
       if (localBroadcastChannel) localBroadcastChannel.postMessage(payload);
       if (onlineSocket && onlineSocket.readyState === WebSocket.OPEN && state.onlineRoomCode) {
         onlineSocket.send(JSON.stringify(payload));
@@ -4397,8 +4555,8 @@
     }
 
     function buildWardrobeUI() {
-      wardrobeTabs.innerHTML = "";
-      wardrobeGrid.innerHTML = "";
+      wardrobeTabs.replaceChildren();
+      wardrobeGrid.replaceChildren();
       for (const cat of wardrobeCategories) {
         const btn = document.createElement("button");
         btn.className = `tabBtn${cat === activeWardrobeCategory ? " active" : ""}`;
