@@ -655,12 +655,32 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
   <script>
-    if (!window.THREE) {
-      document.write('<script src="https://unpkg.com/three@0.158.0/build/three.min.js"><\\/script>');
-    }
-
+    /* Load Three.js — try jsDelivr first, then cdnjs, then unpkg */
+    (function() {
+      var cdns = [
+        "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js",
+        "https://unpkg.com/three@0.158.0/build/three.min.js"
+      ];
+      var idx = 0;
+      function tryNext() {
+        if (idx >= cdns.length) {
+          document.getElementById("loadingOverlay").innerHTML =
+            "<div style='color:#ff6e6e;font-size:1.2rem;text-align:center;padding:2rem'>" +
+            "⚠️ Failed to load game engine.<br>Check your internet connection and refresh.</div>";
+          return;
+        }
+        var s = document.createElement("script");
+        s.src = cdns[idx++];
+        s.onload = function() { window._threeLoaded = true; startGame(); };
+        s.onerror = function() { tryNext(); };
+        document.head.appendChild(s);
+      }
+      tryNext();
+    })();
+  </script>
+  <script>
     const loadingOverlay = document.getElementById("loadingOverlay");
     const errorOverlay = document.getElementById("errorOverlay");
 
@@ -674,12 +694,7 @@
       errorOverlay.textContent += `[${stamp}] ${scope}: ${stack}\n\n`;
     }
 
-    if (!window.THREE) {
-      showVisibleError(new Error("Failed to load Three.js from cdnjs and fallback unpkg CDN."), "startup");
-      if (loadingOverlay) loadingOverlay.textContent = "Failed to load Three.js";
-      throw new Error("Three.js unavailable");
-    }
-
+    function startGame() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x8fc8ff);
 
@@ -3871,6 +3886,7 @@
       showVisibleError(err, "startup");
       if (loadingOverlay) loadingOverlay.textContent = "Startup failed (see error log)";
     }
+    } // end startGame()
   </script>
 </body>
 </html>
