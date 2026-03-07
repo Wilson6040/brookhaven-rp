@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brookhaven RP - Phase 2</title>
+  <title>Brookhaven RP - Phase 4</title>
   <style>
     :root {
       --ui-bg: rgba(14, 22, 28, 0.75);
@@ -294,6 +294,96 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
+    .mapIcon {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      pointer-events: none;
+    }
+
+    .mapIcon.npc { background: #64d8ff; }
+    .mapIcon.job { background: #ffd45b; }
+
+    #npcDialog {
+      position: absolute;
+      left: 50%;
+      bottom: 120px;
+      transform: translateX(-50%);
+      width: min(420px, 92vw);
+      display: none;
+      pointer-events: auto;
+      z-index: 18;
+    }
+
+    #wardrobeOverlay .menuCard {
+      width: min(96vw, 980px);
+      height: min(90vh, 640px);
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 14px;
+    }
+
+    #wardrobePreview {
+      width: 100%;
+      height: 360px;
+      border-radius: 10px;
+      border: 1px solid var(--ui-border);
+      background: radial-gradient(circle at 50% 25%, rgba(120, 160, 220, 0.25), rgba(5, 12, 18, 0.85));
+    }
+
+    #wardrobeTabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .tabBtn {
+      border: 1px solid var(--ui-border);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .tabBtn.active { background: rgba(255, 212, 91, 0.24); }
+
+    #wardrobeGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 8px;
+      max-height: 470px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .swatchBtn {
+      border: 1px solid var(--ui-border);
+      border-radius: 8px;
+      padding: 6px;
+      cursor: pointer;
+      color: var(--text);
+      text-align: left;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .swatch {
+      width: 100%;
+      height: 20px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .menuSection { display: none; }
+    .menuSection.open { display: block; }
+
     @media (max-width: 700px) {
       #hudTopLeft { width: 200px; }
       #hotbar { grid-template-columns: repeat(6, 44px); gap: 6px; }
@@ -310,6 +400,7 @@
   <div id="ui">
     <div id="hudTopLeft" class="panel">
       <div>Balance: <strong id="balanceText">$500</strong></div>
+      <div>Tickets: <strong id="ticketsText">0</strong></div>
       <div>Fuel: <strong id="fuelText">100%</strong></div>
       <div>
         Stamina
@@ -349,8 +440,12 @@
       <div class="menuCard panel">
         <h2>Paused</h2>
         <button id="resumeBtn" class="menuBtn">Resume</button>
-        <div class="panel">Controls: WASD move/drive, Shift run/turbo, Space jump/handbrake, E vehicle+doors+buy, F interact, V first-person, M map, Esc pause</div>
-        <div class="panel">
+        <div class="menuRow">
+          <button id="controlsToggleBtn" class="menuBtn">Controls</button>
+          <button id="settingsToggleBtn" class="menuBtn">Settings</button>
+        </div>
+        <div id="controlsPanel" class="panel menuSection open">Controls: Arrow Keys move/drive, Shift run/turbo, Space jump/handbrake, E vehicle+doors+NPC chat, F interact/feed, C wardrobe, V first-person, M map, Esc pause</div>
+        <div id="settingsPanel" class="panel menuSection open">
           <div style="margin-bottom:8px;font-weight:600">Settings</div>
           <div class="menuRow">
             <label for="musicVolume">Music</label>
@@ -382,6 +477,27 @@
           <div class="mapLabel" style="left: 7%; top: 2%;">Farm</div>
           <div class="mapLabel" style="left: 42%; top: 8%;">Forest</div>
           <div class="mapLabel" style="left: 8%; top: 58%;">Carnival</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="npcDialog" class="panel">
+      <div id="npcDialogName" style="font-weight:700; margin-bottom:3px;"></div>
+      <div id="npcDialogRole" style="opacity:0.85; margin-bottom:6px;"></div>
+      <div id="npcDialogLine"></div>
+    </div>
+
+    <div id="wardrobeOverlay" class="overlay">
+      <div class="menuCard panel">
+        <div>
+          <div style="font-size:20px;font-weight:700;margin-bottom:8px;">Wardrobe</div>
+          <canvas id="wardrobePreview"></canvas>
+          <div style="margin-top:8px; opacity:0.8; font-size:12px;">Preview rotates automatically</div>
+          <button id="wardrobeCloseBtn" class="menuBtn" style="margin-top:12px;width:100%;">Close (C)</button>
+        </div>
+        <div>
+          <div id="wardrobeTabs"></div>
+          <div id="wardrobeGrid"></div>
         </div>
       </div>
     </div>
@@ -420,6 +536,7 @@
     const interactionPrompt = document.getElementById("interactionPrompt");
     const eventToast = document.getElementById("eventToast");
     const fuelText = document.getElementById("fuelText");
+    const ticketsText = document.getElementById("ticketsText");
     const jobProgressWrap = document.getElementById("jobProgressWrap");
     const jobProgressBar = document.getElementById("jobProgressBar");
     const fadeOverlay = document.getElementById("fadeOverlay");
@@ -427,6 +544,15 @@
     const mapOverlay = document.getElementById("mapOverlay");
     const mapPlayer = document.getElementById("mapPlayer");
     const mapClock = document.getElementById("mapClock");
+    const npcDialog = document.getElementById("npcDialog");
+    const npcDialogName = document.getElementById("npcDialogName");
+    const npcDialogRole = document.getElementById("npcDialogRole");
+    const npcDialogLine = document.getElementById("npcDialogLine");
+    const wardrobeOverlay = document.getElementById("wardrobeOverlay");
+    const wardrobeTabs = document.getElementById("wardrobeTabs");
+    const wardrobeGrid = document.getElementById("wardrobeGrid");
+    const mapBoard = document.getElementById("mapBoard");
+    const hotbarSlots = Array.from(document.querySelectorAll("#hotbar .slot"));
 
     const state = {
       paused: false,
@@ -463,7 +589,17 @@
       firePoleSlideTimer: 0,
       pendingDelivery: null,
       deliveryPickupReadyAt: 0,
-      fishingReadyAt: 0
+      fishingReadyAt: 0,
+      activePet: null,
+      tickets: 0,
+      currentNpc: null,
+      currentNpcLine: 0,
+      wardrobeOpen: false,
+      controlsPanelOpen: true,
+      settingsPanelOpen: true,
+      rideMode: null,
+      ringTossScore: 0,
+      balloonPopScore: 0
     };
 
     const keys = {};
@@ -482,6 +618,18 @@
     const interiorDoorTriggers = new Map();
     const interiorLights = [];
     const miniJobs = [];
+    const npcs = [];
+    const npcNameSprites = [];
+    const petShopOffers = [];
+    const petEntities = [];
+    const mapNpcIcons = [];
+    const mapJobIcons = [];
+    const carnivalRides = {
+      ferris: { center: null, cars: [], angle: 0, boardedCar: null },
+      carousel: { root: null, horses: [], angle: 0 },
+      bumperCars: [],
+      playerBumper: null
+    };
     const tempVec3A = new THREE.Vector3();
     const tempVec3B = new THREE.Vector3();
     const raycaster = new THREE.Raycaster();
@@ -589,12 +737,68 @@
         const buzz = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.05, 12), hairMat);
         buzz.position.y = 0.17;
         g.add(buzz);
+      } else if (style === "ponytail") {
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.1, 12), hairMat);
+        cap.position.y = 0.09;
+        const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.36, 10), hairMat);
+        tail.position.set(0, 0.02, -0.29);
+        tail.rotation.x = 0.6;
+        g.add(cap, tail);
+      } else if (style === "long") {
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.1, 12), hairMat);
+        cap.position.y = 0.12;
+        const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.14), hairMat);
+        back.position.set(0, -0.05, -0.2);
+        g.add(cap, back);
+      } else if (style === "curly") {
+        const curls = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 12), hairMat);
+        curls.position.y = 0.13;
+        g.add(curls);
+      } else if (style === "mohawk") {
+        const strip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.26, 0.52), hairMat);
+        strip.position.y = 0.2;
+        g.add(strip);
+      } else if (style === "bald") {
+        // intentionally empty for bald style
       }
 
       hairMesh = g;
       head.add(hairMesh);
     }
     applyHairStyle(playerConfig.hairStyle);
+
+    function makeColorSet(h) {
+      const out = [];
+      for (let i = 0; i < 25; i++) {
+        const c = new THREE.Color().setHSL((h + i * 0.017) % 1, 0.55, 0.34 + (i % 6) * 0.08);
+        out.push(Number(c.getHex()));
+      }
+      return out;
+    }
+    const wardrobeOptions = {
+      Tops: makeColorSet(0.57),
+      Bottoms: makeColorSet(0.08),
+      Shoes: makeColorSet(0.66),
+      Hats: makeColorSet(0.02),
+      Accessories: makeColorSet(0.84),
+      Skin: [0xf2c8a0, 0xd9a67f, 0xb47a52, 0x8f5b37, 0xffd8bf, 0x6e3f26, 0xcf8d68, 0xe4b391, 0x7c4b2f, 0xa16846],
+      Hair: ["bob", "afro", "ponytail", "short", "long", "buzz", "curly", "bun", "mohawk", "bald"]
+    };
+    const wardrobeCategories = Object.keys(wardrobeOptions);
+    let activeWardrobeCategory = "Tops";
+
+    function refreshPlayerLook() {
+      torso.material.color.setHex(playerConfig.shirtColor);
+      leftLeg.material.color.setHex(playerConfig.trouserColor);
+      rightLeg.material.color.setHex(playerConfig.trouserColor);
+      leftShoe.material.color.setHex(playerConfig.shoeColor);
+      rightShoe.material.color.setHex(playerConfig.shoeColor);
+      head.material.color.setHex(playerConfig.skinColor);
+      leftArm.material.color.setHex(playerConfig.skinColor);
+      rightArm.material.color.setHex(playerConfig.skinColor);
+      applyHairStyle(playerConfig.hairStyle);
+      state.activeOutfitColor = playerConfig.shirtColor;
+    }
 
     const policeHat = new THREE.Mesh(
       new THREE.CylinderGeometry(0.31, 0.36, 0.14, 14),
@@ -706,6 +910,7 @@
       state.balance += amount;
       state.balanceFlashTimer = 0.45;
       state.balanceFlashType = amount >= 0 ? "flash-positive" : "flash-negative";
+      if (amount > 0) playMoneyArpeggio();
     }
 
     function makeWindow(x, y, z, rotY = 0) {
@@ -845,6 +1050,22 @@
       marker.position.set(10, 3, 34);
       marker.castShadow = true;
       scene.add(marker);
+
+      const petShop = new THREE.Mesh(
+        new THREE.BoxGeometry(14, 8, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffc4dd })
+      );
+      petShop.position.set(-92, 4, 28);
+      addBuildingBox(petShop);
+      const petShopSign = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 1.2, 0.5),
+        new THREE.MeshStandardMaterial({ color: 0xfff4b2 })
+      );
+      petShopSign.position.set(-92, 8.8, 34.2);
+      scene.add(petShopSign);
+      registerInteractive(petShop, "Press F to Buy Pet", 5, () => {
+        openPetShop();
+      });
     }
 
     function createCivic() {
@@ -1088,14 +1309,39 @@
       fairBase.receiveShadow = true;
       scene.add(fairBase);
 
+      const ferrisCenter = new THREE.Group();
+      ferrisCenter.position.set(-275, 28, 145);
+      scene.add(ferrisCenter);
+      carnivalRides.ferris.center = ferrisCenter;
+
       const ferrisRing = new THREE.Mesh(
         new THREE.TorusGeometry(24, 1.5, 14, 80),
         new THREE.MeshStandardMaterial({ color: 0xd6dee8, metalness: 0.3, roughness: 0.35 })
       );
-      ferrisRing.position.set(-275, 28, 145);
       ferrisRing.rotation.y = Math.PI / 2;
       ferrisRing.castShadow = true;
-      scene.add(ferrisRing);
+      ferrisCenter.add(ferrisRing);
+
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const car = new THREE.Group();
+        const basket = new THREE.Mesh(
+          new THREE.BoxGeometry(2.5, 1.2, 2),
+          new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(i / 8, 0.7, 0.55) })
+        );
+        basket.position.y = -0.6;
+        car.add(basket);
+        car.position.set(0, Math.sin(a) * 24, Math.cos(a) * 24);
+        ferrisCenter.add(car);
+        carnivalRides.ferris.cars.push({ group: car, angle: a });
+      }
+
+      registerInteractive(ferrisRing, "Press E to Board Ferris Wheel", 5, () => {
+        state.rideMode = "ferris";
+        carnivalRides.ferris.boardedCar = carnivalRides.ferris.cars[0];
+        showToast("Boarded Ferris Wheel");
+        playDoorClick();
+      });
 
       const support1 = new THREE.Mesh(
         new THREE.CylinderGeometry(1, 1, 44, 12),
@@ -1118,6 +1364,52 @@
       bumperArea.position.set(-215, 0.55, 170);
       bumperArea.receiveShadow = true;
       scene.add(bumperArea);
+      registerInteractive(bumperArea, "Press E to Ride Bumper Cars", 5, () => {
+        state.rideMode = "bumper";
+        showToast("Bumper cars ready");
+        playDoorClick();
+      });
+      for (let i = 0; i < 6; i++) {
+        const car = new THREE.Mesh(
+          new THREE.BoxGeometry(2.2, 1.1, 2.6),
+          new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(i / 6, 0.75, 0.52) })
+        );
+        car.position.set(-230 + (i % 3) * 14, 1.2, 161 + Math.floor(i / 3) * 12);
+        car.castShadow = true;
+        scene.add(car);
+        carnivalRides.bumperCars.push({
+          mesh: car,
+          phase: Math.random() * Math.PI * 2,
+          playerControlled: i === 0
+        });
+      }
+      carnivalRides.playerBumper = carnivalRides.bumperCars[0];
+
+      const carousel = new THREE.Group();
+      carousel.position.set(-180, 0, 110);
+      scene.add(carousel);
+      carnivalRides.carousel.root = carousel;
+      const carouselBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(12, 12, 1.2, 20),
+        new THREE.MeshStandardMaterial({ color: 0x9f6bc4 })
+      );
+      carouselBase.position.y = 0.6;
+      carousel.add(carouselBase);
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const horse = new THREE.Mesh(
+          new THREE.BoxGeometry(1.8, 1, 0.8),
+          new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL((i + 2) / 10, 0.6, 0.65) })
+        );
+        horse.position.set(Math.sin(a) * 7.5, 2, Math.cos(a) * 7.5);
+        carousel.add(horse);
+        carnivalRides.carousel.horses.push({ mesh: horse, offset: i * 0.7 });
+      }
+      registerInteractive(carouselBase, "Press E to Ride Carousel", 5, () => {
+        state.rideMode = state.rideMode === "carousel" ? null : "carousel";
+        showToast(state.rideMode === "carousel" ? "Carousel ride started" : "Carousel ride ended");
+        playDoorClick();
+      });
 
       for (let i = 0; i < 4; i++) {
         const stall = new THREE.Mesh(
@@ -1127,6 +1419,56 @@
         stall.position.set(-320 + i * 20, 3, 200);
         addBuildingBox(stall);
       }
+      const ringToss = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 4, 7),
+        new THREE.MeshStandardMaterial({ color: 0xd35f5f })
+      );
+      ringToss.position.set(-320, 2.2, 178);
+      scene.add(ringToss);
+      registerInteractive(ringToss, "Press F to Play Ring Toss (+$5/point)", 4, () => {
+        state.ringTossScore += 1;
+        const reward = 5;
+        updateBalance(reward);
+        showToast(`Ring toss score ${state.ringTossScore} (+$${reward})`);
+      });
+
+      const balloonPop = new THREE.Mesh(
+        new THREE.BoxGeometry(8, 4, 7),
+        new THREE.MeshStandardMaterial({ color: 0x5f8ad3 })
+      );
+      balloonPop.position.set(-300, 2.2, 178);
+      scene.add(balloonPop);
+      registerInteractive(balloonPop, "Press F to Pop Balloons (+$4/pop)", 4, () => {
+        state.balloonPopScore += 1;
+        updateBalance(4);
+        showToast(`Balloon popped! Score ${state.balloonPopScore}`);
+      });
+
+      const candyFloss = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.5, 2.5, 3, 14),
+        new THREE.MeshStandardMaterial({ color: 0xffb6da })
+      );
+      candyFloss.position.set(-280, 1.5, 178);
+      scene.add(candyFloss);
+      registerInteractive(candyFloss, "Press F to Buy Candy Floss ($8, +5 energy)", 4, () => {
+        if (state.balance < 8) return showToast("Not enough cash");
+        updateBalance(-8);
+        state.stamina = Math.min(100, state.stamina + 5);
+        showToast("Candy floss +5 stamina");
+      });
+
+      const ticketBooth = new THREE.Mesh(
+        new THREE.BoxGeometry(9, 6, 8),
+        new THREE.MeshStandardMaterial({ color: 0xf1cc5e })
+      );
+      ticketBooth.position.set(-260, 3, 178);
+      scene.add(ticketBooth);
+      registerInteractive(ticketBooth, "Press F to Buy Ticket (10 coins = 1 ticket)", 4, () => {
+        if (state.balance < 10) return showToast("Need $10");
+        updateBalance(-10);
+        state.tickets += 1;
+        showToast(`Ticket purchased. Total tickets: ${state.tickets}`);
+      });
 
       createCarnivalLabel("CARNIVAL", -250, 14, 236);
     }
@@ -1497,8 +1839,8 @@
         const rackItem = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.6), new THREE.MeshStandardMaterial({ color: colors[i] }));
         rackItem.position.set(clothing.centerX - 9 + i * 4.5, 1.2, interiorOffsetZ - 9);
         registerInteractive(rackItem, `Press F to Try On Outfit ${i + 1}`, 3, () => {
-          torso.material.color.setHex(colors[i]);
-          state.activeOutfitColor = colors[i];
+          playerConfig.shirtColor = colors[i];
+          refreshPlayerLook();
           showToast(`Try on: Outfit ${i + 1}`);
           playInteractionClick();
         });
@@ -1534,19 +1876,201 @@
       createInteriorRoom("office", 620, 0xc7cfdb);
     }
 
-    function createMiniJobs() {
-      const fishMarker = new THREE.Mesh(
+    function makeNameSprite(text, color = "#ffffff", bg = "rgba(0,0,0,0.55)", size = 72) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 384;
+      canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 22, 384, 86);
+      ctx.fillStyle = color;
+      ctx.font = `bold ${size}px Trebuchet MS`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, 192, 64);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
+      sprite.scale.set(8, 2.4, 1);
+      return sprite;
+    }
+
+    const npcDefinitions = [
+      { name: "Maya Chen", role: "Shopkeeper", waypoints: [[-40, -24], [-30, -20], [-48, -18]], lines: ["New styles landed today.", "Try the pastel jackets.", "Need help finding a fit?"] },
+      { name: "James Miller", role: "Police Officer", waypoints: [[-40, 0], [20, 0], [70, -5]], lines: ["Keeping High Street safe.", "Drive safely in town.", "Report issues anytime."] },
+      { name: "Dr Sarah Park", role: "Doctor", waypoints: [[92, -118], [88, -112], [96, -112]], lines: ["Hydration first, always.", "I can patch you right up.", "Take breaks when tired."] },
+      { name: "Tom Bradley", role: "Firefighter", waypoints: [[172, -74], [170, -60], [178, -62]], lines: ["Stay calm in emergencies.", "Fire drills save lives.", "Keep exits clear."] },
+      { name: "Lisa Wong", role: "Teacher", waypoints: [[110, -48], [118, -38], [102, -36]], lines: ["Homework done?", "Class starts soon.", "The gym is open later."] },
+      { name: "Chef Marco", role: "Restaurant Owner", waypoints: [[-75, -24], [-70, -18], [-80, -18]], lines: ["Today's special is fresh pasta.", "Kitchen closes at midnight.", "Try the signature sauce."] },
+      { name: "Officer Dave", role: "Police", waypoints: [[145, -125], [150, -112], [138, -114]], lines: ["Need assistance?", "Station is fully staffed.", "Check lost and found inside."] },
+      { name: "Nurse Emily", role: "Nurse", waypoints: [[86, -124], [100, -124], [94, -111]], lines: ["Please queue at reception.", "Vitals look good.", "Take care out there."] },
+      { name: "Bob the Farmer", role: "Farmer", waypoints: [[-315, -275], [-290, -295], [-330, -315]], lines: ["Crops are looking healthy.", "Fresh eggs at dawn.", "Watch for tractors."] },
+      { name: "Penny Lane", role: "Florist", waypoints: [[165, 120], [185, 120], [175, 140]], lines: ["These roses are in bloom.", "The park is beautiful today.", "Flowers cheer everyone up."] },
+      { name: "Jake Storm", role: "Mechanic", waypoints: [[80, 26], [74, 32], [86, 32]], lines: ["I tune engines all day.", "Need fuel or repairs?", "Keep tire pressure right."] },
+      { name: "Rosa Garcia", role: "Grocery Clerk", waypoints: [[-5, -24], [-12, -18], [2, -18]], lines: ["Fresh produce just arrived.", "Aisle three has snacks.", "Checkout is this way."] },
+      { name: "Sam Taylor", role: "Bus Driver", waypoints: [[170, 12], [180, 120], [0, 180]], lines: ["Next stop, the beach.", "Please stand behind the line.", "Buses run every hour."] },
+      { name: "Alex Kim", role: "Student", waypoints: [[100, -40], [120, -30], [110, -20]], lines: ["I'm late for class.", "After school at the park?", "Math test was rough."] },
+      { name: "Mia Roberts", role: "Lifeguard", waypoints: [[40, 250], [80, 260], [0, 260]], lines: ["Swim in marked zones.", "Waves are calm now.", "Keep an eye on children."] },
+      { name: "Harry Scott", role: "Fisherman", waypoints: [[-30, 248], [-5, 252], [25, 248]], lines: ["Best catch at sunset.", "Patience catches fish.", "Try the deeper water."] },
+      { name: "Zoe Adams", role: "Park Keeper", waypoints: [[140, 150], [210, 150], [175, 108]], lines: ["Please keep paths clean.", "The fountain was restored.", "Birds nest near the oaks."] },
+      { name: "Dan Fox", role: "Carnival Host", waypoints: [[-250, 170], [-220, 170], [-280, 170]], lines: ["Rides are open!", "Tickets at the booth.", "Win a prize at the stalls."] },
+      { name: "Grace Hill", role: "Electronics Clerk", waypoints: [[65, -24], [56, -18], [74, -18]], lines: ["New tablets in stock.", "Headphones are discounted.", "Need device setup help?"] },
+      { name: "Max Turner", role: "Delivery Person", waypoints: [[110, -24], [20, 10], [-100, -140]], lines: ["Deliveries never stop.", "I know every street.", "Package for house twelve next."] }
+    ];
+
+    function spawnNpcBody(shirt = 0x4d7bb8) {
+      const npc = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.2, 12), new THREE.MeshStandardMaterial({ color: shirt }));
+      body.position.y = 0.95;
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 12), new THREE.MeshStandardMaterial({ color: 0xf0c9a1 }));
+      headMesh.position.y = 1.72;
+      npc.add(body, headMesh);
+      setShadowRecursive(npc);
+      return npc;
+    }
+
+    function createNPCs() {
+      npcDefinitions.forEach((def, i) => {
+        const npcMesh = spawnNpcBody(new THREE.Color().setHSL((i * 0.083) % 1, 0.45, 0.5));
+        const first = def.waypoints[0];
+        npcMesh.position.set(first[0], 0, first[1]);
+        const name = makeNameSprite(def.name, "#ffffff", "rgba(10,20,30,0.6)", 48);
+        name.position.set(0, 2.8, 0);
+        npcMesh.add(name);
+        scene.add(npcMesh);
+        npcs.push({
+          ...def,
+          mesh: npcMesh,
+          waypointIndex: 1,
+          dialogueIndex: 0,
+          speed: 2 + (i % 3) * 0.1
+        });
+        npcNameSprites.push(name);
+      });
+    }
+
+    const petDefinitions = [
+      { id: "dog", name: "Dog", price: 220, speed: 4, shape: "dog" },
+      { id: "cat", name: "Cat", price: 180, speed: 3.5, shape: "cat" },
+      { id: "rabbit", name: "Rabbit", price: 140, speed: 3, shape: "rabbit" },
+      { id: "hamster", name: "Hamster", price: 100, speed: 2.5, shape: "hamster" },
+      { id: "parrot", name: "Parrot", price: 260, speed: 0, shape: "parrot" },
+      { id: "horse", name: "Horse", price: 500, speed: 6, shape: "horse" },
+      { id: "turtle", name: "Turtle", price: 130, speed: 2, shape: "turtle" },
+      { id: "fish", name: "Fish Bowl", price: 120, speed: 2, shape: "fish" },
+      { id: "snake", name: "Snake", price: 210, speed: 3, shape: "snake" },
+      { id: "lizard", name: "Lizard", price: 160, speed: 3, shape: "lizard" }
+    ];
+
+    function createPetMesh(shape) {
+      const g = new THREE.Group();
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe3c89a });
+      if (shape === "dog" || shape === "cat" || shape === "horse" || shape === "lizard") {
+        const scale = shape === "horse" ? 1.7 : shape === "cat" ? 0.8 : shape === "lizard" ? 0.65 : 1;
+        const body = new THREE.Mesh(new THREE.BoxGeometry(1.1 * scale, 0.6 * scale, 0.6 * scale), bodyMat);
+        body.position.y = 0.65 * scale;
+        g.add(body);
+        for (let i = 0; i < 4; i++) {
+          const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18 * scale, 0.5 * scale, 0.18 * scale), new THREE.MeshStandardMaterial({ color: 0x8b6b4f }));
+          leg.position.set((i < 2 ? -0.35 : 0.35) * scale, 0.25 * scale, (i % 2 ? -0.2 : 0.2) * scale);
+          g.add(leg);
+        }
+      } else if (shape === "rabbit") {
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), bodyMat);
+        body.position.y = 0.55;
+        const ear1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.12), bodyMat);
+        ear1.position.set(-0.12, 1.02, 0);
+        const ear2 = ear1.clone();
+        ear2.position.x = 0.12;
+        g.add(body, ear1, ear2);
+      } else if (shape === "hamster") {
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 10), bodyMat);
+        body.position.y = 0.42;
+        g.add(body);
+      } else if (shape === "parrot") {
+        const body = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 10), new THREE.MeshStandardMaterial({ color: 0x4fc46f }));
+        const headP = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 10), new THREE.MeshStandardMaterial({ color: 0x5dd37b }));
+        headP.position.y = 0.28;
+        g.add(body, headP);
+      } else if (shape === "turtle") {
+        const shell = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 12), new THREE.MeshStandardMaterial({ color: 0x648448 }));
+        shell.scale.y = 0.6;
+        shell.position.y = 0.35;
+        g.add(shell);
+      } else if (shape === "fish") {
+        const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), new THREE.MeshStandardMaterial({ color: 0x8ac9ff, transparent: true, opacity: 0.45 }));
+        const fish = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshStandardMaterial({ color: 0xff8f5c }));
+        fish.position.y = 0.06;
+        g.add(bowl, fish);
+      } else if (shape === "snake") {
+        for (let i = 0; i < 6; i++) {
+          const seg = new THREE.Mesh(new THREE.SphereGeometry(0.16 - i * 0.01, 10, 10), new THREE.MeshStandardMaterial({ color: 0x6f9d47 }));
+          seg.position.set(-i * 0.14, 0.23, 0);
+          g.add(seg);
+        }
+      }
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.23, 0.04, 8, 16), new THREE.MeshStandardMaterial({ color: 0xff4f7d }));
+      collar.rotation.x = Math.PI / 2;
+      collar.position.y = 0.52;
+      g.add(collar);
+      setShadowRecursive(g);
+      return g;
+    }
+
+    function setActivePet(def, name) {
+      if (state.activePet?.mesh) scene.remove(state.activePet.mesh);
+      const mesh = createPetMesh(def.shape);
+      mesh.position.copy(player.position).add(new THREE.Vector3(1.5, 0, 1.5));
+      scene.add(mesh);
+      state.activePet = {
+        type: def.id,
+        species: def.name,
+        name: name || def.name,
+        speed: def.speed,
+        accessories: { collar: true, bow: false, outfitColor: 0xff4f7d },
+        mesh,
+        feedBounce: 0
+      };
+      showToast(`${state.activePet.name} is now following you`);
+    }
+
+    function openPetShop() {
+      const opts = petDefinitions.map((p, i) => `${i + 1}. ${p.name} $${p.price}`).join("\n");
+      const pick = prompt(`Pet Shop\n${opts}\nEnter number to buy (max 1 active pet):`, "1");
+      if (!pick) return;
+      const idx = Number(pick) - 1;
+      const def = petDefinitions[idx];
+      if (!def) return;
+      if (state.balance < def.price) return showToast("Not enough cash");
+      const petName = prompt("Name your pet:", def.name) || def.name;
+      updateBalance(-def.price);
+      setActivePet(def, petName);
+      playDoorClick();
+    }
+
+    function createJobMarker(x, z) {
+      const marker = new THREE.Mesh(
         new THREE.ConeGeometry(0.8, 2.3, 8),
         new THREE.MeshStandardMaterial({ color: 0xffde49, emissive: 0x6d5f18, emissiveIntensity: 0.3 })
       );
-      fishMarker.position.set(-20, 2, 250);
-      scene.add(fishMarker);
-      miniJobs.push({ id: "fishing", marker: fishMarker, cooldown: 30, readyAt: 0, activeUntil: 0 });
+      marker.position.set(x, 2, z);
+      scene.add(marker);
+      return marker;
+    }
 
-      const deliveryMarker = fishMarker.clone();
-      deliveryMarker.position.set(110, 2, -24);
-      scene.add(deliveryMarker);
-      miniJobs.push({ id: "delivery", marker: deliveryMarker, cooldown: 60, readyAt: 0, activeUntil: 0, hasPackage: false, target: null });
+    function createMiniJobs() {
+      miniJobs.push({ id: "delivery", name: "Package Delivery", marker: createJobMarker(112, -24), cooldown: 300, readyAt: 0, stage: "idle", target: null, packages: 3, maxPackages: 3, respawnAt: 0 });
+      miniJobs.push({
+        id: "lawn",
+        name: "Lawn Mowing",
+        spots: [[-220, -220], [-270, -220], [-220, -165], [-270, -165]],
+        marker: createJobMarker(-220, -220),
+        cooldown: 60,
+        readyAt: 0,
+        duration: 5,
+        startedAt: 0
+      });
+      miniJobs.push({ id: "serving", name: "Food Serving", marker: createJobMarker(-75, -24), cooldown: 45, readyAt: 0, targetTable: null });
+      miniJobs.push({ id: "cleaning", name: "Building Cleaning", marker: createJobMarker(110, -42), cooldown: 600, readyAt: 0, dustLeft: 0 });
+      miniJobs.push({ id: "fishing", name: "Fishing", marker: createJobMarker(-20, 250), cooldown: 20, readyAt: 0, stage: "idle", biteAt: 0 });
     }
 
     const starGeo = new THREE.BufferGeometry();
@@ -1709,24 +2233,32 @@
       }
     }
 
-    const saveKey = "brookhaven_phase1_save";
+    const saveKey = "brookhaven_phase4_save";
     function saveGame() {
       const data = {
         playerPos: [player.position.x, player.position.y, player.position.z],
         playerRot: player.rotation.y,
         balance: state.balance,
-        inventory: state.inventory,
-        equippedOutfit: playerConfig,
-        pet: null,
+        inventory: state.inventory.slice(0, 6),
+        equippedOutfit: { ...playerConfig },
+        pet: state.activePet ? {
+          name: state.activePet.name,
+          type: state.activePet.type,
+          accessories: state.activePet.accessories
+        } : null,
         timeOfDay: state.timeOfDay,
         weather: state.weather,
-        ownedVehicles: state.ownedVehicles,
+        ownedVehicles: [...state.ownedVehicles],
+        tickets: state.tickets,
         fuel: state.fuel,
         activeOutfitColor: state.activeOutfitColor,
         vehiclePositions: vehicleEntities.map((v) => ({ id: v.id, p: [v.mesh.position.x, v.mesh.position.y, v.mesh.position.z], r: v.mesh.rotation.y })),
-        homeDecor: {}
+        homeDecor: {},
+        jobs: miniJobs.map((j) => ({ id: j.id, readyAt: j.readyAt || 0 }))
       };
       localStorage.setItem(saveKey, JSON.stringify(data));
+      showToast("Game saved");
+      playDoorClick();
     }
 
     function loadGame() {
@@ -1740,12 +2272,18 @@
         player.rotation.y = Number(data.playerRot) || 0;
         state.balance = Number(data.balance) || 500;
         state.timeOfDay = Number(data.timeOfDay) || 0.25;
-        state.inventory = Array.isArray(data.inventory) ? data.inventory.slice(0, 6) : state.inventory;
+        state.inventory = Array.isArray(data.inventory) ? data.inventory.slice(0, 6) : [null, null, null, null, null, null];
         state.fuel = THREE.MathUtils.clamp(Number(data.fuel) || 100, 0, 100);
+        state.tickets = Math.max(0, Number(data.tickets) || 0);
         if (Array.isArray(data.ownedVehicles)) state.ownedVehicles = [...new Set(data.ownedVehicles)];
         if (Number.isFinite(data.activeOutfitColor)) {
           state.activeOutfitColor = data.activeOutfitColor;
-          torso.material.color.setHex(state.activeOutfitColor);
+          playerConfig.shirtColor = state.activeOutfitColor;
+          refreshPlayerLook();
+        }
+        if (data.equippedOutfit && typeof data.equippedOutfit === "object") {
+          Object.assign(playerConfig, data.equippedOutfit);
+          refreshPlayerLook();
         }
         if (Array.isArray(data.vehiclePositions)) {
           for (const saved of data.vehiclePositions) {
@@ -1758,7 +2296,21 @@
         for (const v of vehicleEntities) {
           v.owned = state.ownedVehicles.includes(v.id);
         }
+        if (data.pet && typeof data.pet.type === "string") {
+          const def = petDefinitions.find((p) => p.id === data.pet.type);
+          if (def) {
+            setActivePet(def, data.pet.name || def.name);
+            if (data.pet.accessories) state.activePet.accessories = data.pet.accessories;
+          }
+        }
+        if (Array.isArray(data.jobs)) {
+          for (const saved of data.jobs) {
+            const j = miniJobs.find((x) => x.id === saved.id);
+            if (j) j.readyAt = Number(saved.readyAt) || 0;
+          }
+        }
         setWeather(typeof data.weather === "string" ? data.weather : "sunny");
+        showToast("Game loaded");
       } catch (err) {
         console.warn("Load failed", err);
       }
@@ -1769,6 +2321,8 @@
     let rainNoise = null;
     let rainGain = null;
     let rainFilter = null;
+    let vehicleOsc = null;
+    let vehicleGain = null;
 
     function ensureAudio() {
       if (audioCtx) return;
@@ -1797,6 +2351,15 @@
       rainGain.connect(audioCtx.destination);
       rainNoise.start();
       updateRainNoiseState();
+
+      vehicleOsc = audioCtx.createOscillator();
+      vehicleGain = audioCtx.createGain();
+      vehicleOsc.type = "sawtooth";
+      vehicleOsc.frequency.value = 80;
+      vehicleGain.gain.value = 0;
+      vehicleOsc.connect(vehicleGain);
+      vehicleGain.connect(sfxGain);
+      vehicleOsc.start();
     }
 
     function updateRainNoiseState() {
@@ -1852,6 +2415,29 @@
       osc.stop(audioCtx.currentTime + 0.09);
     }
 
+    function playDoorClick() {
+      playInteractionClick();
+    }
+
+    function playMoneyArpeggio() {
+      if (!audioCtx || !sfxGain) return;
+      const freqs = [523.25, 659.25, 783.99];
+      freqs.forEach((f, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = f;
+        const t = audioCtx.currentTime + i * 0.06;
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.exponentialRampToValueAtTime(0.09 * Number(document.getElementById("sfxVolume").value), t + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+        osc.connect(gain);
+        gain.connect(sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.1);
+      });
+    }
+
     function enterInterior(interiorId) {
       const spawn = interiorSpawns.get(interiorId);
       if (!spawn) return;
@@ -1860,7 +2446,7 @@
       player.position.copy(spawn);
       velocity.y = 0;
       showToast(`Entered ${interiorId.replace("_", " ")}`);
-      playInteractionClick();
+      playDoorClick();
     }
 
     function exitInterior() {
@@ -1871,7 +2457,7 @@
       state.currentInterior = null;
       state.sitting = false;
       showToast("Exited building");
-      playInteractionClick();
+      playDoorClick();
     }
 
     function getPlayerOrVehiclePosition() {
@@ -1888,7 +2474,7 @@
         state.drivingVehicleId = null;
         activeVehicle = null;
         showToast("Exited vehicle");
-        playInteractionClick();
+        playDoorClick();
         return true;
       }
 
@@ -1909,7 +2495,7 @@
       player.visible = false;
       state.sitting = false;
       showToast(`Driving ${nearest.name}`);
-      playInteractionClick();
+      playDoorClick();
       return true;
     }
 
@@ -2095,13 +2681,18 @@
       return x >= beachWaterBounds.minX && x <= beachWaterBounds.maxX && z >= beachWaterBounds.minZ && z <= beachWaterBounds.maxZ;
     }
 
+    function moveForwardKey() { return keys["ArrowUp"] || keys["KeyW"]; }
+    function moveBackKey() { return keys["ArrowDown"] || keys["KeyS"]; }
+    function moveLeftKey() { return keys["ArrowLeft"] || keys["KeyA"]; }
+    function moveRightKey() { return keys["ArrowRight"] || keys["KeyD"]; }
+
     let footstepTimer = 0;
 
     function updatePlayer(dt) {
       if (activeVehicle) return;
 
       if (state.sitting) {
-        if (keys["KeyW"] || keys["KeyA"] || keys["KeyS"] || keys["KeyD"] || keys["Space"]) {
+        if (moveForwardKey() || moveLeftKey() || moveBackKey() || moveRightKey() || keys["Space"]) {
           state.sitting = false;
         }
       }
@@ -2110,8 +2701,8 @@
       const groundY = inWater ? 0.3 : 1;
       state.swimMode = player.position.y < 0.5 || (inWater && player.position.y <= 1.2);
 
-      const inputX = (keys["KeyD"] ? 1 : 0) - (keys["KeyA"] ? 1 : 0);
-      const inputZ = (keys["KeyW"] ? 1 : 0) - (keys["KeyS"] ? 1 : 0);
+      const inputX = (moveRightKey() ? 1 : 0) - (moveLeftKey() ? 1 : 0);
+      const inputZ = (moveForwardKey() ? 1 : 0) - (moveBackKey() ? 1 : 0);
       let moving = inputX !== 0 || inputZ !== 0;
 
       const forward = new THREE.Vector3(Math.sin(orbitYaw), 0, Math.cos(orbitYaw));
@@ -2216,6 +2807,125 @@
       }
     }
 
+    function nearestNpcInRange(range = 3) {
+      let best = null;
+      let bestDist = range;
+      for (const npc of npcs) {
+        const d = npc.mesh.position.distanceTo(player.position);
+        if (d < bestDist) {
+          bestDist = d;
+          best = npc;
+        }
+      }
+      return best;
+    }
+
+    function showNpcDialog(npc) {
+      if (!npc) return;
+      state.currentNpc = npc;
+      npc.dialogueIndex = (npc.dialogueIndex + 1) % npc.lines.length;
+      npcDialogName.textContent = npc.name;
+      npcDialogRole.textContent = npc.role;
+      npcDialogLine.textContent = npc.lines[npc.dialogueIndex];
+      npcDialog.style.display = "block";
+      state.currentNpcLine = 2.8;
+      playDoorClick();
+    }
+
+    function updateNPCs(dt) {
+      const bob = Math.sin(performance.now() * 0.004) * 0.03;
+      for (const npc of npcs) {
+        const targetWP = npc.waypoints[npc.waypointIndex];
+        if (!targetWP) continue;
+        const target = tempVec3A.set(targetWP[0], 0, targetWP[1]);
+        const to = target.sub(npc.mesh.position);
+        const dist = Math.hypot(to.x, to.z);
+        if (dist < 0.5) {
+          npc.waypointIndex = (npc.waypointIndex + 1) % npc.waypoints.length;
+        } else {
+          to.normalize();
+          npc.mesh.position.addScaledVector(to, npc.speed * dt);
+          npc.mesh.rotation.y = Math.atan2(to.x, to.z);
+        }
+        npc.mesh.position.y = bob;
+      }
+
+      if (state.currentNpcLine > 0) {
+        state.currentNpcLine -= dt;
+        if (state.currentNpcLine <= 0) {
+          npcDialog.style.display = "none";
+          state.currentNpc = null;
+        }
+      }
+    }
+
+    function updatePet(dt) {
+      if (!state.activePet?.mesh) return;
+      const pet = state.activePet;
+      if (pet.type === "parrot") {
+        pet.mesh.position.copy(player.position);
+        pet.mesh.position.y = player.position.y + 1.65;
+        pet.mesh.position.x += Math.cos(player.rotation.y) * 0.34;
+        pet.mesh.position.z += Math.sin(player.rotation.y) * -0.34;
+      } else {
+        const desired = tempVec3A.copy(player.position).add(new THREE.Vector3(-1.2, 0, -1.2));
+        const delta = desired.sub(pet.mesh.position);
+        if (delta.lengthSq() > 0.01) {
+          delta.y = 0;
+          delta.normalize();
+          pet.mesh.position.addScaledVector(delta, (pet.speed || 2.5) * dt);
+          pet.mesh.rotation.y = Math.atan2(delta.x, delta.z);
+        }
+      }
+      if (pet.feedBounce > 0) {
+        pet.feedBounce -= dt;
+        pet.mesh.position.y = Math.sin((1 - pet.feedBounce) * 18) * 0.25;
+      } else {
+        pet.mesh.position.y = Math.max(0, pet.mesh.position.y * 0.88);
+      }
+    }
+
+    function updateCarnivalRides(dt) {
+      carnivalRides.ferris.angle += dt * 0.45;
+      const ferris = carnivalRides.ferris;
+      for (const car of ferris.cars) {
+        const a = car.angle + ferris.angle;
+        car.group.position.set(0, Math.sin(a) * 24, Math.cos(a) * 24);
+        car.group.rotation.y = -ferris.angle;
+      }
+
+      carnivalRides.carousel.angle += dt * 0.8;
+      if (carnivalRides.carousel.root) {
+        carnivalRides.carousel.root.rotation.y = carnivalRides.carousel.angle;
+        for (const horse of carnivalRides.carousel.horses) {
+          horse.mesh.position.y = 2 + Math.sin(performance.now() * 0.004 + horse.offset) * 0.5;
+        }
+      }
+
+      const t = performance.now() * 0.001;
+      for (const car of carnivalRides.bumperCars) {
+        if (car.playerControlled && state.rideMode === "bumper") {
+          const steer = (moveRightKey() ? 1 : 0) - (moveLeftKey() ? 1 : 0);
+          const throttle = (moveForwardKey() ? 1 : 0) - (moveBackKey() ? 1 : 0);
+          car.mesh.rotation.y += steer * dt * 2;
+          car.mesh.position.x += Math.sin(car.mesh.rotation.y) * throttle * dt * 8;
+          car.mesh.position.z += Math.cos(car.mesh.rotation.y) * throttle * dt * 8;
+        } else {
+          car.mesh.position.x += Math.sin(t + car.phase) * dt * 2;
+          car.mesh.position.z += Math.cos(t * 0.9 + car.phase) * dt * 2;
+        }
+        car.mesh.position.x = THREE.MathUtils.clamp(car.mesh.position.x, -237, -193);
+        car.mesh.position.z = THREE.MathUtils.clamp(car.mesh.position.z, 156, 184);
+      }
+
+      if (state.rideMode === "ferris" && ferris.boardedCar) {
+        const worldPos = ferris.boardedCar.group.getWorldPosition(tempVec3A);
+        const camTarget = worldPos.clone().add(new THREE.Vector3(0, 0.7, 0));
+        camera.position.lerp(worldPos.clone().add(new THREE.Vector3(0, 1.6, 3.1)), 0.1);
+        camera.lookAt(camTarget);
+      }
+    }
+
     function updatePrompt() {
       state.currentInteractive = null;
 
@@ -2226,6 +2936,19 @@
           interactionPrompt.style.opacity = "1";
           return;
         }
+      }
+
+      const nearbyNpc = nearestNpcInRange(3);
+      if (nearbyNpc) {
+        interactionPrompt.textContent = `Press E to talk to ${nearbyNpc.name}`;
+        interactionPrompt.style.opacity = "1";
+        return;
+      }
+
+      if (state.activePet?.mesh && player.position.distanceTo(state.activePet.mesh.position) < 3) {
+        interactionPrompt.textContent = `Press F to feed ${state.activePet.name}`;
+        interactionPrompt.style.opacity = "1";
+        return;
       }
 
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -2271,6 +2994,14 @@
     }
 
     function updateCamera(dt) {
+      if (state.rideMode === "ferris") return;
+      if (state.rideMode === "bumper" && carnivalRides.playerBumper) {
+        const car = carnivalRides.playerBumper.mesh;
+        const target = tempVec3A.copy(car.position).add(new THREE.Vector3(0, 1.4, 0));
+        camera.position.lerp(target.clone().add(new THREE.Vector3(0, 4, 8)), Math.min(1, dt * 5));
+        camera.lookAt(target);
+        return;
+      }
       if (activeVehicle) {
         const heading = activeVehicle.mesh.rotation.y;
         const target = tempVec3A.copy(activeVehicle.mesh.position).add(new THREE.Vector3(0, 1.8, 0));
@@ -2319,6 +3050,40 @@
       mapPlayer.style.top = `${(nz * 100).toFixed(2)}%`;
       state.mapBlink += 0.04;
       mapPlayer.style.opacity = `${0.65 + Math.sin(state.mapBlink * 4) * 0.35}`;
+
+      for (let i = 0; i < mapNpcIcons.length; i++) {
+        const icon = mapNpcIcons[i];
+        const npc = npcs[i];
+        if (!npc) continue;
+        const x = ((npc.mesh.position.x + 400) / 800) * 100;
+        const z = ((npc.mesh.position.z + 400) / 800) * 100;
+        icon.style.left = `${x.toFixed(2)}%`;
+        icon.style.top = `${z.toFixed(2)}%`;
+      }
+      for (let i = 0; i < mapJobIcons.length; i++) {
+        const icon = mapJobIcons[i];
+        const job = miniJobs[i];
+        if (!job?.marker) continue;
+        const x = ((job.marker.position.x + 400) / 800) * 100;
+        const z = ((job.marker.position.z + 400) / 800) * 100;
+        icon.style.left = `${x.toFixed(2)}%`;
+        icon.style.top = `${z.toFixed(2)}%`;
+      }
+    }
+
+    function createMapIcons() {
+      for (let i = 0; i < npcDefinitions.length; i++) {
+        const icon = document.createElement("div");
+        icon.className = "mapIcon npc";
+        mapBoard.appendChild(icon);
+        mapNpcIcons.push(icon);
+      }
+      for (let i = 0; i < 5; i++) {
+        const icon = document.createElement("div");
+        icon.className = "mapIcon job";
+        mapBoard.appendChild(icon);
+        mapJobIcons.push(icon);
+      }
     }
 
     function updateBeachWater() {
@@ -2344,10 +3109,13 @@
         if (v.emergencyLight) v.emergencyLight.intensity = flashOn ? 2.2 : 0;
       }
 
-      if (!activeVehicle) return;
+      if (!activeVehicle) {
+        if (audioCtx && vehicleGain) vehicleGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.08);
+        return;
+      }
 
-      const throttle = (keys["KeyW"] ? 1 : 0) - (keys["KeyS"] ? 1 : 0);
-      const steerInput = (keys["KeyD"] ? 1 : 0) - (keys["KeyA"] ? 1 : 0);
+      const throttle = (moveForwardKey() ? 1 : 0) - (moveBackKey() ? 1 : 0);
+      const steerInput = (moveRightKey() ? 1 : 0) - (moveLeftKey() ? 1 : 0);
       const handbrake = keys["Space"];
       const turbo = keys["ShiftLeft"] || keys["ShiftRight"];
 
@@ -2382,6 +3150,11 @@
       activeVehicle.mesh.position.z = THREE.MathUtils.clamp(activeVehicle.mesh.position.z, -390, 390);
 
       state.fuel = Math.max(0, state.fuel - Math.abs(activeVehicle.speed) * dt * 0.02);
+      if (audioCtx && vehicleOsc && vehicleGain) {
+        const speedNorm = Math.min(1, Math.abs(activeVehicle.speed) / Math.max(1, activeVehicle.maxSpeed));
+        vehicleOsc.frequency.setTargetAtTime(75 + speedNorm * 180, audioCtx.currentTime, 0.05);
+        vehicleGain.gain.setTargetAtTime(0.04 + speedNorm * 0.12, audioCtx.currentTime, 0.05);
+      }
     }
 
     function updateFuelAndZones() {
@@ -2431,42 +3204,156 @@
 
     function updateMiniJobs(dt) {
       const now = performance.now() * 0.001;
-      const fishing = miniJobs.find((j) => j.id === "fishing");
-      const delivery = miniJobs.find((j) => j.id === "delivery");
+      let showingProgress = false;
 
-      if (fishing) {
-        fishing.marker.visible = now >= fishing.readyAt;
-        if (fishing.activeUntil > now) {
-          const progress = 1 - (fishing.activeUntil - now) / 5;
-          jobProgressWrap.style.opacity = "1";
-          jobProgressBar.style.width = `${(progress * 100).toFixed(1)}%`;
-          if (fishing.activeUntil - now <= 0.02) {
-            fishing.activeUntil = 0;
-            fishing.readyAt = now + fishing.cooldown;
-            const reward = 12 + Math.floor(Math.random() * 29);
-            updateBalance(reward);
-            showToast(`Fishing complete! +$${reward}`);
+      for (const job of miniJobs) {
+        if (!job.marker) continue;
+        if (job.id === "delivery" && job.packages <= 0 && now >= (job.respawnAt || 0)) {
+          job.packages = job.maxPackages || 3;
+        }
+        job.marker.rotation.y += dt * 1.2;
+        job.marker.position.y = 2 + Math.sin(now * 2 + job.marker.position.x * 0.01) * 0.3;
+        job.marker.visible = now >= (job.readyAt || 0) && (job.id !== "delivery" || job.packages > 0);
+      }
+
+      const lawn = miniJobs.find((j) => j.id === "lawn");
+      if (lawn && lawn.startedAt > 0) {
+        const progress = THREE.MathUtils.clamp((now - lawn.startedAt) / lawn.duration, 0, 1);
+        showingProgress = true;
+        jobProgressWrap.style.opacity = "1";
+        jobProgressBar.style.width = `${(progress * 100).toFixed(1)}%`;
+        if (progress >= 1) {
+          lawn.startedAt = 0;
+          lawn.readyAt = now + lawn.cooldown;
+          if (Array.isArray(lawn.spots) && lawn.spots.length) {
+            const next = lawn.spots[Math.floor(Math.random() * lawn.spots.length)];
+            lawn.marker.position.set(next[0], lawn.marker.position.y, next[1]);
           }
+          updateBalance(30);
+          showToast("Lawn mowing complete +$30");
         }
       }
 
-      if (delivery) {
-        delivery.marker.visible = now >= delivery.readyAt && !delivery.hasPackage;
-        if (delivery.target) delivery.target.visible = delivery.hasPackage;
+      const fishing = miniJobs.find((j) => j.id === "fishing");
+      if (fishing && fishing.stage === "waiting") {
+        const total = Math.max(0.1, fishing.biteAt - (fishing.castAt || now - 3));
+        const progress = THREE.MathUtils.clamp((now - (fishing.castAt || now)) / total, 0, 1);
+        showingProgress = true;
+        jobProgressWrap.style.opacity = "1";
+        jobProgressBar.style.width = `${(progress * 100).toFixed(1)}%`;
       }
 
-      if (!fishing || fishing.activeUntil <= now) {
+      if (!showingProgress) {
         jobProgressWrap.style.opacity = "0";
         jobProgressBar.style.width = "0%";
       }
     }
 
+    function startDeliveryTarget(job) {
+      const pick = houseDoors[Math.floor(Math.random() * houseDoors.length)];
+      if (job.target) scene.remove(job.target);
+      job.target = new THREE.Mesh(
+        new THREE.ConeGeometry(0.8, 2.3, 8),
+        new THREE.MeshStandardMaterial({ color: 0x5ae886, emissive: 0x0e5b2a, emissiveIntensity: 0.35 })
+      );
+      job.target.position.set(pick.x, 2, pick.z + 4);
+      scene.add(job.target);
+    }
+
+    function handleJobInteract() {
+      const now = performance.now() * 0.001;
+      const delivery = miniJobs.find((j) => j.id === "delivery");
+      const lawn = miniJobs.find((j) => j.id === "lawn");
+      const serving = miniJobs.find((j) => j.id === "serving");
+      const cleaning = miniJobs.find((j) => j.id === "cleaning");
+      const fishing = miniJobs.find((j) => j.id === "fishing");
+
+      if (delivery && now >= delivery.readyAt && player.position.distanceTo(delivery.marker.position) < 4) {
+        if (delivery.stage !== "carrying") {
+          if ((delivery.packages || 0) <= 0) {
+            showToast("No packages left. Restock in 5 minutes.");
+            return true;
+          }
+          delivery.stage = "carrying";
+          startDeliveryTarget(delivery);
+          showToast("Package picked up. Deliver to green marker.");
+        } else if (delivery.target && player.position.distanceTo(delivery.target.position) < 4) {
+          delivery.stage = "idle";
+          delivery.packages = Math.max(0, (delivery.packages || 1) - 1);
+          delivery.readyAt = now + 1;
+          if (delivery.packages <= 0) delivery.respawnAt = now + delivery.cooldown;
+          updateBalance(50);
+          scene.remove(delivery.target);
+          delivery.target = null;
+          showToast(`Package delivered +$50 (${delivery.packages} left)`);
+        }
+        return true;
+      }
+      if (delivery && delivery.stage === "carrying" && delivery.target && player.position.distanceTo(delivery.target.position) < 4) {
+        delivery.stage = "idle";
+        delivery.packages = Math.max(0, (delivery.packages || 1) - 1);
+        delivery.readyAt = now + 1;
+        if (delivery.packages <= 0) delivery.respawnAt = now + delivery.cooldown;
+        updateBalance(50);
+        scene.remove(delivery.target);
+        delivery.target = null;
+        showToast(`Package delivered +$50 (${delivery.packages} left)`);
+        return true;
+      }
+
+      if (lawn && now >= lawn.readyAt && player.position.distanceTo(lawn.marker.position) < 4) {
+        if (!lawn.startedAt) {
+          lawn.startedAt = now;
+          showToast("Mowing lawn...");
+        }
+        return true;
+      }
+
+      if (serving && now >= serving.readyAt && player.position.distanceTo(serving.marker.position) < 4) {
+        serving.readyAt = now + serving.cooldown;
+        updateBalance(25);
+        showToast("Food served +$25");
+        return true;
+      }
+
+      if (cleaning && now >= cleaning.readyAt && player.position.distanceTo(cleaning.marker.position) < 4) {
+        cleaning.readyAt = now + cleaning.cooldown;
+        updateBalance(40);
+        showToast("Building cleaned +$40");
+        return true;
+      }
+
+      if (fishing && now >= fishing.readyAt && player.position.distanceTo(fishing.marker.position) < 4) {
+        if (fishing.stage !== "waiting") {
+          fishing.stage = "waiting";
+          fishing.castAt = now;
+          fishing.biteAt = now + 3 + Math.random() * 5;
+          showToast("Fishing... wait for a bite, then press F");
+        } else if (now >= fishing.biteAt) {
+          fishing.stage = "idle";
+          fishing.readyAt = now + fishing.cooldown;
+          const reward = 20 + Math.floor(Math.random() * 81);
+          updateBalance(reward);
+          showToast(`Caught fish +$${reward}`);
+        } else {
+          showToast("No bite yet...");
+        }
+        return true;
+      }
+
+      return false;
+    }
+
     function updateHUD() {
       balanceText.textContent = `$${Math.floor(state.balance)}`;
+      ticketsText.textContent = String(state.tickets);
       fuelText.textContent = `${Math.round(state.fuel)}%`;
       staminaBar.style.width = `${state.stamina}%`;
       healthBar.style.width = `${state.health}%`;
       policeHat.visible = state.policeHat;
+      hotbarSlots.forEach((slot, idx) => {
+        slot.textContent = state.inventory[idx] ? String(state.inventory[idx]).slice(0, 9) : String(idx + 1);
+      });
       if (state.balanceFlashType) {
         balanceText.classList.remove("flash-positive", "flash-negative");
         balanceText.classList.add(state.balanceFlashType);
@@ -2481,6 +3368,9 @@
       updatePlayer(dt);
       updateVehicles(dt);
       updateEmote(dt);
+      updateNPCs(dt);
+      updatePet(dt);
+      updateCarnivalRides(dt);
       updatePrompt();
       updateDayNight(dt);
       updateWeather(dt);
@@ -2492,6 +3382,7 @@
       updateCamera(dt);
       updateMinimap();
       updateHUD();
+      if (state.wardrobeOpen) renderWardrobePreview();
 
       renderer.render(scene, camera);
     }
@@ -2518,9 +3409,93 @@
       mapOverlay.style.display = next ? "flex" : "none";
     }
 
+    let wardrobeRenderer = null;
+    let wardrobeScene = null;
+    let wardrobeCamera = null;
+    let wardrobeAvatar = null;
+
+    function initWardrobePreview() {
+      const canvas = document.getElementById("wardrobePreview");
+      wardrobeRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      wardrobeRenderer.setSize(canvas.clientWidth || 320, canvas.clientHeight || 360, false);
+      wardrobeScene = new THREE.Scene();
+      wardrobeCamera = new THREE.PerspectiveCamera(55, (canvas.clientWidth || 320) / (canvas.clientHeight || 360), 0.1, 100);
+      wardrobeCamera.position.set(0, 1.5, 4.2);
+      const a = new THREE.AmbientLight(0xffffff, 0.75);
+      const d = new THREE.DirectionalLight(0xffffff, 0.7);
+      d.position.set(4, 8, 3);
+      wardrobeScene.add(a, d);
+      wardrobeAvatar = player.clone();
+      wardrobeScene.add(wardrobeAvatar);
+    }
+
+    function renderWardrobePreview() {
+      if (!wardrobeRenderer || !wardrobeScene || !wardrobeAvatar) return;
+      wardrobeAvatar.rotation.y += 0.01;
+      wardrobeRenderer.render(wardrobeScene, wardrobeCamera);
+    }
+
+    function buildWardrobeUI() {
+      wardrobeTabs.innerHTML = "";
+      wardrobeGrid.innerHTML = "";
+      for (const cat of wardrobeCategories) {
+        const btn = document.createElement("button");
+        btn.className = `tabBtn${cat === activeWardrobeCategory ? " active" : ""}`;
+        btn.textContent = cat;
+        btn.addEventListener("click", () => {
+          activeWardrobeCategory = cat;
+          buildWardrobeUI();
+        });
+        wardrobeTabs.appendChild(btn);
+      }
+      const opts = wardrobeOptions[activeWardrobeCategory];
+      opts.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "swatchBtn";
+        const sw = document.createElement("div");
+        sw.className = "swatch";
+        sw.style.background = typeof opt === "number" ? `#${opt.toString(16).padStart(6, "0")}` : "#556070";
+        btn.appendChild(sw);
+        btn.appendChild(document.createTextNode(typeof opt === "number" ? `$${idx + 1}` : String(opt)));
+        btn.addEventListener("click", () => {
+          if (activeWardrobeCategory === "Tops") playerConfig.shirtColor = opt;
+          else if (activeWardrobeCategory === "Bottoms") playerConfig.trouserColor = opt;
+          else if (activeWardrobeCategory === "Shoes") playerConfig.shoeColor = opt;
+          else if (activeWardrobeCategory === "Skin") playerConfig.skinColor = opt;
+          else if (activeWardrobeCategory === "Hair") playerConfig.hairStyle = opt;
+          else if (activeWardrobeCategory === "Hats") state.policeHat = true;
+          refreshPlayerLook();
+          if (wardrobeAvatar) {
+            wardrobeScene.remove(wardrobeAvatar);
+            wardrobeAvatar = player.clone();
+            wardrobeScene.add(wardrobeAvatar);
+          }
+        });
+        wardrobeGrid.appendChild(btn);
+      });
+    }
+
+    function toggleWardrobe(next) {
+      state.wardrobeOpen = next;
+      wardrobeOverlay.style.display = next ? "flex" : "none";
+      if (next) {
+        if (!wardrobeRenderer) initWardrobePreview();
+        buildWardrobeUI();
+      }
+    }
+
     document.addEventListener("keydown", (e) => {
       if (e.code === "Escape") {
         e.preventDefault();
+        if (state.rideMode) {
+          state.rideMode = null;
+          showToast("Ride exited");
+          return;
+        }
+        if (state.wardrobeOpen) {
+          toggleWardrobe(false);
+          return;
+        }
         if (state.mapOpen) {
           toggleMap(false);
           return;
@@ -2529,7 +3504,7 @@
         return;
       }
 
-      if (state.paused) return;
+      if (state.paused || state.wardrobeOpen) return;
 
       keys[e.code] = true;
       if (e.code === "Space" && !activeVehicle && canJump && !state.swimMode && !state.sitting) {
@@ -2539,6 +3514,11 @@
       }
       if (e.code === "KeyE") {
         ensureAudio();
+        const npc = nearestNpcInRange(3);
+        if (npc) {
+          showNpcDialog(npc);
+          return;
+        }
         if (tryEnterOrExitVehicle()) return;
         if (tryEnterDoor()) return;
         if (tryDealershipBuy()) return;
@@ -2546,49 +3526,24 @@
       }
       if (e.code === "KeyF") {
         ensureAudio();
-        const now = performance.now() * 0.001;
-        const fishing = miniJobs.find((j) => j.id === "fishing");
-        const delivery = miniJobs.find((j) => j.id === "delivery");
-
         if (state.currentInteractive?.userData?.onInteract) {
           state.currentInteractive.userData.onInteract();
           return;
         }
-
-        if (fishing && now >= fishing.readyAt && player.position.distanceTo(fishing.marker.position) < 4) {
-          fishing.activeUntil = now + 5;
-          showToast("Fishing...");
-          playInteractionClick();
+        if (state.activePet?.mesh && player.position.distanceTo(state.activePet.mesh.position) < 3) {
+          const slot = state.inventory.findIndex((it) => it && (String(it).includes("Apple") || String(it).includes("Grocery") || String(it).includes("Burger")));
+          if (slot >= 0) {
+            state.inventory[slot] = null;
+            state.activePet.feedBounce = 0.9;
+            showToast(`${state.activePet.name} is happy!`);
+            playMoneyArpeggio();
+          } else {
+            showToast("Need food item in inventory");
+          }
           return;
         }
 
-        if (delivery && now >= delivery.readyAt && !delivery.hasPackage && player.position.distanceTo(delivery.marker.position) < 4) {
-          delivery.hasPackage = true;
-          const pick = houseDoors[Math.floor(Math.random() * houseDoors.length)];
-          if (delivery.target) scene.remove(delivery.target);
-          delivery.target = new THREE.Mesh(
-            new THREE.ConeGeometry(0.8, 2.3, 8),
-            new THREE.MeshStandardMaterial({ color: 0x5ae886, emissive: 0x0e5b2a, emissiveIntensity: 0.35 })
-          );
-          delivery.target.position.set(pick.x, 2, pick.z + 4);
-          scene.add(delivery.target);
-          showToast("Package picked up");
-          playInteractionClick();
-          return;
-        }
-
-        if (delivery && delivery.hasPackage && delivery.target && player.position.distanceTo(delivery.target.position) < 4) {
-          delivery.hasPackage = false;
-          delivery.readyAt = now + delivery.cooldown;
-          const reward = 35 + Math.floor(Math.random() * 35);
-          updateBalance(reward);
-          showToast(`Delivered! +$${reward}`);
-          scene.remove(delivery.target);
-          delivery.target = null;
-          playInteractionClick();
-          return;
-        }
-
+        if (handleJobInteract()) return;
         trySit();
       }
       if (e.code === "KeyV") {
@@ -2596,6 +3551,9 @@
       }
       if (e.code === "KeyM") {
         toggleMap(!state.mapOpen);
+      }
+      if (e.code === "KeyC") {
+        toggleWardrobe(!state.wardrobeOpen);
       }
     });
 
@@ -2634,11 +3592,20 @@
     });
 
     document.getElementById("resumeBtn").addEventListener("click", () => togglePause(false));
+    document.getElementById("controlsToggleBtn").addEventListener("click", () => {
+      state.controlsPanelOpen = !state.controlsPanelOpen;
+      document.getElementById("controlsPanel").classList.toggle("open", state.controlsPanelOpen);
+    });
+    document.getElementById("settingsToggleBtn").addEventListener("click", () => {
+      state.settingsPanelOpen = !state.settingsPanelOpen;
+      document.getElementById("settingsPanel").classList.toggle("open", state.settingsPanelOpen);
+    });
     document.getElementById("saveBtn").addEventListener("click", saveGame);
     document.getElementById("loadBtn").addEventListener("click", loadGame);
     document.getElementById("quitBtn").addEventListener("click", () => {
       if (confirm("Quit to title? Unsaved progress will be lost.")) window.location.reload();
     });
+    document.getElementById("wardrobeCloseBtn").addEventListener("click", () => toggleWardrobe(false));
 
     document.getElementById("musicVolume").addEventListener("input", updateRainNoiseState);
     document.getElementById("sfxVolume").addEventListener("input", () => {
@@ -2654,10 +3621,16 @@
       if (e.target === pauseOverlay) togglePause(false);
     });
 
+    wardrobeOverlay.addEventListener("click", (e) => {
+      if (e.target === wardrobeOverlay) toggleWardrobe(false);
+    });
+
     buildWorld();
     createVehicles();
     createInteriors();
+    createNPCs();
     createMiniJobs();
+    createMapIcons();
     setShadowRecursive(scene);
     setWeather("sunny");
     loadGame();
