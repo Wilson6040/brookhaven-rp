@@ -3890,8 +3890,8 @@
     }
 
     function updateOrientationOverlay() {
-      if (!orientationOverlay || !isTouchDevice) return;
-      const portrait = window.screen.width < window.screen.height || window.innerWidth < window.innerHeight;
+      if (!orientationOverlay) return;
+      const portrait = window.innerWidth < window.innerHeight;
       orientationOverlay.style.display = portrait ? "flex" : "none";
     }
 
@@ -3955,7 +3955,7 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       updateOrientationOverlay();
     });
-    window.addEventListener("orientationchange", updateOrientationOverlay);
+    window.addEventListener("orientationchange", () => setTimeout(updateOrientationOverlay, 200));
 
     document.getElementById("resumeBtn").addEventListener("click", () => togglePause(false));
     document.getElementById("controlsToggleBtn").addEventListener("click", () => {
@@ -3992,7 +3992,8 @@
     });
 
     initTouchControls();
-    updateOrientationOverlay();
+    // Delay orientation check — iOS needs a tick to settle viewport dimensions
+    setTimeout(updateOrientationOverlay, 100);
 
     try {
       buildWorld();
