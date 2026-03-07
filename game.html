@@ -541,28 +541,6 @@
       box-shadow: 0 0 18px rgba(100, 216, 255, 0.85);
     }
 
-    #orientationOverlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-      z-index: 1100;
-      background: rgba(4, 8, 12, 0.95);
-      pointer-events: auto;
-      font-size: 24px;
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    #orientationOverlay .rotateIcon {
-      display: block;
-      font-size: 44px;
-      margin-bottom: 10px;
-    }
-
     body.touch-device #hudTopLeft,
     body.touch-device #hudTopRight,
     body.touch-device #interactionPrompt,
@@ -624,7 +602,6 @@
   <canvas id="gameCanvas"></canvas>
   <div id="loadingOverlay">Loading...</div>
   <div id="errorOverlay"></div>
-  <div id="orientationOverlay"><span class="rotateIcon">↻</span>Please rotate to landscape</div>
 
   <div id="ui">
     <div id="hudTopLeft" class="panel">
@@ -843,7 +820,6 @@
     const mapBoard = document.getElementById("mapBoard");
     const hotbarSlots = Array.from(document.querySelectorAll("#hotbar .slot"));
     const gameCanvas = document.getElementById("gameCanvas");
-    const orientationOverlay = document.getElementById("orientationOverlay");
 
     if (isTouchDevice) {
       document.body.classList.add("touch-device");
@@ -3889,12 +3865,6 @@
       gameCanvas.addEventListener("touchmove", preventCanvasTouch, { passive: false });
     }
 
-    function updateOrientationOverlay() {
-      if (!orientationOverlay) return;
-      const portrait = window.innerWidth < window.innerHeight;
-      orientationOverlay.style.display = portrait ? "flex" : "none";
-    }
-
     document.addEventListener("keydown", (e) => {
       if (e.code === "Escape") {
         e.preventDefault();
@@ -3953,9 +3923,7 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-      updateOrientationOverlay();
     });
-    window.addEventListener("orientationchange", () => setTimeout(updateOrientationOverlay, 200));
 
     document.getElementById("resumeBtn").addEventListener("click", () => togglePause(false));
     document.getElementById("controlsToggleBtn").addEventListener("click", () => {
@@ -3993,7 +3961,6 @@
 
     initTouchControls();
     // Delay orientation check — iOS needs a tick to settle viewport dimensions
-    setTimeout(updateOrientationOverlay, 100);
 
     try {
       buildWorld();
