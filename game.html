@@ -18,6 +18,7 @@
       --accent: #ffd45b;
       --good: #4cd27f;
       --bad: #ff6e6e;
+      --cyan: #39e9ff;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -68,9 +69,18 @@
     #hudTopRight {
       position: absolute;
       top: 12px;
-      right: 12px;
+      right: 74px;
       min-width: 130px;
       text-align: right;
+    }
+
+    #sprintIndicator {
+      margin-top: 6px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--cyan);
+      display: none;
+      text-shadow: 0 0 12px rgba(57, 233, 255, 0.6);
     }
 
     .barWrap {
@@ -90,21 +100,14 @@
     #staminaBar { background: var(--accent); }
     #healthBar { background: var(--bad); }
 
-    #minimapWrap {
-      position: absolute;
-      right: 12px;
-      bottom: 12px;
-      width: 150px;
-      height: 150px;
-      padding: 0;
-      overflow: hidden;
-    }
-
     #minimapCanvas {
-      width: 150px;
-      height: 150px;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       display: block;
-      border-radius: 10px;
+      border-radius: 12px;
+      opacity: 0.95;
     }
 
     #hotbar {
@@ -259,11 +262,71 @@
       width: 170px;
     }
 
-    #mapOverlayContent {
-      width: min(92vw, 900px);
-      height: min(90vh, 700px);
-      position: relative;
-      padding: 14px;
+    #mapLayer {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    #mapPanelBackdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(4, 8, 12, 0.38);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    #mapPinBtn {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(14, 22, 28, 0.68);
+      color: #fff;
+      font-size: 26px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    #mapPinBtn.active {
+      background: rgba(57, 233, 255, 0.26);
+      box-shadow: 0 0 18px rgba(57, 233, 255, 0.5);
+    }
+
+    #mapSidePanel {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 300px;
+      height: 100%;
+      background: rgba(10, 16, 22, 0.96);
+      border-left: 1px solid var(--ui-border);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      padding: 10px;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #mapLayer.open {
+      pointer-events: auto;
+    }
+
+    #mapLayer.open #mapPanelBackdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #mapLayer.open #mapSidePanel {
+      transform: translateX(0);
     }
 
     #mapBoard {
@@ -308,6 +371,14 @@
       padding: 6px 10px;
       border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #mapPanelTitle {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 2px;
     }
 
     .mapIcon {
@@ -552,7 +623,14 @@
     }
 
     #touchWardrobe { right: 160px; bottom: 350px; }
+    #touchRun { right: 90px; bottom: 350px; }
     #touchMap { right: 20px; bottom: 350px; }
+
+    #touchRun.run-active {
+      border-color: var(--cyan);
+      box-shadow: 0 0 18px rgba(57, 233, 255, 0.85);
+      background: rgba(31, 75, 88, 0.95);
+    }
 
     body.touch-device #hudTopLeft,
     body.touch-device #hudTopRight,
@@ -587,8 +665,7 @@
       #hotbar { grid-template-columns: repeat(6, 44px); gap: 6px; }
       .slot { width: 44px; height: 44px; }
       #interactionPrompt { bottom: 68px; }
-      #minimapWrap { width: 130px; height: 130px; }
-      #minimapCanvas { width: 130px; height: 130px; }
+      #mapSidePanel { width: 280px; }
       .touchBtn,
       .touch-btn {
         width: 70px;
@@ -627,6 +704,7 @@
     <div id="hudTopRight" class="panel">
       <div>Clock: <strong id="clockText">12:00</strong></div>
       <div>Weather: <strong id="weatherText">sunny</strong></div>
+      <div id="sprintIndicator">SPRINT</div>
     </div>
 
     <div id="zonePopup" class="panel">Town Centre</div>
@@ -644,10 +722,6 @@
       <div class="slot">6</div>
     </div>
 
-    <div id="minimapWrap" class="panel">
-      <canvas id="minimapCanvas" width="150" height="150"></canvas>
-    </div>
-
     <div id="pauseOverlay" class="overlay">
       <div class="menuCard panel">
         <h2>Paused</h2>
@@ -656,7 +730,7 @@
           <button id="controlsToggleBtn" class="menuBtn">Controls</button>
           <button id="settingsToggleBtn" class="menuBtn">Settings</button>
         </div>
-        <div id="controlsPanel" class="panel menuSection open">Controls: Arrow Keys / D-Pad move/drive, Shift run/turbo, Space jump/handbrake, E vehicle+doors+NPC chat, F interact/feed, C wardrobe, V first-person, M map, Esc pause</div>
+        <div id="controlsPanel" class="panel menuSection open">Controls: Arrow Keys / D-Pad move/drive, R toggle sprint (x2), Shift vehicle turbo, Space jump/handbrake, E vehicle+doors+NPC chat, F interact/use inventory/place furniture, C wardrobe, V first-person, M map panel, Esc pause</div>
         <div id="settingsPanel" class="panel menuSection open">
           <div style="margin-bottom:8px;font-weight:600">Settings</div>
           <div class="menuRow">
@@ -676,9 +750,13 @@
       </div>
     </div>
 
-    <div id="mapOverlay" class="overlay">
-      <div id="mapOverlayContent" class="panel">
+    <div id="mapLayer">
+      <div id="mapPanelBackdrop"></div>
+      <button id="mapPinBtn" aria-label="Toggle map panel">📍</button>
+      <div id="mapSidePanel">
+        <div id="mapPanelTitle">Town Map</div>
         <div id="mapBoard">
+          <canvas id="minimapCanvas" width="300" height="700"></canvas>
           <div id="mapClock">00:00</div>
           <div id="mapPlayer"></div>
           <div class="mapLabel" style="left: 10%; top: 12%;">Residential</div>
@@ -727,7 +805,8 @@
         <button id="touchSpace" aria-label="Jump or handbrake">&#11014;<br>Jump</button>
       </div>
       <button id="touchWardrobe" class="touchUtilityBtn" aria-label="Open wardrobe">&#128085; Wardrobe</button>
-      <button id="touchMap" class="touchUtilityBtn" aria-label="Open map">&#128506; Map</button>
+      <button id="touchRun" class="touchUtilityBtn" aria-label="Toggle sprint">🏃 Run</button>
+      <button id="touchMap" class="touchUtilityBtn" aria-label="Open map panel">📍 Map</button>
     </div>
   </div>
 
@@ -791,7 +870,8 @@
       antialias: true,
       alpha: true
     });
-    miniRenderer.setSize(150, 150, false);
+    const minimapCanvas = document.getElementById("minimapCanvas");
+    miniRenderer.setSize(minimapCanvas.clientWidth || 300, minimapCanvas.clientHeight || 700, false);
     miniRenderer.setPixelRatio(1);
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1500);
@@ -813,9 +893,12 @@
     const jobProgressBar = document.getElementById("jobProgressBar");
     const fadeOverlay = document.getElementById("fadeOverlay");
     const pauseOverlay = document.getElementById("pauseOverlay");
-    const mapOverlay = document.getElementById("mapOverlay");
+    const mapLayer = document.getElementById("mapLayer");
+    const mapPanelBackdrop = document.getElementById("mapPanelBackdrop");
+    const mapPinBtn = document.getElementById("mapPinBtn");
     const mapPlayer = document.getElementById("mapPlayer");
     const mapClock = document.getElementById("mapClock");
+    const sprintIndicator = document.getElementById("sprintIndicator");
     const npcDialog = document.getElementById("npcDialog");
     const npcDialogName = document.getElementById("npcDialogName");
     const npcDialogRole = document.getElementById("npcDialogRole");
@@ -826,6 +909,9 @@
     const mapBoard = document.getElementById("mapBoard");
     const hotbarSlots = Array.from(document.querySelectorAll("#hotbar .slot"));
     const gameCanvas = document.getElementById("gameCanvas");
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialRoomCode = /^\d{4}$/.test(urlParams.get("room") || "") ? String(urlParams.get("room")) : "";
+    const playerClientId = `p_${Math.random().toString(36).slice(2, 10)}`;
 
     if (isTouchDevice) {
       document.body.classList.add("touch-device");
@@ -876,7 +962,10 @@
       settingsPanelOpen: true,
       rideMode: null,
       ringTossScore: 0,
-      balloonPopScore: 0
+      balloonPopScore: 0,
+      runMode: false,
+      shieldUntil: 0,
+      onlineRoomCode: initialRoomCode
     };
 
     const keys = {};
@@ -901,6 +990,11 @@
     const petEntities = [];
     const mapNpcIcons = [];
     const mapJobIcons = [];
+    const damagePopups = [];
+    const houseInteriorCenters = new Map();
+    const houseFurnitureSlots = new Map();
+    const placedFurnitureByHome = new Map();
+    const remotePlayers = new Map();
     const carnivalRides = {
       ferris: { center: null, cars: [], angle: 0, boardedCar: null },
       carousel: { root: null, horses: [], angle: 0 },
@@ -913,14 +1007,18 @@
     let activeVehicle = null;
     let vehicleTurboTimer = 0;
     let flashEmergencyTimer = 0;
+    let localBroadcastChannel = null;
+    let onlineSocket = null;
+    let netTick = 0;
 
     const playerConfig = {
       skinColor: 0xf2c8a0,
       shirtColor: 0x4da6ff,
       trouserColor: 0x2f3953,
-      shoeColor: 0x232323,
+      shoeColor: 0x333333,
       hairColor: 0x2a1b12,
-      hairStyle: "short"
+      hairStyle: "short",
+      faceStyle: "Default"
     };
 
     const player = new THREE.Group();
@@ -956,10 +1054,10 @@
     player.add(rightLeg);
 
     const leftShoe = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.08, 0.26),
+      new THREE.BoxGeometry(0.25, 0.15, 0.35),
       new THREE.MeshStandardMaterial({ color: playerConfig.shoeColor })
     );
-    leftShoe.position.set(-0.13, 0.02, 0.04);
+    leftShoe.position.set(-0.13, -0.85, 0.04);
     leftShoe.castShadow = true;
     player.add(leftShoe);
 
@@ -983,6 +1081,25 @@
     const rightArm = leftArm.clone();
     rightArmPivot.add(rightArm);
     player.add(rightArmPivot);
+
+    const leftHand = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 14, 14),
+      new THREE.MeshStandardMaterial({ color: playerConfig.skinColor })
+    );
+    leftHand.position.set(-0.6, 0.75, 0.3);
+    leftHand.castShadow = true;
+    player.add(leftHand);
+
+    const rightHand = leftHand.clone();
+    rightHand.position.x = 0.6;
+    player.add(rightHand);
+
+    const faceOverlay = new THREE.Mesh(
+      new THREE.SphereGeometry(0.282, 24, 24),
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+    );
+    faceOverlay.position.copy(head.position);
+    player.add(faceOverlay);
 
     let hairMesh = null;
     function applyHairStyle(style) {
@@ -1071,17 +1188,106 @@
       return out;
     }
 
+    const shoeOptions = [
+      { name: "Trainers", color: "#8db3ff" },
+      { name: "High Tops", color: "#3b4f7f" },
+      { name: "Boots", color: "#5f432d" },
+      { name: "Sandals", color: "#c8a77e" },
+      { name: "Heels", color: "#d94d7a" },
+      { name: "Loafers", color: "#6a4f3c" },
+      { name: "Slip-ons", color: "#8893a2" },
+      { name: "Brogues", color: "#7a583f" },
+      { name: "Chelsea", color: "#2f2f38" },
+      { name: "Platforms", color: "#bb8ad9" },
+      { name: "Flip Flops", color: "#3ca7b9" },
+      { name: "Wellies", color: "#2f9442" },
+      { name: "Slippers", color: "#f1a7c7" },
+      { name: "Running", color: "#57b0ff" },
+      { name: "Pumps", color: "#cc5f84" },
+      { name: "Wedges", color: "#ab774d" },
+      { name: "Mules", color: "#9d6f58" },
+      { name: "Espadrilles", color: "#d6b07a" },
+      { name: "Clogs", color: "#8f6a45" },
+      { name: "Oxfords", color: "#3e2d25" },
+      { name: "Skate Shoes", color: "#1c1f26" },
+      { name: "Mary Janes", color: "#5c4758" },
+      { name: "Ankle Boots", color: "#47372c" },
+      { name: "Stilettos", color: "#c6294f" },
+      { name: "Crocs", color: "#89c845" }
+    ];
+
+    const faceOptions = [
+      { name: "Default", glyph: "" },
+      { name: "Freckles", glyph: "⋯" },
+      { name: "Blush", glyph: "😊" },
+      { name: "Sunglasses", glyph: "😎" },
+      { name: "Glasses Round", glyph: "🤓" },
+      { name: "Glasses Square", glyph: "🕶" },
+      { name: "Mask", glyph: "😷" },
+      { name: "Beard", glyph: "🧔" },
+      { name: "Stubble", glyph: "🙂" },
+      { name: "Moustache", glyph: "🥸" },
+      { name: "Eye Patch", glyph: "🏴‍☠️" },
+      { name: "War Paint", glyph: "⚔️" },
+      { name: "Stars", glyph: "⭐" },
+      { name: "Hearts", glyph: "💖" },
+      { name: "Scars", glyph: "🩹" },
+      { name: "Clown Nose", glyph: "🤡" },
+      { name: "Vampire Fangs", glyph: "🧛" },
+      { name: "Bunny Face", glyph: "🐰" },
+      { name: "Cat Face", glyph: "🐱" },
+      { name: "Dog Face", glyph: "🐶" },
+      { name: "Robot Face", glyph: "🤖" },
+      { name: "Angel", glyph: "😇" },
+      { name: "Devil", glyph: "😈" },
+      { name: "Zombie", glyph: "🧟" },
+      { name: "Ghost", glyph: "👻" }
+    ];
+
+    function makeFaceTexture(faceName) {
+      const found = faceOptions.find((f) => f.name === faceName) || faceOptions[0];
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.clearRect(0, 0, 256, 256);
+      if (found.glyph) {
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "120px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif";
+        ctx.fillText(found.glyph, 128, 130);
+      } else {
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.beginPath();
+        ctx.arc(128, 118, 7, 0, Math.PI * 2);
+        ctx.arc(164, 118, 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function applyFaceStyle(faceName) {
+      const tex = makeFaceTexture(faceName);
+      if (!tex) return;
+      tex.needsUpdate = true;
+      faceOverlay.material.map = tex;
+      faceOverlay.material.opacity = faceName === "Default" ? 0.35 : 0.95;
+      faceOverlay.material.needsUpdate = true;
+    }
+
     const wardrobeOptions = {
-      Tops: makeColorSet(0.57),
-      Bottoms: makeColorSet(0.08),
-      Shoes: makeColorSet(0.66),
-      Hats: makeColorSet(0.02),
-      Accessories: makeColorSet(0.84),
-      Skin: makeSkinSet(),
-      Hair: makeHairStyleSet()
+      tops: makeColorSet(0.57),
+      bottoms: makeColorSet(0.08),
+      shoes: shoeOptions,
+      hats: makeColorSet(0.02),
+      accessories: makeColorSet(0.84),
+      skin: makeSkinSet(),
+      hair: makeHairStyleSet(),
+      face: faceOptions
     };
     const wardrobeCategories = Object.keys(wardrobeOptions);
-    let activeWardrobeCategory = "Tops";
+    let activeWardrobeCategory = "tops";
 
     function refreshPlayerLook() {
       torso.material.color.setHex(playerConfig.shirtColor);
@@ -1092,7 +1298,10 @@
       head.material.color.setHex(playerConfig.skinColor);
       leftArm.material.color.setHex(playerConfig.skinColor);
       rightArm.material.color.setHex(playerConfig.skinColor);
+      leftHand.material.color.setHex(playerConfig.skinColor);
+      rightHand.material.color.setHex(playerConfig.skinColor);
       applyHairStyle(playerConfig.hairStyle);
+      applyFaceStyle(playerConfig.faceStyle);
       state.activeOutfitColor = playerConfig.shirtColor;
     }
 
@@ -1103,6 +1312,7 @@
     policeHat.position.set(0, 0.32, 0);
     policeHat.visible = false;
     head.add(policeHat);
+    refreshPlayerLook();
 
     const velocity = new THREE.Vector3();
     const moveVector = new THREE.Vector3();
@@ -1206,11 +1416,85 @@
       else state.inventory[Math.floor(Math.random() * state.inventory.length)] = item;
     }
 
+    function getInventoryLabel(item, fallback) {
+      if (!item) return fallback;
+      if (typeof item === "string") return item.slice(0, 9);
+      if (typeof item === "object" && item.name) return String(item.name).slice(0, 9);
+      return fallback;
+    }
+
+    function pullInventoryItem(predicate) {
+      const idx = state.inventory.findIndex((it) => it && predicate(it));
+      if (idx < 0) return null;
+      const item = state.inventory[idx];
+      state.inventory[idx] = null;
+      return item;
+    }
+
     function updateBalance(amount) {
       state.balance += amount;
       state.balanceFlashTimer = 0.45;
       state.balanceFlashType = amount >= 0 ? "flash-positive" : "flash-negative";
       if (amount > 0) playMoneyArpeggio();
+    }
+
+    function spawnDamagePopup(text, worldPos, color = "#ffffff") {
+      const canvas = document.createElement("canvas");
+      canvas.width = 192;
+      canvas.height = 96;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, 192, 96);
+      ctx.font = "bold 44px Trebuchet MS";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = color;
+      ctx.strokeStyle = "rgba(0,0,0,0.7)";
+      ctx.lineWidth = 8;
+      ctx.strokeText(text, 96, 48);
+      ctx.fillText(text, 96, 48);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
+      sprite.scale.set(2.8, 1.4, 1);
+      sprite.position.copy(worldPos).add(new THREE.Vector3(0, 2.5, 0));
+      scene.add(sprite);
+      damagePopups.push({ sprite, life: 1.2, vel: 2.3 });
+    }
+
+    function applyHealthToPlayer(delta, reason = "") {
+      const now = performance.now() * 0.001;
+      if (delta < 0 && now < state.shieldUntil) {
+        spawnDamagePopup("SHIELD", player.position, "#ffd45b");
+        return;
+      }
+      state.health = THREE.MathUtils.clamp(state.health + delta, 0, 100);
+      spawnDamagePopup(`${delta > 0 ? "+" : ""}${Math.round(delta)}`, player.position, delta > 0 ? "#5ff08f" : "#ff8a8a");
+      if (reason && delta < 0) showToast(`${reason} ${Math.round(delta)}`);
+    }
+
+    function applyHealthToNpc(npc, delta) {
+      if (!npc) return;
+      npc.health = THREE.MathUtils.clamp((npc.health ?? 100) + delta, 0, 100);
+      spawnDamagePopup(`${delta > 0 ? "+" : ""}${Math.round(delta)}`, npc.mesh.position, delta > 0 ? "#5ff08f" : "#ff8a8a");
+    }
+
+    function getNearestDamageTarget(range = 5) {
+      let best = null;
+      let bestDist = range;
+      for (const npc of npcs) {
+        const d = npc.mesh.position.distanceTo(player.position);
+        if (d < bestDist) {
+          bestDist = d;
+          best = { kind: "npc", npc };
+        }
+      }
+      for (const remote of remotePlayers.values()) {
+        const d = remote.mesh.position.distanceTo(player.position);
+        if (d < bestDist) {
+          bestDist = d;
+          best = { kind: "remote", remote };
+        }
+      }
+      return best;
     }
 
     function makeWindow(x, y, z, rotY = 0) {
@@ -1330,7 +1614,8 @@
         { x: -40, z: -24, c: 0xa7d98e, interiorId: "clothing" },
         { x: -5, z: -24, c: 0x9ab1ff, interiorId: "grocery" },
         { x: 30, z: -24, c: 0xffb270, interiorId: "dealership" },
-        { x: 65, z: -24, c: 0xd1b0ff, interiorId: "office" }
+        { x: 65, z: -24, c: 0xd1b0ff, interiorId: "office" },
+        { x: 100, z: -24, c: 0xc6a17d, interiorId: "furniture" }
       ];
       for (const s of shops) {
         createShop(s.x, s.z, 24, 9, 16, s.c);
@@ -2005,21 +2290,127 @@
       return { centerX };
     }
 
+    function createCharacterRig(shirt = 0x4d7bb8, skin = 0xf0c9a1, shoes = 0x333333) {
+      const char = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.2, 12), new THREE.MeshStandardMaterial({ color: shirt }));
+      body.position.y = 0.95;
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 12), new THREE.MeshStandardMaterial({ color: skin }));
+      headMesh.position.y = 1.72;
+      const leftLegMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.7, 10), new THREE.MeshStandardMaterial({ color: 0x394763 }));
+      leftLegMesh.position.set(-0.12, 0.35, 0);
+      const rightLegMesh = leftLegMesh.clone();
+      rightLegMesh.position.x = 0.12;
+      const leftFootMesh = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.15, 0.35), new THREE.MeshStandardMaterial({ color: shoes }));
+      leftFootMesh.position.set(-0.12, -0.85, 0.04);
+      const rightFootMesh = leftFootMesh.clone();
+      rightFootMesh.position.x = 0.12;
+      const leftArmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.74, 10), new THREE.MeshStandardMaterial({ color: skin }));
+      leftArmMesh.position.set(-0.46, 1.03, 0);
+      leftArmMesh.rotation.z = 0.06;
+      const rightArmMesh = leftArmMesh.clone();
+      rightArmMesh.position.x = 0.46;
+      rightArmMesh.rotation.z = -0.06;
+      const leftHandMesh = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), new THREE.MeshStandardMaterial({ color: skin }));
+      leftHandMesh.position.set(-0.6, 0.75, 0.3);
+      const rightHandMesh = leftHandMesh.clone();
+      rightHandMesh.position.x = 0.6;
+      char.add(body, headMesh, leftLegMesh, rightLegMesh, leftFootMesh, rightFootMesh, leftArmMesh, rightArmMesh, leftHandMesh, rightHandMesh);
+      setShadowRecursive(char);
+      return char;
+    }
+
+    const furnitureCatalog = [
+      { name: "Sofa", color: 0xd84545, price: 150 },
+      { name: "Armchair", color: 0x3f76d3, price: 80 },
+      { name: "Coffee Table", color: 0x7a5133, price: 50 },
+      { name: "Bookshelf", color: 0x2b2f37, price: 70 },
+      { name: "TV", color: 0x151515, price: 200 },
+      { name: "Plant", color: 0x3b9f49, price: 30 },
+      { name: "Lamp", color: 0xe8cf59, price: 40 },
+      { name: "Rug", color: 0xd06ab5, price: 60 },
+      { name: "Bed", color: 0x7c5bd9, price: 180 },
+      { name: "Wardrobe Cabinet", color: 0x9e6f45, price: 120 }
+    ];
+
+    function makeFurnitureMesh(item) {
+      const group = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: item.color });
+      if (item.name === "Sofa") {
+        const base = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.1, 1.8), mat);
+        base.position.y = 0.7;
+        const back = new THREE.Mesh(new THREE.BoxGeometry(4.5, 1.2, 0.4), mat);
+        back.position.set(0, 1.35, -0.7);
+        group.add(base, back);
+      } else if (item.name === "Armchair") {
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1, 1.6), mat);
+        seat.position.y = 0.65;
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1, 0.35), mat);
+        back.position.set(0, 1.2, -0.6);
+        group.add(seat, back);
+      } else if (item.name === "Coffee Table") {
+        const table = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.25, 1.3), mat);
+        table.position.y = 0.8;
+        group.add(table);
+      } else if (item.name === "Bookshelf" || item.name === "Wardrobe Cabinet") {
+        const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.8, 3.2, 0.8), mat);
+        shelf.position.y = 1.6;
+        group.add(shelf);
+      } else if (item.name === "TV") {
+        const tv = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.4, 0.16), mat);
+        tv.position.y = 1.5;
+        group.add(tv);
+      } else if (item.name === "Plant") {
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 0.55, 10), new THREE.MeshStandardMaterial({ color: 0x704d33 }));
+        pot.position.y = 0.3;
+        const leaves = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 12), mat);
+        leaves.position.y = 1.05;
+        group.add(pot, leaves);
+      } else if (item.name === "Lamp") {
+        const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.1, 10), mat);
+        stand.position.y = 1.05;
+        const top = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.7, 12), mat);
+        top.position.y = 2.2;
+        group.add(stand, top);
+      } else if (item.name === "Rug") {
+        const rug = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.05, 2.3), mat);
+        rug.position.y = 0.03;
+        group.add(rug);
+      } else if (item.name === "Bed") {
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.7, 2.6), mat);
+        frame.position.y = 0.45;
+        group.add(frame);
+      } else {
+        const fallback = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.2, 1.3), mat);
+        fallback.position.y = 0.7;
+        group.add(fallback);
+      }
+      setShadowRecursive(group);
+      return group;
+    }
+
     function createInteriors() {
       function spawnNpc(x, z, shirt = 0x4d7bb8) {
-        const npc = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.2, 12), new THREE.MeshStandardMaterial({ color: shirt }));
-        body.position.y = 0.95;
-        const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 12), new THREE.MeshStandardMaterial({ color: 0xf0c9a1 }));
-        headMesh.position.y = 1.72;
-        npc.add(body, headMesh);
+        const npc = createCharacterRig(shirt);
         npc.position.set(x, 0, z);
-        setShadowRecursive(npc);
         scene.add(npc);
       }
 
       for (let i = 0; i < houseDoors.length; i++) {
         const room = createInteriorRoom(`house_${i}`, -420 - (i % 4) * 48, houseDoors[i].color);
+        houseInteriorCenters.set(i, room.centerX);
+        houseFurnitureSlots.set(i, [
+          new THREE.Vector3(room.centerX - 10, 0, interiorOffsetZ - 2),
+          new THREE.Vector3(room.centerX - 5, 0, interiorOffsetZ - 2),
+          new THREE.Vector3(room.centerX, 0, interiorOffsetZ - 2),
+          new THREE.Vector3(room.centerX + 5, 0, interiorOffsetZ - 2),
+          new THREE.Vector3(room.centerX - 10, 0, interiorOffsetZ + 4),
+          new THREE.Vector3(room.centerX - 5, 0, interiorOffsetZ + 4),
+          new THREE.Vector3(room.centerX, 0, interiorOffsetZ + 4),
+          new THREE.Vector3(room.centerX + 5, 0, interiorOffsetZ + 4),
+          new THREE.Vector3(room.centerX - 10, 0, interiorOffsetZ + 10),
+          new THREE.Vector3(room.centerX - 5, 0, interiorOffsetZ + 10)
+        ]);
+        placedFurnitureByHome.set(i, []);
         const sofa = new THREE.Mesh(new THREE.BoxGeometry(5, 1.2, 2), new THREE.MeshStandardMaterial({ color: 0x7b8796 }));
         sofa.position.set(room.centerX - 8, 1.1, interiorOffsetZ - 10);
         scene.add(sofa);
@@ -2188,6 +2579,40 @@
         });
         scene.add(shelfItem);
       }
+      const potionItems = [
+        { name: "Health Potion", color: 0xff4141, price: 50 },
+        { name: "Poison Potion", color: 0xa34bd8, price: 50 },
+        { name: "Magic Blast", color: 0x4488ff, price: 80 },
+        { name: "Shield Potion", color: 0xd7b64e, price: 60 }
+      ];
+      potionItems.forEach((potion, i) => {
+        const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.2, 12), new THREE.MeshStandardMaterial({ color: potion.color }));
+        bottle.position.set(grocery.centerX + 6 + i * 2.4, 1.3, interiorOffsetZ - 11.5);
+        registerInteractive(bottle, `Press F to Buy ${potion.name} (£${potion.price})`, 3, () => {
+          if (state.balance < potion.price) return showToast("Not enough cash");
+          updateBalance(-potion.price);
+          pushInventory({ type: "potion", name: potion.name, color: potion.color, price: potion.price });
+          showToast(`Bought ${potion.name}`);
+          playInteractionClick();
+        });
+        scene.add(bottle);
+      });
+
+      const furniture = createInteriorRoom("furniture", 680, 0xd8cbb7);
+      furnitureCatalog.forEach((item, i) => {
+        const display = makeFurnitureMesh(item);
+        const row = Math.floor(i / 5);
+        const col = i % 5;
+        display.position.set(furniture.centerX - 12 + col * 6, 0, interiorOffsetZ - 10 + row * 10);
+        registerInteractive(display, `Press F to Buy ${item.name} (£${item.price})`, 3.6, () => {
+          if (state.balance < item.price) return showToast("Not enough cash");
+          updateBalance(-item.price);
+          pushInventory({ type: "furniture", name: item.name, color: item.color, price: item.price });
+          showToast(`Bought ${item.name}`);
+          playInteractionClick();
+        });
+        scene.add(display);
+      });
 
       createInteriorRoom("dealership", 500, 0xcfd6df);
       createInteriorRoom("petrol", 560, 0xd9d9d9);
@@ -2235,13 +2660,7 @@
     ];
 
     function spawnNpcBody(shirt = 0x4d7bb8) {
-      const npc = new THREE.Group();
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.42, 1.2, 12), new THREE.MeshStandardMaterial({ color: shirt }));
-      body.position.y = 0.95;
-      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 12, 12), new THREE.MeshStandardMaterial({ color: 0xf0c9a1 }));
-      headMesh.position.y = 1.72;
-      npc.add(body, headMesh);
-      setShadowRecursive(npc);
+      const npc = createCharacterRig(shirt);
       return npc;
     }
 
@@ -2259,7 +2678,8 @@
           mesh: npcMesh,
           waypointIndex: 1,
           dialogueIndex: 0,
-          speed: 2 + (i % 3) * 0.1
+          speed: 2 + (i % 3) * 0.1,
+          health: 100
         });
         npcNameSprites.push(name);
       });
@@ -2789,6 +3209,128 @@
       return player.position;
     }
 
+    function createRemoteLabel(text) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 80;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.fillStyle = "rgba(6, 14, 22, 0.72)";
+      ctx.fillRect(0, 8, 256, 64);
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "bold 30px Trebuchet MS";
+      ctx.fillText(text, 128, 40);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
+      sprite.scale.set(6, 1.8, 1);
+      sprite.position.set(0, 2.4, 0);
+      return sprite;
+    }
+
+    function createRemoteCapsule(id, colorHex) {
+      const mesh = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.36, 1.1, 6, 10),
+        new THREE.MeshStandardMaterial({ color: colorHex })
+      );
+      mesh.castShadow = true;
+      const label = createRemoteLabel(`P-${id.slice(-4)}`);
+      if (label) mesh.add(label);
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function upsertRemotePlayer(source, payload) {
+      if (!payload?.id || payload.id === playerClientId) return;
+      const key = `${source}:${payload.id}`;
+      let remote = remotePlayers.get(key);
+      if (!remote) {
+        const color = Number(new THREE.Color().setHSL(Math.abs(payload.id.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % 360) / 360, 0.68, 0.55).getHex());
+        const mesh = createRemoteCapsule(payload.id, color);
+        remote = {
+          id: payload.id,
+          source,
+          mesh,
+          target: new THREE.Vector3(payload.x || 0, payload.y || 1, payload.z || 0),
+          rot: payload.rot || 0,
+          lastSeen: performance.now()
+        };
+        remotePlayers.set(key, remote);
+      }
+      remote.target.set(payload.x || 0, payload.y || 1, payload.z || 0);
+      remote.rot = Number(payload.rot) || 0;
+      remote.lastSeen = performance.now();
+    }
+
+    function initLocalMultiplayer() {
+      if (!("BroadcastChannel" in window)) return;
+      try {
+        localBroadcastChannel = new BroadcastChannel("ella-world-channel");
+        localBroadcastChannel.onmessage = (e) => {
+          const data = e.data;
+          if (!data || data.type !== "pos") return;
+          upsertRemotePlayer("local", data);
+        };
+      } catch (err) {
+        console.warn("Local multiplayer disabled:", err);
+      }
+    }
+
+    function initOnlineMultiplayer(roomCode) {
+      if (!/^\d{4}$/.test(roomCode)) return;
+      state.onlineRoomCode = roomCode;
+      try {
+        onlineSocket = new WebSocket("wss://ws.vi-server.org/mirror/");
+      } catch (err) {
+        console.warn("Online socket failed:", err);
+        return;
+      }
+      onlineSocket.addEventListener("open", () => {
+        showToast(`Online room ${roomCode} joined`);
+      });
+      onlineSocket.addEventListener("message", (e) => {
+        try {
+          const data = JSON.parse(String(e.data || "{}"));
+          if (data.type !== "pos" || data.code !== state.onlineRoomCode) return;
+          upsertRemotePlayer("online", data);
+        } catch (_err) {
+          // ignore malformed relay messages
+        }
+      });
+      onlineSocket.addEventListener("close", () => {
+        showToast("Online room disconnected");
+      });
+    }
+
+    function broadcastMultiplayerState() {
+      const pos = getPlayerOrVehiclePosition();
+      const payload = {
+        type: "pos",
+        code: state.onlineRoomCode || "",
+        id: playerClientId,
+        x: pos.x,
+        y: pos.y,
+        z: pos.z,
+        rot: activeVehicle ? activeVehicle.mesh.rotation.y : player.rotation.y
+      };
+      if (localBroadcastChannel) localBroadcastChannel.postMessage(payload);
+      if (onlineSocket && onlineSocket.readyState === WebSocket.OPEN && state.onlineRoomCode) {
+        onlineSocket.send(JSON.stringify(payload));
+      }
+    }
+
+    function updateRemotePlayers(dt) {
+      const now = performance.now();
+      for (const [key, remote] of remotePlayers.entries()) {
+        remote.mesh.position.lerp(remote.target, Math.min(1, dt * 8));
+        remote.mesh.rotation.y += (remote.rot - remote.mesh.rotation.y) * Math.min(1, dt * 8);
+        if (now - remote.lastSeen > 6000) {
+          scene.remove(remote.mesh);
+          remotePlayers.delete(key);
+        }
+      }
+    }
+
     function tryEnterOrExitVehicle() {
       if (activeVehicle) {
         const right = new THREE.Vector3(Math.cos(activeVehicle.mesh.rotation.y), 0, -Math.sin(activeVehicle.mesh.rotation.y));
@@ -3030,24 +3572,17 @@
       let moving = inputX !== 0 || inputZ !== 0;
 
       const forward = new THREE.Vector3(Math.sin(cameraAzimuth), 0, Math.cos(cameraAzimuth));
-      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+      const right = new THREE.Vector3(-forward.z, 0, forward.x);
 
       moveVector.set(0, 0, 0);
       moveVector.addScaledVector(forward, inputZ);
       moveVector.addScaledVector(right, inputX);
       if (moveVector.lengthSq() > 0) moveVector.normalize();
 
-      const wantsRun = keys["ShiftLeft"] || keys["ShiftRight"];
       let speed = 5;
-      if (wantsRun && state.stamina > 0 && !state.swimMode) speed = 8;
+      if (state.runMode && !state.swimMode) speed = 10;
       if (state.swimMode) speed = 2.4;
-
-      if (speed === 8 && moving) {
-        state.stamina = Math.max(0, state.stamina - 20 * dt);
-        if (state.stamina === 0) speed = 5;
-      } else {
-        state.stamina = Math.min(100, state.stamina + 10 * dt);
-      }
+      state.stamina = Math.min(100, state.stamina + 10 * dt);
 
       if (state.sitting) moving = false;
 
@@ -3669,15 +4204,101 @@
       return false;
     }
 
+    function tryPlaceFurnitureAtHome() {
+      if (activeVehicle) return false;
+      let homeIndex = -1;
+      let best = 4.5;
+      for (let i = 0; i < houseDoors.length; i++) {
+        const d = Math.hypot(player.position.x - houseDoors[i].x, player.position.z - houseDoors[i].z);
+        if (d < best) {
+          best = d;
+          homeIndex = i;
+        }
+      }
+      if (homeIndex < 0) return false;
+      const furniture = pullInventoryItem((it) => typeof it === "object" && it.type === "furniture");
+      if (!furniture) return false;
+      const slots = houseFurnitureSlots.get(homeIndex) || [];
+      const placed = placedFurnitureByHome.get(homeIndex) || [];
+      const slot = slots[Math.min(placed.length, Math.max(0, slots.length - 1))];
+      if (!slot) {
+        pushInventory(furniture);
+        showToast("No free furniture slots in this home");
+        return true;
+      }
+      const mesh = makeFurnitureMesh(furniture);
+      mesh.position.copy(slot);
+      scene.add(mesh);
+      placed.push(mesh);
+      placedFurnitureByHome.set(homeIndex, placed);
+      showToast(`${furniture.name} placed in home`);
+      playInteractionClick();
+      return true;
+    }
+
+    function tryUsePotionFromInventory() {
+      const potion = pullInventoryItem((it) => typeof it === "object" && it.type === "potion");
+      if (!potion) return false;
+      const name = potion.name;
+      if (name === "Health Potion") {
+        applyHealthToPlayer(50);
+        showToast("Health Potion used (+50)");
+      } else if (name === "Poison Potion") {
+        const target = getNearestDamageTarget(5);
+        if (target?.kind === "npc") applyHealthToNpc(target.npc, -50);
+        if (target?.kind === "remote") spawnDamagePopup("-50", target.remote.mesh.position, "#ff8a8a");
+        showToast(target ? "Poison Potion hit target (-50)" : "Poison Potion used (no target)");
+      } else if (name === "Magic Blast") {
+        let hits = 0;
+        for (const npc of npcs) {
+          if (npc.mesh.position.distanceTo(player.position) <= 10) {
+            applyHealthToNpc(npc, -30);
+            hits += 1;
+          }
+        }
+        for (const remote of remotePlayers.values()) {
+          if (remote.mesh.position.distanceTo(player.position) <= 10) {
+            spawnDamagePopup("-30", remote.mesh.position, "#ff8a8a");
+            hits += 1;
+          }
+        }
+        showToast(`Magic Blast used (${hits} hit)`);
+      } else if (name === "Shield Potion") {
+        state.shieldUntil = performance.now() * 0.001 + 30;
+        spawnDamagePopup("+SHIELD", player.position, "#ffd45b");
+        showToast("Shield Potion active (30s)");
+      } else {
+        showToast(`${name} used`);
+      }
+      playInteractionClick();
+      return true;
+    }
+
+    function updateDamagePopups(dt) {
+      for (let i = damagePopups.length - 1; i >= 0; i--) {
+        const popup = damagePopups[i];
+        popup.life -= dt;
+        popup.sprite.position.y += popup.vel * dt;
+        popup.sprite.material.opacity = Math.max(0, popup.life / 1.2);
+        if (popup.life <= 0) {
+          scene.remove(popup.sprite);
+          damagePopups.splice(i, 1);
+        }
+      }
+    }
+
     function updateHUD() {
       balanceText.textContent = `$${Math.floor(state.balance)}`;
       ticketsText.textContent = String(state.tickets);
       fuelText.textContent = `${Math.round(state.fuel)}%`;
       staminaBar.style.width = `${state.stamina}%`;
       healthBar.style.width = `${state.health}%`;
+      sprintIndicator.style.display = state.runMode ? "block" : "none";
+      const runBtn = document.getElementById("touchRun");
+      if (runBtn) runBtn.classList.toggle("run-active", state.runMode);
       policeHat.visible = state.policeHat;
       hotbarSlots.forEach((slot, idx) => {
-        slot.textContent = state.inventory[idx] ? String(state.inventory[idx]).slice(0, 9) : String(idx + 1);
+        slot.textContent = getInventoryLabel(state.inventory[idx], String(idx + 1));
       });
       if (state.balanceFlashType) {
         balanceText.classList.remove("flash-positive", "flash-negative");
@@ -3696,6 +4317,7 @@
       updateVehicles(dt);
       updateEmote(dt);
       updateNPCs(dt);
+      updateRemotePlayers(dt);
       updatePet(dt);
       updateCarnivalRides(dt);
       updatePrompt();
@@ -3705,10 +4327,16 @@
       updateFuelAndZones();
       updateMiniJobs(dt);
       updateInteractionTimers(dt);
+      updateDamagePopups(dt);
       updateZoneName(dt);
       updateCamera(dt);
       frameCount += 1;
       if (!isTouchDevice || frameCount % 2 === 0) updateMinimap();
+      netTick += dt;
+      if (netTick >= 0.1) {
+        netTick = 0;
+        broadcastMultiplayerState();
+      }
       updateHUD();
       if (state.wardrobeOpen) renderWardrobePreview();
 
@@ -3738,7 +4366,8 @@
 
     function toggleMap(next) {
       state.mapOpen = next;
-      mapOverlay.style.display = next ? "flex" : "none";
+      mapLayer.classList.toggle("open", next);
+      mapPinBtn.classList.toggle("active", next);
     }
 
     let wardrobeRenderer = null;
@@ -3773,7 +4402,7 @@
       for (const cat of wardrobeCategories) {
         const btn = document.createElement("button");
         btn.className = `tabBtn${cat === activeWardrobeCategory ? " active" : ""}`;
-        btn.textContent = cat;
+        btn.textContent = cat[0].toUpperCase() + cat.slice(1);
         btn.addEventListener("click", () => {
           activeWardrobeCategory = cat;
           buildWardrobeUI();
@@ -3786,16 +4415,27 @@
         btn.className = "swatchBtn";
         const sw = document.createElement("div");
         sw.className = "swatch";
-        sw.style.background = typeof opt === "number" ? `#${opt.toString(16).padStart(6, "0")}` : "#556070";
+        if (typeof opt === "number") sw.style.background = `#${opt.toString(16).padStart(6, "0")}`;
+        else if (activeWardrobeCategory === "shoes") sw.style.background = opt.color;
+        else sw.style.background = "#556070";
+        if (activeWardrobeCategory === "face" && opt.glyph) {
+          sw.textContent = opt.glyph;
+          sw.style.display = "flex";
+          sw.style.alignItems = "center";
+          sw.style.justifyContent = "center";
+          sw.style.fontSize = "16px";
+        }
         btn.appendChild(sw);
-        btn.appendChild(document.createTextNode(typeof opt === "number" ? `$${idx + 1}` : String(opt)));
+        const label = typeof opt === "number" ? `$${idx + 1}` : (opt.name || String(opt));
+        btn.appendChild(document.createTextNode(label));
         btn.addEventListener("click", () => {
-          if (activeWardrobeCategory === "Tops") playerConfig.shirtColor = opt;
-          else if (activeWardrobeCategory === "Bottoms") playerConfig.trouserColor = opt;
-          else if (activeWardrobeCategory === "Shoes") playerConfig.shoeColor = opt;
-          else if (activeWardrobeCategory === "Skin") playerConfig.skinColor = opt;
-          else if (activeWardrobeCategory === "Hair") playerConfig.hairStyle = opt;
-          else if (activeWardrobeCategory === "Hats") state.policeHat = true;
+          if (activeWardrobeCategory === "tops") playerConfig.shirtColor = opt;
+          else if (activeWardrobeCategory === "bottoms") playerConfig.trouserColor = opt;
+          else if (activeWardrobeCategory === "shoes") playerConfig.shoeColor = Number(new THREE.Color(opt.color).getHex());
+          else if (activeWardrobeCategory === "skin") playerConfig.skinColor = opt;
+          else if (activeWardrobeCategory === "hair") playerConfig.hairStyle = opt;
+          else if (activeWardrobeCategory === "face") playerConfig.faceStyle = opt.name;
+          else if (activeWardrobeCategory === "hats") state.policeHat = true;
           refreshPlayerLook();
           if (wardrobeAvatar) {
             wardrobeScene.remove(wardrobeAvatar);
@@ -3836,6 +4476,7 @@
       }
       if (code === "KeyF") {
         ensureAudio();
+        if (tryPlaceFurnitureAtHome()) return;
         if (state.currentInteractive?.userData?.onInteract) {
           state.currentInteractive.userData.onInteract();
           return;
@@ -3853,7 +4494,14 @@
           return;
         }
         if (handleJobInteract()) return;
+        if (tryUsePotionFromInventory()) return;
         trySit();
+      }
+      if (code === "KeyR") {
+        state.runMode = !state.runMode;
+        const runBtn = document.getElementById("touchRun");
+        if (runBtn) runBtn.classList.toggle("run-active", state.runMode);
+        showToast(state.runMode ? "Sprint enabled" : "Sprint disabled", 1.2);
       }
       if (code === "KeyV") {
         state.firstPerson = !state.firstPerson;
@@ -3909,9 +4557,21 @@
       if (mapBtn) {
         mapBtn.addEventListener("touchstart", (e) => {
           e.preventDefault();
-          toggleMap(true);
+          toggleMap(!state.mapOpen);
         }, { passive: false });
-        mapBtn.addEventListener("click", () => toggleMap(true));
+        mapBtn.addEventListener("click", () => toggleMap(!state.mapOpen));
+      }
+      const runBtn = document.getElementById("touchRun");
+      if (runBtn) {
+        runBtn.addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          handleActionKey("KeyR");
+          runBtn.classList.toggle("run-active", state.runMode);
+        }, { passive: false });
+        runBtn.addEventListener("click", () => {
+          handleActionKey("KeyR");
+          runBtn.classList.toggle("run-active", state.runMode);
+        });
       }
 
       window.addEventListener("blur", () => {
@@ -3942,7 +4602,7 @@
         target.closest(".touchUtilityBtn") ||
         target.closest("#touchControls button") ||
         target.closest("#pauseOverlay") ||
-        target.closest("#mapOverlay") ||
+        target.closest("#mapLayer") ||
         target.closest("#wardrobeOverlay") ||
         target.closest("#hudTopLeft") ||
         target.closest("#hudTopRight")
@@ -4050,6 +4710,7 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouchDevice ? 1.0 : 1.5));
+      miniRenderer.setSize(minimapCanvas.clientWidth || 300, minimapCanvas.clientHeight || window.innerHeight, false);
     });
 
     document.getElementById("resumeBtn").addEventListener("click", () => togglePause(false));
@@ -4074,8 +4735,10 @@
       sfxGain.gain.setTargetAtTime(Number(document.getElementById("sfxVolume").value), audioCtx.currentTime, 0.05);
     });
 
-    mapOverlay.addEventListener("click", (e) => {
-      if (e.target === mapOverlay) toggleMap(false);
+    mapPanelBackdrop.addEventListener("click", () => toggleMap(false));
+    mapPinBtn.addEventListener("click", () => toggleMap(!state.mapOpen));
+    mapLayer.addEventListener("click", (e) => {
+      if (e.target === mapLayer) toggleMap(false);
     });
 
     pauseOverlay.addEventListener("click", (e) => {
@@ -4095,6 +4758,8 @@
       createNPCs();
       createMiniJobs();
       createMapIcons();
+      initLocalMultiplayer();
+      if (state.onlineRoomCode) initOnlineMultiplayer(state.onlineRoomCode);
       setShadowRecursive(scene);
       setWeather("sunny");
       loadGame();

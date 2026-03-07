@@ -72,6 +72,53 @@
       color: #64748b;
       margin-bottom: 3rem;
     }
+    .join-panel {
+      width: min(92vw, 360px);
+      background: rgba(19, 30, 43, 0.9);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      margin-bottom: 1.4rem;
+    }
+    .join-label {
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      text-align: left;
+    }
+    .join-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .join-input {
+      flex: 1;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 0.65rem 0.75rem;
+      font-size: 1rem;
+      letter-spacing: 0.25rem;
+      text-align: center;
+    }
+    .join-btn {
+      border: 0;
+      border-radius: 10px;
+      background: #22d3ee;
+      color: #03202a;
+      padding: 0.65rem 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .join-link {
+      font-size: 0.78rem;
+      color: #7dd3fc;
+      text-align: left;
+      word-break: break-all;
+      min-height: 1em;
+    }
     /* Features */
     .features {
       padding: 3rem 1.5rem;
@@ -161,6 +208,14 @@
     <h1>Ella &amp; <span>Amber's</span> World</h1>
     <p class="tagline">An open world life sim — built for the girls 🐱</p>
     <a href="game.html" class="play-btn">▶ Play Now</a>
+    <div class="join-panel">
+      <div class="join-label">Join a session:</div>
+      <div class="join-row">
+        <input id="roomCodeInput" class="join-input" type="text" maxlength="4" inputmode="numeric" placeholder="1234" />
+        <button id="joinOnlineBtn" class="join-btn">Join Online</button>
+      </div>
+      <div id="shareLink" class="join-link"></div>
+    </div>
     <p class="badge">🔄 Best played in <strong>landscape mode</strong> · Free · Works offline</p>
   </section>
 
@@ -206,6 +261,46 @@
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    const roomInput = document.getElementById("roomCodeInput");
+    const joinBtn = document.getElementById("joinOnlineBtn");
+    const shareLink = document.getElementById("shareLink");
+
+    function normalizeCode(value) {
+      return String(value || "").replace(/\D/g, "").slice(0, 4);
+    }
+
+    function shareUrlFor(code) {
+      const root = `${location.origin}${location.pathname}`;
+      return `${root}?room=${code}`;
+    }
+
+    function updateShareLink(code) {
+      shareLink.textContent = /^\d{4}$/.test(code) ? `Share: ${shareUrlFor(code)}` : "";
+    }
+
+    function joinRoom(code) {
+      if (!/^\d{4}$/.test(code)) return;
+      location.href = `game.html?room=${code}`;
+    }
+
+    roomInput?.addEventListener("input", () => {
+      roomInput.value = normalizeCode(roomInput.value);
+      updateShareLink(roomInput.value);
+    });
+
+    joinBtn?.addEventListener("click", () => {
+      const code = normalizeCode(roomInput?.value);
+      if (!/^\d{4}$/.test(code)) return;
+      joinRoom(code);
+    });
+
+    const incoming = normalizeCode(new URLSearchParams(location.search).get("room"));
+    if (incoming) {
+      roomInput.value = incoming;
+      updateShareLink(incoming);
+      if (/^\d{4}$/.test(incoming)) joinRoom(incoming);
     }
   </script>
 </body>

@@ -109,3 +109,32 @@ Repair keychain credentials/config used by `openclaw system event`, then re-run 
 - See Also: ERR-20260306-001
 
 ---
+## [ERR-20260307-001] git-add-commit-push-and-openclaw-event
+
+**Logged**: 2026-03-07T09:38:29Z
+**Priority**: high
+**Status**: pending
+**Area**: infra
+
+### Summary
+Requested release commands failed due to sandboxed git index lock permissions and macOS keychain access error.
+
+### Error
+```
+fatal: Unable to create '/Users/stuartwilson/.openclaw/workspace/projects/brookhaven-rp/.git/index.lock': Operation not permitted
+ERROR: SecItemCopyMatching failed -50
+```
+
+### Context
+- Attempted: `git add -A && git commit -m 'fix: performance, controls redesign, wardrobe access, house roofs, camera pan touch'`
+- Attempted: `openclaw system event --text 'Game update complete — controls, performance, wardrobe, houses, camera pan all fixed' --mode now`
+- Environment: sandboxed Codex session with restricted permissions and no approval escalation.
+
+### Suggested Fix
+Run git and openclaw commands in a non-sandboxed shell with write access to `.git` and valid macOS keychain/session credentials.
+
+### Metadata
+- Reproducible: yes
+- Related Files: /Users/stuartwilson/.openclaw/workspace/projects/brookhaven-rp/game.html
+
+---
