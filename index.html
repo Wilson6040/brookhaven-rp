@@ -384,6 +384,126 @@
     .menuSection { display: none; }
     .menuSection.open { display: block; }
 
+    #loadingOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+
+    #errorOverlay {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      max-height: 40vh;
+      overflow: auto;
+      z-index: 45;
+      display: none;
+      background: rgba(24, 4, 4, 0.95);
+      border: 1px solid rgba(255, 120, 120, 0.55);
+      border-radius: 10px;
+      padding: 12px;
+      color: #ffdede;
+      font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+
+    #touchControls {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      pointer-events: none;
+    }
+
+    #touchDpad {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      width: 192px;
+      height: 192px;
+      pointer-events: none;
+    }
+
+    #touchRun {
+      position: absolute;
+      right: -6px;
+      top: -36px;
+      width: 52px;
+      height: 32px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      background: rgba(0, 0, 0, 0.48);
+      color: #fff;
+      pointer-events: auto;
+      font-size: 13px;
+      font-weight: 700;
+      touch-action: none;
+    }
+
+    .touchBtn {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: rgba(0, 0, 0, 0.45);
+      color: #fff;
+      font-size: 28px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .touchBtn.active {
+      background: rgba(255, 255, 255, 0.32);
+      transform: scale(0.97);
+    }
+
+    #touchUp { left: 66px; top: 0; }
+    #touchLeft { left: 0; top: 66px; }
+    #touchRight { left: 132px; top: 66px; }
+    #touchDown { left: 66px; top: 132px; }
+
+    #touchActions {
+      position: absolute;
+      right: 16px;
+      bottom: 26px;
+      display: flex;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    #touchE,
+    #touchSpace {
+      width: 78px;
+      height: 78px;
+      border-radius: 39px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: #111;
+      font-size: 21px;
+      font-weight: 800;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #touchE { background: rgba(255, 212, 91, 0.95); }
+    #touchSpace { background: rgba(255, 255, 255, 0.92); font-size: 15px; }
+
     @media (max-width: 700px) {
       #hudTopLeft { width: 200px; }
       #hotbar { grid-template-columns: repeat(6, 44px); gap: 6px; }
@@ -391,11 +511,29 @@
       #interactionPrompt { bottom: 68px; }
       #minimapWrap { width: 130px; height: 130px; }
       #minimapCanvas { width: 130px; height: 130px; }
+      #touchDpad {
+        width: 178px;
+        height: 178px;
+      }
+      .touchBtn {
+        width: 56px;
+        height: 56px;
+      }
+      #touchUp { left: 61px; top: 0; }
+      #touchLeft { left: 0; top: 61px; }
+      #touchRight { left: 122px; top: 61px; }
+      #touchDown { left: 61px; top: 122px; }
+      #touchE, #touchSpace {
+        width: 72px;
+        height: 72px;
+      }
     }
   </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
+  <div id="loadingOverlay">Loading...</div>
+  <div id="errorOverlay"></div>
 
   <div id="ui">
     <div id="hudTopLeft" class="panel">
@@ -444,7 +582,7 @@
           <button id="controlsToggleBtn" class="menuBtn">Controls</button>
           <button id="settingsToggleBtn" class="menuBtn">Settings</button>
         </div>
-        <div id="controlsPanel" class="panel menuSection open">Controls: Arrow Keys move/drive, Shift run/turbo, Space jump/handbrake, E vehicle+doors+NPC chat, F interact/feed, C wardrobe, V first-person, M map, Esc pause</div>
+        <div id="controlsPanel" class="panel menuSection open">Controls: Arrow Keys / D-Pad move/drive, Shift run/turbo, Space jump/handbrake, E vehicle+doors+NPC chat, F interact/feed, C wardrobe, V first-person, M map, Esc pause</div>
         <div id="settingsPanel" class="panel menuSection open">
           <div style="margin-bottom:8px;font-weight:600">Settings</div>
           <div class="menuRow">
@@ -501,10 +639,47 @@
         </div>
       </div>
     </div>
+
+    <div id="touchControls">
+      <div id="touchDpad">
+        <button id="touchRun">Run</button>
+        <button id="touchUp" class="touchBtn" aria-label="Move up">&#9650;</button>
+        <button id="touchLeft" class="touchBtn" aria-label="Move left">&#9664;</button>
+        <button id="touchRight" class="touchBtn" aria-label="Move right">&#9654;</button>
+        <button id="touchDown" class="touchBtn" aria-label="Move down">&#9660;</button>
+      </div>
+      <div id="touchActions">
+        <button id="touchE" aria-label="Interact">E</button>
+        <button id="touchSpace" aria-label="Jump or handbrake">Space</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
   <script>
+    if (!window.THREE) {
+      document.write('<script src="https://unpkg.com/three@0.158.0/build/three.min.js"><\\/script>');
+    }
+
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const errorOverlay = document.getElementById("errorOverlay");
+
+    function showVisibleError(err, scope = "runtime") {
+      const safeError = err instanceof Error ? err : new Error(String(err));
+      console.error(`[${scope}]`, safeError);
+      if (!errorOverlay) return;
+      const stamp = new Date().toISOString();
+      const stack = safeError.stack || safeError.message || String(safeError);
+      errorOverlay.style.display = "block";
+      errorOverlay.textContent += `[${stamp}] ${scope}: ${stack}\n\n`;
+    }
+
+    if (!window.THREE) {
+      showVisibleError(new Error("Failed to load Three.js from cdnjs and fallback unpkg CDN."), "startup");
+      if (loadingOverlay) loadingOverlay.textContent = "Failed to load Three.js";
+      throw new Error("Three.js unavailable");
+    }
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x8fc8ff);
 
@@ -3360,6 +3535,7 @@
       }
     }
 
+    let firstFrameRendered = false;
     function animate() {
       requestAnimationFrame(animate);
       if (state.paused) return;
@@ -3385,6 +3561,10 @@
       if (state.wardrobeOpen) renderWardrobePreview();
 
       renderer.render(scene, camera);
+      if (!firstFrameRendered) {
+        firstFrameRendered = true;
+        if (loadingOverlay) loadingOverlay.style.display = "none";
+      }
     }
 
     function trySit() {
@@ -3484,6 +3664,101 @@
       }
     }
 
+    function handleActionKey(code) {
+      if (code === "Space" && !activeVehicle && canJump && !state.swimMode && !state.sitting) {
+        velocity.y = 10;
+        canJump = false;
+        playJumpSound();
+      }
+      if (code === "KeyE") {
+        ensureAudio();
+        const npc = nearestNpcInRange(3);
+        if (npc) {
+          showNpcDialog(npc);
+          return;
+        }
+        if (tryEnterOrExitVehicle()) return;
+        if (tryEnterDoor()) return;
+        if (tryDealershipBuy()) return;
+        state.emoteIndex = (state.emoteIndex + 1) % 5;
+      }
+      if (code === "KeyF") {
+        ensureAudio();
+        if (state.currentInteractive?.userData?.onInteract) {
+          state.currentInteractive.userData.onInteract();
+          return;
+        }
+        if (state.activePet?.mesh && player.position.distanceTo(state.activePet.mesh.position) < 3) {
+          const slot = state.inventory.findIndex((it) => it && (String(it).includes("Apple") || String(it).includes("Grocery") || String(it).includes("Burger")));
+          if (slot >= 0) {
+            state.inventory[slot] = null;
+            state.activePet.feedBounce = 0.9;
+            showToast(`${state.activePet.name} is happy!`);
+            playMoneyArpeggio();
+          } else {
+            showToast("Need food item in inventory");
+          }
+          return;
+        }
+        if (handleJobInteract()) return;
+        trySit();
+      }
+      if (code === "KeyV") {
+        state.firstPerson = !state.firstPerson;
+      }
+      if (code === "KeyM") {
+        toggleMap(!state.mapOpen);
+      }
+      if (code === "KeyC") {
+        toggleWardrobe(!state.wardrobeOpen);
+      }
+    }
+
+    function bindTouchButton(id, keyCode, opts = {}) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const press = (e) => {
+        e.preventDefault();
+        keys[keyCode] = true;
+        btn.classList.add("active");
+        if (opts.onPress) opts.onPress();
+      };
+      const release = (e) => {
+        e.preventDefault();
+        keys[keyCode] = false;
+        btn.classList.remove("active");
+      };
+      btn.addEventListener("touchstart", press, { passive: false });
+      btn.addEventListener("touchend", release, { passive: false });
+      btn.addEventListener("touchcancel", release, { passive: false });
+      btn.addEventListener("contextmenu", (e) => e.preventDefault());
+    }
+
+    function initTouchControls() {
+      if (!("ontouchstart" in window)) return;
+      const touchControls = document.getElementById("touchControls");
+      if (touchControls) touchControls.style.display = "block";
+
+      bindTouchButton("touchUp", "ArrowUp");
+      bindTouchButton("touchDown", "ArrowDown");
+      bindTouchButton("touchLeft", "ArrowLeft");
+      bindTouchButton("touchRight", "ArrowRight");
+      bindTouchButton("touchRun", "ShiftLeft");
+      bindTouchButton("touchE", "KeyE", { onPress: () => handleActionKey("KeyE") });
+      bindTouchButton("touchSpace", "Space", { onPress: () => handleActionKey("Space") });
+
+      window.addEventListener("blur", () => {
+        keys.ArrowUp = false;
+        keys.ArrowDown = false;
+        keys.ArrowLeft = false;
+        keys.ArrowRight = false;
+        keys.ShiftLeft = false;
+        keys.KeyE = false;
+        keys.Space = false;
+        document.querySelectorAll("#touchControls button.active").forEach((btn) => btn.classList.remove("active"));
+      });
+    }
+
     document.addEventListener("keydown", (e) => {
       if (e.code === "Escape") {
         e.preventDefault();
@@ -3507,54 +3782,7 @@
       if (state.paused || state.wardrobeOpen) return;
 
       keys[e.code] = true;
-      if (e.code === "Space" && !activeVehicle && canJump && !state.swimMode && !state.sitting) {
-        velocity.y = 10;
-        canJump = false;
-        playJumpSound();
-      }
-      if (e.code === "KeyE") {
-        ensureAudio();
-        const npc = nearestNpcInRange(3);
-        if (npc) {
-          showNpcDialog(npc);
-          return;
-        }
-        if (tryEnterOrExitVehicle()) return;
-        if (tryEnterDoor()) return;
-        if (tryDealershipBuy()) return;
-        state.emoteIndex = (state.emoteIndex + 1) % 5;
-      }
-      if (e.code === "KeyF") {
-        ensureAudio();
-        if (state.currentInteractive?.userData?.onInteract) {
-          state.currentInteractive.userData.onInteract();
-          return;
-        }
-        if (state.activePet?.mesh && player.position.distanceTo(state.activePet.mesh.position) < 3) {
-          const slot = state.inventory.findIndex((it) => it && (String(it).includes("Apple") || String(it).includes("Grocery") || String(it).includes("Burger")));
-          if (slot >= 0) {
-            state.inventory[slot] = null;
-            state.activePet.feedBounce = 0.9;
-            showToast(`${state.activePet.name} is happy!`);
-            playMoneyArpeggio();
-          } else {
-            showToast("Need food item in inventory");
-          }
-          return;
-        }
-
-        if (handleJobInteract()) return;
-        trySit();
-      }
-      if (e.code === "KeyV") {
-        state.firstPerson = !state.firstPerson;
-      }
-      if (e.code === "KeyM") {
-        toggleMap(!state.mapOpen);
-      }
-      if (e.code === "KeyC") {
-        toggleWardrobe(!state.wardrobeOpen);
-      }
+      handleActionKey(e.code);
     });
 
     document.addEventListener("keyup", (e) => {
@@ -3625,17 +3853,24 @@
       if (e.target === wardrobeOverlay) toggleWardrobe(false);
     });
 
-    buildWorld();
-    createVehicles();
-    createInteriors();
-    createNPCs();
-    createMiniJobs();
-    createMapIcons();
-    setShadowRecursive(scene);
-    setWeather("sunny");
-    loadGame();
-    updateHUD();
-    animate();
+    initTouchControls();
+
+    try {
+      buildWorld();
+      createVehicles();
+      createInteriors();
+      createNPCs();
+      createMiniJobs();
+      createMapIcons();
+      setShadowRecursive(scene);
+      setWeather("sunny");
+      loadGame();
+      updateHUD();
+      animate();
+    } catch (err) {
+      showVisibleError(err, "startup");
+      if (loadingOverlay) loadingOverlay.textContent = "Startup failed (see error log)";
+    }
   </script>
 </body>
 </html>
