@@ -121,6 +121,7 @@
       grid-template-columns: repeat(6, 52px);
       gap: 8px;
       padding: 8px;
+      pointer-events: auto;
     }
 
     .slot {
@@ -134,6 +135,13 @@
       justify-content: center;
       font-size: 11px;
       color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .slot.active {
+      border-color: rgba(57, 233, 255, 0.85);
+      box-shadow: 0 0 14px rgba(57, 233, 255, 0.45);
     }
 
     #zonePopup {
@@ -216,7 +224,7 @@
       align-items: center;
       justify-content: center;
       pointer-events: auto;
-      z-index: 20;
+      z-index: 60;
     }
 
     .menuCard {
@@ -663,6 +671,26 @@
       min-height: 44px;
     }
 
+    body:not(.touch-device) #hotbar {
+      grid-template-columns: repeat(6, 38px);
+      gap: 6px;
+    }
+
+    body:not(.touch-device) .slot {
+      width: 38px;
+      height: 38px;
+      font-size: 9px;
+    }
+
+    body:not(.touch-device) #hudTopLeft,
+    body:not(.touch-device) #hudTopRight,
+    body:not(.touch-device) #zonePopup,
+    body:not(.touch-device) #interactionPrompt,
+    body:not(.touch-device) #eventToast,
+    body:not(.touch-device) #jobProgressWrap {
+      font-size: 0.8em;
+    }
+
     @media (max-width: 700px) {
       #hudTopLeft { width: 200px; }
       #hotbar { grid-template-columns: repeat(6, 44px); gap: 6px; }
@@ -1085,7 +1113,7 @@
     };
 
     const player = new THREE.Group();
-    player.position.set(0, 1, 0);
+    player.position.set(0, 1, 60);
     scene.add(player);
 
     const torso = new THREE.Mesh(
@@ -4614,7 +4642,16 @@
       }
     }
 
+    function setActiveHotbarSlot(idx) {
+      const clamped = THREE.MathUtils.clamp(Number(idx) || 0, 0, hotbarSlots.length - 1);
+      hotbarSlots.forEach((slot, slotIdx) => slot.classList.toggle("active", slotIdx === clamped));
+    }
+
     function handleActionKey(code) {
+      if (/^Digit[1-6]$/.test(code)) {
+        setActiveHotbarSlot(Number(code.slice(-1)) - 1);
+        return;
+      }
       if (code === "Space" && !activeVehicle && canJump && !state.swimMode && !state.sitting) {
         velocity.y = 10;
         canJump = false;
@@ -4693,8 +4730,11 @@
     }
 
     function initTouchControls() {
-      if (!("ontouchstart" in window)) return;
       const touchControls = document.getElementById("touchControls");
+      if (!isTouchDevice) {
+        if (touchControls) touchControls.style.display = "none";
+        return;
+      }
       if (touchControls) touchControls.style.display = "block";
 
       bindTouchButton("touchUp", "ArrowUp");
@@ -4810,6 +4850,11 @@
       touchPanIdentifier = null;
     }, { passive: true });
 
+    hotbarSlots.forEach((slot, idx) => {
+      slot.addEventListener("click", () => setActiveHotbarSlot(idx));
+    });
+    setActiveHotbarSlot(0);
+
     document.addEventListener("keydown", (e) => {
       if (e.code === "Escape") {
         e.preventDefault();
@@ -4921,6 +4966,10 @@
       setShadowRecursive(scene);
       setWeather("sunny");
       loadGame();
+      const initialCameraTarget = new THREE.Vector3(player.position.x, player.position.y + 1.2, player.position.z);
+      cameraTarget.copy(initialCameraTarget);
+      camera.position.copy(player.position).add(new THREE.Vector3(0, 8, 15));
+      camera.lookAt(initialCameraTarget);
       updateHUD();
       animate();
     } catch (err) {
