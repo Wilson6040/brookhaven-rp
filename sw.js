@@ -1,4 +1,4 @@
-const VERSION = 'v1';
+const VERSION = 'v4';
 const CACHE = 'ellas-world-' + VERSION;
 const FILES = ['./game.html', './manifest.json'];
 
@@ -10,40 +10,24 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys
-        .filter((key) => key.startsWith('ellas-world-') && key !== CACHE)
-        .map((key) => caches.delete(key))
-    );
+    await Promise.all(keys.map((key) => caches.delete(key))); // delete ALL old caches
     await self.clients.claim();
     const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     clients.forEach((client) => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
   })());
 });
 
+// Network first — always fetch fresh, fall back to cache only if offline
 self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-
-  const url = new URL(req.url);
-  const isGamePage = url.origin === self.location.origin && (url.pathname.endsWith('/game.html') || url.pathname === '/game.html');
-
-  if (isGamePage) {
-    event.respondWith((async () => {
-      const cached = await caches.match('./game.html');
-      return cached || fetch(req);
-    })());
-    return;
-  }
-
+  if (event.request.method !== 'GET') return;
   event.respondWith((async () => {
     try {
-      const networkResponse = await fetch(req);
+      const networkResponse = await fetch(event.request);
+      const cache = await caches.open(CACHE);
+      cache.put(event.request, networkResponse.clone());
       return networkResponse;
     } catch (_err) {
-      const cached = await caches.match(req);
-      if (cached) return cached;
-      return caches.match('./game.html');
+      return caches.match(event.request);
     }
   })());
 });
